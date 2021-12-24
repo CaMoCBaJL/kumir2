@@ -1,5 +1,16 @@
+/*
+This file is generated, but you can safely change it
+until you run "gen_actor_source.py" with "--project" flag.
+
+Generated file is just a skeleton for module contents.
+You should change it corresponding to functionality.
+*/
+
 // Self include
 #include "arduinomodule.h"
+
+// Kumir includes
+#include <kumir2-libs/extensionsystem/kplugin.h>
 
 // Qt includes
 #include <QtCore>
@@ -52,6 +63,10 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
 
 }
 
+
+
+
+
 /* public slot */ void ArduinoModule::reloadSettings(ExtensionSystem::SettingsPtr settings, const QStringList & keys)
 {
     // Updates setting on module load, workspace change or appliyng settings dialog.
@@ -67,6 +82,8 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
 }
 
+
+
 /* public slot */ void ArduinoModule::terminateEvaluation()
 {
     // Called on program interrupt to ask long-running module's methods
@@ -80,6 +97,7 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
     Q_UNUSED(pin)  // Remove this line on implementation;
     return false;
+    
 }
 
 /* public slot */ void ArduinoModule::runDigitalWrite(const int pin, const bool value)
@@ -88,6 +106,7 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
     Q_UNUSED(pin)  // Remove this line on implementation;
     Q_UNUSED(value)  // Remove this line on implementation;
+    
 }
 
 /* public slot */ int ArduinoModule::runAnalogRead(const int pin)
@@ -96,6 +115,7 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
     Q_UNUSED(pin)  // Remove this line on implementation;
     return 0;
+    
 }
 
 /* public slot */ void ArduinoModule::runAnalogWrite(const int pin, const int value)
@@ -104,22 +124,142 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
     Q_UNUSED(pin)  // Remove this line on implementation;
     Q_UNUSED(value)  // Remove this line on implementation;
+    
 }
 
-/* private */  Shared::ActorInterface::FunctionList ArduinoModule::dynamicFunctionList() const
+/* public slot */ void ArduinoModule::runDefine(const int value)
 {
-    Shared::ActorInterface::FunctionList result;
-
-//    /* алг функция */
-//    result.push_back(Shared::ActorInterface::Function());
-//    result.last().id = result.size() - 1;
-//    result.last().accessType = Shared::ActorInterface::PublicFunction;
-//    result.last().asciiName = QByteArray("function");
-//    result.last().localizedNames[QLocale::Russian] = QString::fromUtf8("функция");
-//    result.last().returnType = Shared::ActorInterface::Void;
-
-    return result;
+    /* алг void #определить(цел value) */
+    // TODO implement me
+    Q_UNUSED(value)  // Remove this line on implementation;
+    return void();
+    
 }
+
+/* public slot */ void ArduinoModule::runPinMode(const int pinMode)
+{
+    /* алг void задатьПорт(цел pinMode) */
+    // TODO implement me
+    Q_UNUSED(pinMode)  // Remove this line on implementation;
+    return void();
+    
+}
+
+/* public slot */ void ArduinoModule::runDelay(const int ms)
+{
+    /* алг void задержкаС(цел ms) */
+    // TODO implement me
+    Q_UNUSED(ms)  // Remove this line on implementation;
+    return void();
+    
+}
+
+/* public slot */ int ArduinoModule::runMilis()
+{
+    /* алг цел задержкаМС */
+    // TODO implement me
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runMin(const int x, const int y)
+{
+    /* алг цел мин(цел x, цел y) */
+    // TODO implement me
+    Q_UNUSED(x)  // Remove this line on implementation;
+    Q_UNUSED(y)  // Remove this line on implementation;
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runMax(const int x, const int y)
+{
+    /* алг цел макс(цел x, цел y) */
+    // TODO implement me
+    Q_UNUSED(x)  // Remove this line on implementation;
+    Q_UNUSED(y)  // Remove this line on implementation;
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runRandomSeed(const int seed)
+{
+    /* алг цел установитьСлуч(цел seed) */
+    // TODO implement me
+    Q_UNUSED(seed)  // Remove this line on implementation;
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runRandom(const int max)
+{
+    /* алг цел случ(цел max) */
+    // TODO implement me
+    Q_UNUSED(max)  // Remove this line on implementation;
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runRandom(const int min, const int max)
+{
+    /* алг цел случ(цел min, цел max) */
+    // TODO implement me
+    Q_UNUSED(min)  // Remove this line on implementation;
+    Q_UNUSED(max)  // Remove this line on implementation;
+    return 0;
+    
+}
+
+/* public slot */ void ArduinoModule::runSerialbegin(const int rate)
+{
+    /* алг void открытьПорт(цел rate) */
+    // TODO implement me
+    Q_UNUSED(rate)  // Remove this line on implementation;
+    return void();
+    
+}
+
+/* public slot */ void ArduinoModule::runSerialprintln(const int data)
+{
+    /* алг void вывод(цел data) */
+    // TODO implement me
+    Q_UNUSED(data)  // Remove this line on implementation;
+    return void();
+    
+}
+
+/* public slot */ int ArduinoModule::runINPUT()
+{
+    /* алг цел режимВвод */
+    // TODO implement me
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runOUTPUT()
+{
+    /* алг цел режимВывод */
+    // TODO implement me
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runHIGH()
+{
+    /* алг цел высокийСигнал */
+    // TODO implement me
+    return 0;
+    
+}
+
+/* public slot */ int ArduinoModule::runLOW()
+{
+    /* алг цел низкийСигнал */
+    // TODO implement me
+    return 0;
+    
+}
+
 
 
 } // namespace ActorArduino

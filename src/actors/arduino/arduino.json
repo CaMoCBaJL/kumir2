@@ -35,25 +35,8 @@
 			]
 		},
 		{
-			"name": {"ascii": "#define", "ru_RU": "#определить" },
-			"async": false,
-			"returnType": "void",
-			"arguments": [
-				{ "name": "value", "baseType": "int"}
-			]
-		},
-		{
-			"name": {"ascii": "pinMode", "ru_RU": "задатьПорт" },
-			"async": false,
-			"returnType": "void",
-			"arguments": [
-				{ "name": "pinMode", "baseType": "int"}
-			]
-		},
-		{
 			"name": {"ascii": "delay", "ru_RU": "задержкаС" },
 			"async": false,
-			"returnType": "void",
 			"arguments": [
 				{ "name": "ms", "baseType": "int"}
 			]
@@ -64,61 +47,15 @@
 			"returnType": "int"
 		},
 		{
-			"name": {"ascii": "min", "ru_RU": "мин" },
-			"async": false,
-			"returnType": "int",
-			"arguments": [
-				{ "name": "x", "baseType": "int"},
-				{ "name": "y", "baseType": "int"}
-			]
-		},
-		{
-			"name": {"ascii": "max", "ru_RU": "макс" },
-			"async": false,
-			"returnType": "int",
-			"arguments": [
-				{ "name": "x", "baseType": "int"},
-				{ "name": "y", "baseType": "int"}
-			]
-		},
-		{
-			"name": {"ascii": "randomSeed", "ru_RU": "установитьСлуч" },
-			"async": false,
-			"returnType": "int",
-			"arguments": [
-				{ "name": "seed", "baseType": "int"}
-			]
-		},
-		{
-			"name": {"ascii": "random", "ru_RU": "случ" },
-			"async": false,
-			"returnType": "int",
-			"arguments": [
-				{ "name": "max", "baseType": "int"}
-
-			]
-		},
-		{
-			"name": {"ascii": "random", "ru_RU": "случ" },
-			"async": false,
-			"returnType": "int",
-			"arguments": [
-				{ "name": "min", "baseType": "int"},
-				{ "name": "max", "baseType": "int"}
-			]
-		},
-		{
 			"name": {"ascii": "Serial.begin", "ru_RU": "открытьПорт" },
 			"async": false,
-			"returnType": "void",
 			"arguments": [
 				{ "name": "rate", "baseType": "int"}
 			]
 		},
 		{
-			"name": {"ascii": "Serial.println", "ru_RU": "вывод" },
+			"name": {"ascii": "Serial.println", "ru_RU": "выводВПорт" },
 			"async": false,
-			"returnType": "void",
 			"arguments": [
 				{ "name": "data", "baseType": "int"}
 			]
@@ -126,22 +63,26 @@
 		{
 			"name": {"ascii": "INPUT", "ru_RU": "режимВвод" },
 			"async": false,
-			"returnType": "int"
+			"returnType": "int",
+            "arguments": []
 		},
 		{
 			"name": {"ascii": "OUTPUT", "ru_RU": "режимВывод" },
 			"async": false,
-			"returnType": "int"
+			"returnType": "int",
+			"arguments": []
 		},
 		{
 			"name": {"ascii": "HIGH", "ru_RU": "высокийСигнал" },
 			"async": false,
-			"returnType": "int"
+			"returnType": "int",
+			"arguments": []
 		},
 		{
 			"name": {"ascii": "LOW", "ru_RU": "низкийСигнал" },
 			"async": false,
-			"returnType": "int"
+			"returnType": "int",
+			"arguments": []
 		}
 	]
 }

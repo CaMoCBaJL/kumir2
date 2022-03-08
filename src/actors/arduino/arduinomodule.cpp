@@ -127,30 +127,19 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     
 }
 
-/* public slot */ void ArduinoModule::runDefine(const int value)
-{
-    /* алг void #определить(цел value) */
-    // TODO implement me
-    Q_UNUSED(value)  // Remove this line on implementation;
-    return void();
-    
-}
-
 /* public slot */ void ArduinoModule::runPinMode(const int pinMode)
 {
-    /* алг void задатьПорт(цел pinMode) */
+    /* алг задатьПорт(цел pinMode) */
     // TODO implement me
     Q_UNUSED(pinMode)  // Remove this line on implementation;
-    return void();
     
 }
 
 /* public slot */ void ArduinoModule::runDelay(const int ms)
 {
-    /* алг void задержкаС(цел ms) */
+    /* алг задержкаС(цел ms) */
     // TODO implement me
     Q_UNUSED(ms)  // Remove this line on implementation;
-    return void();
     
 }
 
@@ -212,52 +201,37 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
 
 /* public slot */ void ArduinoModule::runSerialbegin(const int rate)
 {
-    /* алг void открытьПорт(цел rate) */
+    /* алг открытьПорт(цел rate) */
     // TODO implement me
     Q_UNUSED(rate)  // Remove this line on implementation;
-    return void();
     
 }
 
 /* public slot */ void ArduinoModule::runSerialprintln(const int data)
 {
-    /* алг void вывод(цел data) */
+    /* алг выводВПорт(цел data) */
     // TODO implement me
     Q_UNUSED(data)  // Remove this line on implementation;
-    return void();
-    
 }
 
 /* public slot */ int ArduinoModule::runINPUT()
 {
-    /* алг цел режимВвод */
-    // TODO implement me
-    return 0;
-    
+    return 1;
 }
 
 /* public slot */ int ArduinoModule::runOUTPUT()
 {
-    /* алг цел режимВывод */
-    // TODO implement me
     return 0;
-    
 }
 
 /* public slot */ int ArduinoModule::runHIGH()
 {
-    /* алг цел высокийСигнал */
-    // TODO implement me
-    return 0;
-    
+    return 1;
 }
 
 /* public slot */ int ArduinoModule::runLOW()
 {
-    /* алг цел низкийСигнал */
-    // TODO implement me
-    return 0;
-    
+    return 0; 
 }
 
 

@@ -17,6 +17,7 @@ You should change it corresponding to functionality.
 
 // Qt includes
 #include <QtCore>
+#include <QTime>
 #if QT_VERSION >= 0x050000
 #   include <QtWidgets>
 #else
@@ -43,7 +44,6 @@ public Q_SLOTS:
     void runDigitalWrite(const int pin, const bool value);
     int runAnalogRead(const int pin);
     void runAnalogWrite(const int pin, const int value);
-    void runDefine(const int value);
     void runPinMode(const int pinMode);
     void runDelay(const int ms);
     int runMilis();
@@ -62,7 +62,8 @@ public Q_SLOTS:
 
 
     /* ========= CLASS PRIVATE ========= */
-
+private:
+    QTime *milisTimer;
 
 
 

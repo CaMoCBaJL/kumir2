@@ -7,6 +7,7 @@
 #include "generator.h"
 #include "kumircodegeneratorplugin.h"
 #include <kumir2-libs/extensionsystem/pluginmanager.h>
+#include <QDebug>
 
 using namespace KumirCodeGenerator;
 using namespace Bytecode;
@@ -124,6 +125,7 @@ void KumirCodeGeneratorPlugin::generateExecutable(
     d->addModule(linkedModule);
     d->generateConstantTable();
     d->generateExternTable();
+    qDebug("some example message");
     modules.pop_back();
     modules.push_back(userModule);
     if (teacherModule) {

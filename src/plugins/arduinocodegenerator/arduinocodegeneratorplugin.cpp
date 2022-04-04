@@ -128,7 +128,7 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     modules.push_back(linkedModule);
     d->addModule(linkedModule);
     d->generateConstantTable();
-    d->generateExternTable();
+//    d->generateExternTable();
     modules.pop_back();
     modules.push_back(userModule);
     if (teacherModule) {

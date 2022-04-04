@@ -9,7 +9,7 @@
 #include <kumir2-libs/dataformats/lexem.h>
 #include <kumir2-libs/errormessages/errormessages.h>
 #include <kumir2/generatorinterface.h>
-#include <kumir2-libs/vm/vm_enums.h>
+#include "arduino_enums.hpp"
 #include "arduino_instruction.hpp"
 
 
@@ -27,7 +27,7 @@ namespace ArduinoCodeGenerator {
 typedef Shared::GeneratorInterface::DebugLevel DebugLevel;
 struct ConstValue {
     QVariant value;
-    QList<Bytecode::ValueType> baseType;
+    QList<Arduino::ValueType> baseType;
     QString recordModuleName;
     QString recordClassLocalizedName;
     QByteArray recordClassAsciiName;
@@ -41,7 +41,7 @@ struct ConstValue {
                 value == other.value;
     }
     inline ConstValue() {
-        baseType.push_back(Bytecode::VT_void);
+        baseType.push_back(Arduino::VT_void);
         dimension = 0;
     }
 };
@@ -59,14 +59,14 @@ public:
     void setDebugLevel(DebugLevel debugLevel);
 private:
     QList<Arduino::Instruction> makeLineInstructions(const QList<AST::LexemPtr> & lexems) const;
-    quint16 constantValue(Bytecode::ValueType type, quint8 dimension, const QVariant & value,
+    quint16 constantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass
                           );
-    quint16 constantValue(const QList<Bytecode::ValueType> & type, quint8 dimension, const QVariant & value,
+    quint16 constantValue(const QList<Arduino::ValueType> & type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass
                           );
     void addKumirModule(int id, const AST::ModulePtr  mod);
-    void addFunction(int id, int moduleId, Bytecode::ElemType type, const AST::ModulePtr  mod, const AST::AlgorithmPtr  alg);
+    void addFunction(int id, int moduleId, Arduino::ElemType type, const AST::ModulePtr  mod, const AST::AlgorithmPtr  alg);
     void addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, const AST::ModulePtr  mod, const AST::AlgorithmPtr  alg);
 
     QList<Arduino::Instruction> instructions(
@@ -94,8 +94,8 @@ private:
     void findFunction(const AST::AlgorithmPtr  alg, quint8 & module, quint16 & id) ;
 
 
-    static QList<Bytecode::ValueType> valueType(const AST::Type & t);
-    static Bytecode::ValueKind valueKind(AST::VariableAccessType t);
+    static QList<Arduino::ValueType> valueType(const AST::Type & t);
+    static Arduino::ValueKind valueKind(AST::VariableAccessType t);
     static Arduino::InstructionType operation(AST::ExpressionOperator op);
 
     AST::DataPtr ast_;

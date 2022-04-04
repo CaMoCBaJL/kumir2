@@ -1,12 +1,12 @@
 #include "generator.h"
-#include <kumir2-libs/vm/vm_tableelem.hpp>
-//include <kumir2-libs/vm/vm.hpp>
+#include "arduino_tableelem.hpp"
 #include <kumir2-libs/extensionsystem/pluginmanager.h>
 #include <kumir2/actorinterface.h>
 #include <kumir2-libs/dataformats/lexem.h>
 
 #include "arduino_data.hpp"
-#include <kumir2-libs/vm/vm_enums.h>
+#include "arduino_enums.hpp"
+#include "CVariable.hpp"
 
 namespace ArduinoCodeGenerator {
 
@@ -60,54 +60,54 @@ static void getVarListSizes(const QVariant & var, int sizes[3], int fromDim)
     sizes[fromDim] = qMax(sizes[fromDim], elems.size());
 }
 
-static VM::AnyValue makeAnyValue(const QVariant & val
-                                 , const QList<Bytecode::ValueType> & vt
+static Arduino::CAnyValue makeAnyValue(const QVariant & val
+                                 , const QList<Arduino::ValueType> & vt
                                  , const QString & moduleName
                                  , const QString & className
                                  )
 {
-    VM::AnyValue result;
+    Arduino::CAnyValue result;
     if (val==QVariant::Invalid)
         return result;
     switch (vt.front())
     {
-    case Bytecode::VT_int:
-        result = VM::AnyValue(val.toInt()); break;
-    case Bytecode::VT_real:
-        result = VM::AnyValue(val.toDouble()); break;
-    case Bytecode::VT_bool:
-        result = VM::AnyValue(bool(val.toBool())); break;
-    case Bytecode::VT_char:
-        result = VM::AnyValue(Kumir::Char(val.toChar().unicode())); break;
-    case Bytecode::VT_string:
-        result = VM::AnyValue(val.toString().toStdWString()); break;
-    case Bytecode::VT_record:
+    case Arduino::VT_int:
+        result = Arduino::CAnyValue(val.toInt()); break;
+    case Arduino::VT_real:
+        result = Arduino::CAnyValue(val.toDouble()); break;
+    case Arduino::VT_bool:
+        result = Arduino::CAnyValue(bool(val.toBool())); break;
+    case Arduino::VT_char:
+        result = Arduino::CAnyValue(Kumir::Char(val.toChar().unicode())); break;
+    case Arduino::VT_string:
+        result = Arduino::CAnyValue(val.toString().toStdWString()); break;
+    case Arduino::VT_record:
     {
         QVariantList valueFields = val.toList();
-        VM::Record record;
+        Arduino::Record record;
         for (int i=1; i<vt.size(); i++) {
-            Bytecode::ValueType fieldType = vt.at(i);
+            Arduino::ValueType fieldType = vt.at(i);
             switch (fieldType) {
-            case Bytecode::VT_int:
-                record.fields.push_back(VM::AnyValue(valueFields[i-1].toInt()));
+            case Arduino::VT_int:
+                record.fields.push_back(Arduino::CAnyValue(valueFields[i-1].toInt()));
                 break;
-            case Bytecode::VT_real:
-                record.fields.push_back(VM::AnyValue(valueFields[i-1].toDouble()));
+            case Arduino::VT_real:
+                record.fields.push_back(Arduino::CAnyValue(valueFields[i-1].toDouble()));
                 break;
-            case Bytecode::VT_bool:
-                record.fields.push_back(VM::AnyValue(valueFields[i-1].toBool()));
+            case Arduino::VT_bool:
+                record.fields.push_back(Arduino::CAnyValue(valueFields[i-1].toBool()));
                 break;
-            case Bytecode::VT_char:
-                record.fields.push_back(VM::AnyValue(valueFields[i-1].toChar().unicode()));
+            case Arduino::VT_char:
+                record.fields.push_back(Arduino::CAnyValue(valueFields[i-1].toChar().unicode()));
                 break;
-            case Bytecode::VT_string:
-                record.fields.push_back(VM::AnyValue(valueFields[i-1].toString().toStdWString()));
+            case Arduino::VT_string:
+                record.fields.push_back(Arduino::CAnyValue(valueFields[i-1].toString().toStdWString()));
                 break;
             default:
                 break;
             }
         }
-        result = VM::AnyValue(record);
+        result = Arduino::CAnyValue(record);
         break;
     }
     default:
@@ -119,14 +119,14 @@ static VM::AnyValue makeAnyValue(const QVariant & val
 static Arduino::TableElem makeConstant(const ConstValue & val)
 {
     Arduino::TableElem e;
-    e.type = Bytecode::EL_CONST;
+    e.type = Arduino::EL_CONST;
     e.vtype = val.baseType.toStdList();
     e.dimension = val.dimension;
     e.recordModuleLocalizedName = val.recordModuleName.toStdWString();
     e.recordClassLocalizedName  = val.recordClassLocalizedName.toStdWString();
     if (val.dimension==0) {
-        VM::Variable var;
-        VM::AnyValue vv = makeAnyValue(val.value,
+        Arduino::CVariable var;
+        Arduino::CAnyValue vv = makeAnyValue(val.value,
                                        val.baseType,
                                        val.recordModuleName,
                                        val.recordClassLocalizedName
@@ -140,7 +140,7 @@ static Arduino::TableElem makeConstant(const ConstValue & val)
     else {
         int sizes[3];
         getVarListSizes(val.value, sizes, 0);
-        VM::Variable var;
+        Arduino::CVariable var;
         var.setConstantFlag(true);
         var.setBaseType(val.baseType.front());
         var.setDimension(val.dimension);
@@ -159,7 +159,7 @@ static Arduino::TableElem makeConstant(const ConstValue & val)
                                  ));
                 }
                 else {
-                    var.setValue(x, VM::AnyValue());
+                    var.setValue(x, Arduino::CAnyValue());
                 }
             }
         } // end if (var.dimension()==1)
@@ -178,13 +178,13 @@ static Arduino::TableElem makeConstant(const ConstValue & val)
                                          ));
                         }
                         else {
-                            var.setValue(y, x, VM::AnyValue());
+                            var.setValue(y, x, Arduino::CAnyValue());
                         }
                     }
                 }
                 else {
                     for (int x=1; x<=sizes[1]; x++) {
-                        var.setValue(y, x, VM::AnyValue());
+                        var.setValue(y, x, Arduino::CAnyValue());
                     }
                 }
             }
@@ -207,13 +207,13 @@ static Arduino::TableElem makeConstant(const ConstValue & val)
                                                  ));
                                 }
                                 else {
-                                    var.setValue(z, y, x, VM::AnyValue());
+                                    var.setValue(z, y, x, Arduino::CAnyValue());
                                 }
                             }
                         }
                         else {
                             for (int x=1; x<=sizes[1]; x++) {
-                                var.setValue(z, y, x, VM::AnyValue());
+                                var.setValue(z, y, x, Arduino::CAnyValue());
                             }
                         }
                     }
@@ -221,7 +221,7 @@ static Arduino::TableElem makeConstant(const ConstValue & val)
                 else {
                     for (int y=1; y<=sizes[1]; y++) {
                         for (int x=1; x<=sizes[2]; x++) {
-                            var.setValue(z, y, x, VM::AnyValue());
+                            var.setValue(z, y, x, Arduino::CAnyValue());
                         }
                     }
                 }
@@ -313,7 +313,7 @@ void Generator::generateExternTable()
     for (int i=externs_.size()-1; i>=0; i--) {
         QPair<quint8, quint16> ext = externs_[i];
         Arduino::TableElem e;
-        e.type = Bytecode::EL_EXTERN;
+        e.type = Arduino::EL_EXTERN;
         e.module = ext.first;
         const AST::ModulePtr  mod = ast_->modules[ext.first];
         const QList<AST::AlgorithmPtr> table = mod->header.algorhitms + mod->header.operators;
@@ -377,7 +377,7 @@ void Generator::generateExternTable()
     }
     foreach (AST::ModulePtr module, modulesExplicitlyImported - modulesImplicitlyImported) {
         Arduino::TableElem e;
-        e.type = Bytecode::EL_EXTERN_INIT;
+        e.type = Arduino::EL_EXTERN_INIT;
         e.module = 0xFF;
         e.algId = e.id = 0xFFFF;
         e.moduleLocalizedName = module->header.name.toStdWString();
@@ -403,41 +403,41 @@ void Generator::generateExternTable()
 }
 
 
-QList<Bytecode::ValueType> Generator::valueType(const AST::Type & t)
+QList<Arduino::ValueType> Generator::valueType(const AST::Type & t)
 {
-    QList<Bytecode::ValueType> result;
+    QList<Arduino::ValueType> result;
     if (t.kind==AST::TypeInteger)
-        result << Bytecode::VT_int;
+        result << Arduino::VT_int;
     else if (t.kind==AST::TypeReal)
-        result << Bytecode::VT_real;
+        result << Arduino::VT_real;
     else if (t.kind==AST::TypeBoolean)
-        result << Bytecode::VT_bool;
+        result << Arduino::VT_bool;
     else if (t.kind==AST::TypeString)
-        result << Bytecode::VT_string;
+        result << Arduino::VT_string;
     else if (t.kind==AST::TypeCharect)
-        result << Bytecode::VT_char;
+        result << Arduino::VT_char;
     else if (t.kind==AST::TypeUser) {
-        result << Bytecode::VT_record;
+        result << Arduino::VT_record;
         for (int i=0; i<t.userTypeFields.size(); i++) {
             AST::Field field = t.userTypeFields[i];
             result << valueType(field.second);
         }
     }
     else
-        result << Bytecode::VT_void;
+        result << Arduino::VT_void;
     return result;
 }
 
-Bytecode::ValueKind Generator::valueKind(AST::VariableAccessType t)
+Arduino::ValueKind Generator::valueKind(AST::VariableAccessType t)
 {
     if (t==AST::AccessArgumentIn)
-        return Bytecode::VK_In;
+        return Arduino::VK_In;
     else if (t==AST::AccessArgumentOut)
-        return Bytecode::VK_Out;
+        return Arduino::VK_Out;
     else if (t==AST::AccessArgumentInOut)
-        return Bytecode::VK_InOut;
+        return Arduino::VK_InOut;
     else
-        return Bytecode::VK_Plain;
+        return Arduino::VK_Plain;
 }
 
 Arduino::InstructionType Generator::operation(AST::ExpressionOperator op)
@@ -492,7 +492,7 @@ void Generator::addKumirModule(int id, const AST::ModulePtr mod)
     for (int i=0; i<mod->impl.globals.size(); i++) {
         const AST::VariablePtr var = mod->impl.globals[i];
         Arduino::TableElem glob;
-        glob.type = Bytecode::EL_GLOBAL;
+        glob.type = Arduino::EL_GLOBAL;
         glob.module = quint8(id);
         glob.id = quint16(i);
         glob.name = var->name.toStdWString();
@@ -509,7 +509,7 @@ void Generator::addKumirModule(int id, const AST::ModulePtr mod)
     Arduino::TableElem initElem;
     Arduino::Instruction returnFromInit;
     returnFromInit.type = Arduino::RET;
-    initElem.type = Bytecode::EL_INIT;
+    initElem.type = Arduino::EL_INIT;
     initElem.module = quint8(id);
     initElem.moduleLocalizedName = mod->header.name.toStdWString();
     initElem.instructions = instructions(id, -1, 0, mod->impl.initializerBody).toVector().toStdVector();
@@ -523,9 +523,9 @@ void Generator::addKumirModule(int id, const AST::ModulePtr mod)
     int mainAlgorhitmId = -1;
     for (int i=0; i<mod->impl.algorhitms.size() ; i++) {
         const AST::AlgorithmPtr  alg = mod->impl.algorhitms[i];
-        Bytecode::ElemType ft = Bytecode::EL_FUNCTION;
+        Arduino::ElemType ft = Arduino::EL_FUNCTION;
         if (mod->header.name.isEmpty() && i==0) {
-            ft = Bytecode::EL_MAIN;
+            ft = Arduino::EL_MAIN;
             if (!alg->header.arguments.isEmpty() || alg->header.returnType.kind!=AST::TypeNone)
             {
                 mainMod = mod;
@@ -535,7 +535,7 @@ void Generator::addKumirModule(int id, const AST::ModulePtr mod)
             }
         }
         if (alg->header.specialType==AST::AlgorithmTypeTesting) {
-            ft = Bytecode::EL_TESTING;
+            ft = Arduino::EL_TESTING;
         }
         addFunction(i, id, ft, mod, alg);
     }
@@ -566,16 +566,16 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
     if (alg->header.returnType.kind!=AST::TypeNone) {
         const AST::VariablePtr retval = returnValue(alg);
         Arduino::TableElem loc;
-        loc.type = Bytecode::EL_LOCAL;
+        loc.type = Arduino::EL_LOCAL;
         loc.module = moduleId;
         loc.algId = algId;
         loc.id = 0;
         loc.name = tr("Function return value").toStdWString();
         loc.dimension = 0;
         loc.vtype = valueType(retval->baseType).toStdList();
-        loc.refvalue = Bytecode::VK_Plain;
+        loc.refvalue = Arduino::VK_Plain;
         byteCode_->d.push_back(loc);
-        varsToOut << constantValue(Bytecode::VT_int, 0, 0, QString(), QString());
+        varsToOut << constantValue(Arduino::VT_int, 0, 0, QString(), QString());
         locOffset = 1;
     }
 
@@ -583,7 +583,7 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
     for (int i=0; i<alg->header.arguments.size(); i++) {
         const AST::VariablePtr var = alg->header.arguments[i];
         Arduino::TableElem loc;
-        loc.type = Bytecode::EL_LOCAL;
+        loc.type = Arduino::EL_LOCAL;
         loc.module = moduleId;
         loc.algId = algId;
         loc.id = locOffset+i;
@@ -596,7 +596,7 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
                     var->baseType.actor->localizedModuleName(QLocale::Russian).toStdWString() : std::wstring();
         loc.recordClassLocalizedName = var->baseType.name.toStdWString();
         loc.recordClassAsciiName = std::string(var->baseType.asciiName.constData());
-        loc.refvalue = Bytecode::VK_Plain;
+        loc.refvalue = Arduino::VK_Plain;
         byteCode_->d.push_back(loc);
 
     }
@@ -656,7 +656,7 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
             Arduino::Instruction varId;
             varId.type = Arduino::LOAD;
             varId.scope = Arduino::CONSTT;
-            varId.arg = constantValue(Bytecode::VT_int, 0, i+locOffset, QString(), QString());
+            varId.arg = constantValue(Arduino::VT_int, 0, i+locOffset, QString(), QString());
 
             Arduino::Instruction call;
             call.type = Arduino::CALL;
@@ -666,7 +666,7 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
             instrs << varId << call;
         }
         if (var->accessType==AST::AccessArgumentOut || var->accessType==AST::AccessArgumentInOut) {
-            varsToOut << constantValue(Bytecode::VT_int, 0, i+locOffset, QString(), QString());
+            varsToOut << constantValue(Arduino::VT_int, 0, i+locOffset, QString(), QString());
         }
     }
 
@@ -693,7 +693,7 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
     Arduino::Instruction argsCount;
     argsCount.type = Arduino::LOAD;
     argsCount.scope = Arduino::CONSTT;
-    argsCount.arg = constantValue(QList<Bytecode::ValueType>()<<Bytecode::VT_int,0,alg->header.arguments.size(), QString(), QString());
+    argsCount.arg = constantValue(QList<Arduino::ValueType>()<<Arduino::VT_int,0,alg->header.arguments.size(), QString(), QString());
     instrs << argsCount;
 
     //  -- 2) Call main (first) algorhitm
@@ -729,7 +729,7 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
     }
 
     Arduino::TableElem func;
-    func.type = Bytecode::EL_BELOWMAIN;
+    func.type = Arduino::EL_BELOWMAIN;
     func.algId = func.id = algId;
     func.module = moduleId;
     func.moduleLocalizedName = mod->header.name.toStdWString();
@@ -771,7 +771,7 @@ QString typeSignature(const AST::Type & tp) {
     return signature;
 }
 
-void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const AST::ModulePtr  mod, const AST::AlgorithmPtr alg)
+void Generator::addFunction(int id, int moduleId, Arduino::ElemType type, const AST::ModulePtr  mod, const AST::AlgorithmPtr alg)
 {
     QString headerError =  "";
     QString beginError = "";
@@ -817,7 +817,7 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
     for (int i=0; i<alg->impl.locals.size(); i++) {
         const AST::VariablePtr  var = alg->impl.locals[i];
         Arduino::TableElem loc;
-        loc.type = Bytecode::EL_LOCAL;
+        loc.type = Arduino::EL_LOCAL;
         loc.module = moduleId;
         loc.algId = id;
         loc.id = i;
@@ -848,7 +848,7 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
         Arduino::Instruction err;
         err.type = Arduino::ERRORR;
         err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Bytecode::VT_string, 0, headerError, QString(), QString());
+        err.arg = constantValue(Arduino::VT_string, 0, headerError, QString(), QString());
         argHandle << err;
     }
 
@@ -861,7 +861,7 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
         argHandle << l;
         l.type = Arduino::ERRORR;
         l.scope = Arduino::CONSTT;
-        l.arg = constantValue(Bytecode::VT_string, 0,
+        l.arg = constantValue(Arduino::VT_string, 0,
                               ErrorMessages::message("KumirAnalizer", QLocale::Russian, alg->impl.headerRuntimeError)
                               , QString(), QString()
                               );
@@ -928,7 +928,7 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
         Arduino::Instruction err;
         err.type = Arduino::ERRORR;
         err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Bytecode::VT_string, 0, beginError, QString(), QString());
+        err.arg = constantValue(Arduino::VT_string, 0, beginError, QString(), QString());
         argHandle << err;
     }
 
@@ -967,7 +967,7 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
             Arduino::Instruction err;
             err.type = Arduino::ERRORR;
             err.scope = Arduino::CONSTT;
-            err.arg = constantValue(Bytecode::VT_string, 0, endError, QString(), QString());
+            err.arg = constantValue(Arduino::VT_string, 0, endError, QString(), QString());
             ret << err;
         }
     }
@@ -1043,15 +1043,15 @@ QList<Arduino::Instruction> Generator::instructions(
     return result;
 }
 
-quint16 Generator::constantValue(Bytecode::ValueType type, quint8 dimension, const QVariant &value,
+quint16 Generator::constantValue(Arduino::ValueType type, quint8 dimension, const QVariant &value,
                                  const QString & moduleName, const QString & className)
 {
-    QList<Bytecode::ValueType> vt;
+    QList<Arduino::ValueType> vt;
     vt.push_back(type);
     return constantValue(vt, dimension, value, QString(), QString());
 }
 
-quint16 Generator::constantValue(const QList<Bytecode::ValueType> & type, quint8 dimension, const QVariant &value,
+quint16 Generator::constantValue(const QList<Arduino::ValueType> & type, quint8 dimension, const QVariant &value,
                                  const QString & moduleName, const QString & className
                                  )
 {
@@ -1077,7 +1077,7 @@ void Generator::ERRORR(int , int , int , const AST::StatementPtr  st, QList<Ardu
     Arduino::Instruction e;
     e.type = Arduino::ERRORR;
     e.scope = Arduino::CONSTT;
-    e.arg = constantValue(Bytecode::VT_string, 0, error, QString(), QString());
+    e.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
     result << e;
 }
 
@@ -1194,7 +1194,7 @@ void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr 
             Arduino::Instruction argsCount;
             argsCount.type = Arduino::LOAD;
             argsCount.scope = Arduino::CONSTT;
-            argsCount.arg = constantValue(Bytecode::VT_int, 0, 3, QString(), QString());
+            argsCount.arg = constantValue(Arduino::VT_int, 0, 3, QString(), QString());
             result << argsCount;
 
             Arduino::Instruction call;
@@ -1214,7 +1214,7 @@ void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr 
             Arduino::Instruction argsCount;
             argsCount.type = Arduino::LOAD;
             argsCount.scope = Arduino::CONSTT;
-            argsCount.arg = constantValue(Bytecode::VT_int, 0, 4, QString(), QString());
+            argsCount.arg = constantValue(Arduino::VT_int, 0, 4, QString(), QString());
             result << argsCount;
 
             Arduino::Instruction call;
@@ -1290,7 +1290,7 @@ QList<Arduino::Instruction> Generator::calculate(int modId, int algId, int level
             // Get char
             result << calculate(modId, algId, level,
                                 st->operands[st->operands.count()-1]);
-            argsCount.arg = constantValue(Bytecode::VT_int, 0, 2, QString(), QString());
+            argsCount.arg = constantValue(Arduino::VT_int, 0, 2, QString(), QString());
             result << argsCount;
             specialFunction.arg = 0x04;
             result << specialFunction;
@@ -1301,7 +1301,7 @@ QList<Arduino::Instruction> Generator::calculate(int modId, int algId, int level
                                 st->operands[st->operands.count()-2]);
             result << calculate(modId, algId, level,
                                 st->operands[st->operands.count()-1]);
-            argsCount.arg = constantValue(Bytecode::VT_int, 0, 3, QString(), QString());
+            argsCount.arg = constantValue(Arduino::VT_int, 0, 3, QString(), QString());
             result << argsCount;
             specialFunction.arg = 0x06;
             result << specialFunction;
@@ -1335,7 +1335,7 @@ QList<Arduino::Instruction> Generator::calculate(int modId, int algId, int level
         Arduino::Instruction b;
         b.type = Arduino::LOAD;
         b.scope = Arduino::CONSTT;
-        b.arg = constantValue(Bytecode::VT_int, 0, argsCount, QString(), QString());
+        b.arg = constantValue(Arduino::VT_int, 0, argsCount, QString(), QString());
         result << b;
 
 
@@ -1380,7 +1380,7 @@ QList<Arduino::Instruction> Generator::calculate(int modId, int algId, int level
                 Arduino::Instruction load;
                 load.type = Arduino::LOAD;
                 load.scope = Arduino::CONSTT;
-                load.arg = constantValue(Bytecode::VT_bool, 0,
+                load.arg = constantValue(Arduino::VT_bool, 0,
                                          st->operatorr==AST::OpAnd
                                          ? false
                                          : true
@@ -1454,7 +1454,7 @@ void Generator::ASSERT(int modId, int algId, int level, const AST::StatementPtr 
         Arduino::Instruction err;
         err.type = Arduino::ERRORR;
         err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Bytecode::VT_string, 0, tr("Assertion false"), QString(), QString());
+        err.arg = constantValue(Arduino::VT_string, 0, tr("Assertion false"), QString(), QString());
         result << err;
     }
 }
@@ -1583,7 +1583,7 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
     Arduino::Instruction pushCount;
     pushCount.type = Arduino::LOAD;
     pushCount.scope = Arduino::CONSTT;
-    pushCount.arg = constantValue(Bytecode::VT_int, 0, argsCount, QString(), QString());
+    pushCount.arg = constantValue(Arduino::VT_int, 0, argsCount, QString(), QString());
     result << pushCount;
 
     Arduino::Instruction call;
@@ -1628,7 +1628,7 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
             result << garbage;
             garbage.type = Arduino::ERRORR;
             garbage.scope = Arduino::CONSTT;
-            garbage.arg = constantValue(Bytecode::VT_string, 0,
+            garbage.arg = constantValue(Arduino::VT_string, 0,
                                         ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->headerError)
                                         , QString(), QString()
                                         );
@@ -1654,7 +1654,7 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
         const QString msg = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->conditionals[0].conditionError);
         error.type = Arduino::ERRORR;
         error.scope = Arduino::CONSTT;
-        error.arg = constantValue(Bytecode::VT_string, 0, msg, QString(), QString());
+        error.arg = constantValue(Arduino::VT_string, 0, msg, QString(), QString());
         result << error;
     }
     else {
@@ -1682,7 +1682,7 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
             }
             error.type = Arduino::ERRORR;
             error.scope = Arduino::CONSTT;
-            error.arg = constantValue(Bytecode::VT_string, 0, msg, QString(), QString());
+            error.arg = constantValue(Arduino::VT_string, 0, msg, QString(), QString());
             result << error;
         }
         else {
@@ -1703,7 +1703,7 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
         }
         error.type = Arduino::ERRORR;
         error.scope = Arduino::CONSTT;
-        error.arg = constantValue(Bytecode::VT_string, 0, msg, QString(), QString());
+        error.arg = constantValue(Arduino::VT_string, 0, msg, QString(), QString());
         result << error;
     }
 
@@ -1720,7 +1720,7 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
         result << garbage;
         garbage.type = Arduino::ERRORR;
         garbage.scope = Arduino::CONSTT;
-        garbage.arg = constantValue(Bytecode::VT_string, 0,
+        garbage.arg = constantValue(Arduino::VT_string, 0,
                                     ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->headerError)
                                     , QString(), QString()
                                     );
@@ -1733,7 +1733,7 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
         Arduino::Instruction err;
         err.type = Arduino::ERRORR;
         err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Bytecode::VT_string, 0, error, QString(), QString());
+        err.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
         result << err;
         return;
     }
@@ -1754,7 +1754,7 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
             Arduino::Instruction err;
             err.type = Arduino::ERRORR;
             err.scope = Arduino::CONSTT;
-            err.arg = constantValue(Bytecode::VT_string, 0, error, QString(), QString());
+            err.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
             result << err;
         }
         else {
@@ -1839,7 +1839,7 @@ void Generator::LOOP(int modId, int algId,
         Arduino::Instruction err;
         err.type = Arduino::ERRORR;
         err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Bytecode::VT_string, 0, error, QString(), QString());
+        err.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
         result << err;
         return;
     }
@@ -1923,7 +1923,7 @@ void Generator::LOOP(int modId, int algId,
         // Store initial value "0" in nearest register
         a.type = Arduino::LOAD;
         a.scope = Arduino::CONSTT;
-        a.arg = constantValue(Bytecode::VT_int, 0, 0, QString(), QString());
+        a.arg = constantValue(Arduino::VT_int, 0, 0, QString(), QString());
         result << a;
 
         a.type = Arduino::POP;
@@ -1948,7 +1948,7 @@ void Generator::LOOP(int modId, int algId,
         result << a;
         a.type = Arduino::LOAD;
         a.scope = Arduino::CONSTT;
-        a.arg = constantValue(Bytecode::VT_int, 0, 1, QString(), QString());
+        a.arg = constantValue(Arduino::VT_int, 0, 1, QString(), QString());
         result << a;
         a.type = Arduino::SUM;
         result << a;
@@ -2019,7 +2019,7 @@ void Generator::LOOP(int modId, int algId,
             Arduino::Instruction loadOneStep;
             loadOneStep.type = Arduino::LOAD;
             loadOneStep.scope = Arduino::CONSTT;
-            loadOneStep.arg = constantValue(Bytecode::VT_int, 0, 1, QString(), QString());
+            loadOneStep.arg = constantValue(Arduino::VT_int, 0, 1, QString(), QString());
             result << loadOneStep;
         }
 
@@ -2104,7 +2104,7 @@ void Generator::LOOP(int modId, int algId,
         Arduino::Instruction ee;
         ee.type = Arduino::ERRORR;
         ee.scope = Arduino::CONSTT;
-        ee.arg = constantValue(Bytecode::VT_string, 0, error, QString(), QString());
+        ee.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
         result << ee;
         return;
     }

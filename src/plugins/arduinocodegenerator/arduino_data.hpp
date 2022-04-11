@@ -5,9 +5,12 @@
 
 #include <deque>
 #include <stdint.h>
+#include "arduino_enums.hpp"
+#include <QDebug>
 
 
 namespace Arduino {
+using Arduino::ElemType;
 
 struct Data {
     std::deque <TableElem> d;
@@ -124,13 +127,32 @@ inline void makeHelpersForTextRepresentation(const Data & data, AS_Helpers & hel
 }
 */
 
-inline void bytecodeToTextStream(std::ostream & ts, const Data & data)
+//void AddConstName(const Data & data, Kumir::String constName, uint16_t constId) {
+//        for (size_t i = 0; i < data.d.size(); i++) {
+//            if (data.d.at(i).id == constId) {
+//                TableElem e = TableElem(data.d.at(i));
+//                e.name = constName;
+//                std::deque<TableElem> updatedDeque;
+//                for (size_t j = 0; j < data.d.size(); j++) {
+//                    if (j == 0)
+//                        updatedDeque.push_back(e);
+//                    if (data.d.at(j).id != constId)
+//                        updatedDeque.push_back(data.d.at(j));
+//                }
+//                data.d.swap(updatedDeque);
+//                return;
+//            }
+//        }
+//    }
+
+inline void bytecodeToTextStream(std::ostringstream & ts, const Data & data)
 {
     ts << "// license\n";
     ts << "// generated from kumir version " << int(data.versionMaj) << " " << int(data.versionMin) << " " << int(data.versionRel) << "\n\n";
     AS_Helpers helpers;
     for (size_t i=0; i<data.d.size(); i++) {
         tableElemToTextStream(ts, data.d.at(i), helpers);
+        qCritical() << ". " << std::to_string(i).c_str()<< " " << std::string(ts.str()).c_str();
         //makeHelpersForTextRepresentation(data, helpers);
         ts << "\n";
     }

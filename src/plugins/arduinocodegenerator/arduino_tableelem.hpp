@@ -19,7 +19,6 @@ using Arduino::CVariable;
 using Arduino::ElemType;
 using Arduino::ValueType;
 using Arduino::ValueKind;
-static int constCounter = 1;
 struct TableElem {
     ElemType type; // Element type
     std::list<ValueType> vtype; // Value type
@@ -51,8 +50,6 @@ struct TableElem {
         module = 0;
         algId = id = 0;
     }
-
-
 };
 /*
 inline bool isLittleEndian() {
@@ -516,7 +513,7 @@ inline std::string vtypeToString(ValueType instructionType)
                 return "";
         }
     }
-    inline std::string method1(const std::list<ValueType> & type, uint8_t dim)
+inline std::string parseVType(const std::list<ValueType> & type, uint8_t dim)
     {
         std::string result;
         ValueType t = type.front();
@@ -621,7 +618,12 @@ inline std::string constantToTextStream(const TableElem & e)
     std::ostringstream os;
     os.setf(std::ios::hex,std::ios::basefield);
     os.setf(std::ios::showbase);
-    os << "const " << method1(e.vtype, e.dimension) << " constName =";
+    os << "const " << parseVType(e.vtype, e.dimension) << " ";
+    Kumir::EncodingError err;
+    std::string constName = Kumir::Coder::encode(Kumir::UTF8, e.name, err);
+    qCritical() << constName.c_str();
+    os << constName;
+    os << " = ";
     os.unsetf(std::ios::basefield);
     os.unsetf(std::ios::showbase);
     if (e.vtype.front()==Arduino::VT_int) {
@@ -653,12 +655,13 @@ inline std::string localToTextStream(const TableElem & e)
     std::ostringstream os;
     os.setf(std::ios::hex,std::ios::basefield);
     os.setf(std::ios::showbase);
-    os << method1(e.vtype, e.dimension) << " ";
+    os << parseVType(e.vtype, e.dimension) << " ";
 //    os << "module=" << int(e.module) << " algorithm=" << e.algId << " id=" << e.id;
     if (e.name.length()>0) {
         Kumir::EncodingError encodingError;
-        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
-    }
+        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "=";
+        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.initialValue.toString()), encodingError);
+        }
     return os.str();
 }
 
@@ -667,7 +670,7 @@ inline std::string globalToTextStream(const TableElem & e)
     std::ostringstream os;
     os.setf(std::ios::hex,std::ios::basefield);
     os.setf(std::ios::showbase);
-    os << method1(e.vtype, e.dimension) << " ";
+    os << parseVType(e.vtype, e.dimension) << " ";
 //    os << "module=" << int(e.module) << " id=" << e.id;
     if (e.name.length()>0) {
         Kumir::EncodingError encodingError;
@@ -713,16 +716,23 @@ inline std::string externToTextStream(const TableElem & e)
 
 inline void tableElemToTextStream(std::ostream &ts, const TableElem &e, const AS_Helpers & helpers)
 {
-    if (e.type==Arduino::EL_CONST)
-        ts << constantToTextStream(e);
-    else if (e.type==Arduino::EL_EXTERN)
-        ts << externToTextStream(e);
-    else if (e.type==Arduino::EL_LOCAL)
-        ts << localToTextStream(e);
-    else if (e.type==Arduino::EL_GLOBAL)
-        ts << globalToTextStream(e);
-    else
-        ts << functionToTextStream(e, helpers);
+    switch(e.type) {
+        case Arduino::EL_CONST:
+            ts << constantToTextStream(e);
+            break;
+        case Arduino::EL_EXTERN:
+            ts << externToTextStream(e);
+            break;
+        case Arduino::EL_LOCAL:
+            ts << localToTextStream(e);
+            break;
+        case Arduino::EL_GLOBAL:
+            ts << globalToTextStream(e);
+            break;
+        default:
+            ts << functionToTextStream(e, helpers);
+            break;
+    }
     ts << "\n";
 }
 

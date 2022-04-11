@@ -11,6 +11,7 @@
 #include <kumir2/generatorinterface.h>
 #include "arduino_enums.hpp"
 #include "arduino_instruction.hpp"
+#include "arduino_tableelem.hpp"
 
 
 
@@ -57,7 +58,10 @@ public:
     void generateConstantTable();
     void generateExternTable();
     void setDebugLevel(DebugLevel debugLevel);
+    void UpdateConstants(Arduino::Data & data);
 private:
+    void SetConstName(Arduino::TableElem & e, const int number);
+    Arduino::TableElem AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId);
     QList<Arduino::Instruction> makeLineInstructions(const QList<AST::LexemPtr> & lexems) const;
     quint16 constantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass

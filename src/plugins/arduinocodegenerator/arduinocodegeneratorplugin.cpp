@@ -94,7 +94,7 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
         QString & fileSuffix
         )
 {
-    Data data;
+    Arduino::Data data;
 
     QList<AST::ModulePtr> & modules = tree->modules;
 
@@ -128,7 +128,7 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     modules.push_back(linkedModule);
     d->addModule(linkedModule);
     d->generateConstantTable();
-//    d->generateExternTable();
+    d->generateExternTable();
     modules.pop_back();
     modules.push_back(userModule);
     if (teacherModule) {
@@ -141,6 +141,7 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     std::list<char> buffer;
 
     std::ostringstream stream;
+    d->UpdateConstants(data);
     Arduino::bytecodeToTextStream(stream, data);
     const std::string text = stream.str();
     out = QByteArray(text.c_str(), text.size());

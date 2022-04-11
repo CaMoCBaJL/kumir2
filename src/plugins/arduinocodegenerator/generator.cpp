@@ -3,14 +3,18 @@
 #include <kumir2-libs/extensionsystem/pluginmanager.h>
 #include <kumir2/actorinterface.h>
 #include <kumir2-libs/dataformats/lexem.h>
+#include <kumir2-libs/stdlib/kumirstdlib.hpp>
 
 #include "arduino_data.hpp"
 #include "arduino_enums.hpp"
 #include "CVariable.hpp"
+#include <deque>
 
 namespace ArduinoCodeGenerator {
 
 using namespace Shared;
+using Arduino::ElemType;
+using Kumir::Core;
 
 template <typename T> std::vector<T>& operator<<(std::vector<T> & vec, const T & value)
 {
@@ -230,6 +234,60 @@ static Arduino::TableElem makeConstant(const ConstValue & val)
         e.initialValue = var;
     }
     return e;
+}
+void Generator::SetConstName(Arduino::TableElem & e, const int number){
+    Kumir::String newName = Core::fromUtf8("const");
+    newName += (Kumir::Converter::intToString(number));
+    e.name = newName;
+}
+
+
+Arduino::TableElem Generator::AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId) {
+    for (size_t i = 0; i < data.d.size(); i++) {
+        if (data.d.at(i).id == constId){
+            Arduino::TableElem e = Arduino::TableElem(data.d.at(i));
+            e.name = constName;
+            return e;
+        }
+    }
+
+    return Arduino::TableElem();
+}
+
+bool isElementAlreadyAdded(const Arduino::TableElem elemFromSource, const std::deque<Arduino::TableElem> newElements){
+    for (size_t j = 0; j < newElements.size(); j++){
+        if (newElements.at(j).id == elemFromSource.id) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+void Generator::UpdateConstants(Arduino::Data & data) {
+    std::deque<Arduino::TableElem> newConstants;
+    for (size_t i = data.d.size(); i > 0; i--) {
+        Arduino::TableElem elem = data.d.at(i - 1);
+        switch (elem.type) {
+            case Arduino::EL_EXTERN:
+            case Arduino::EL_GLOBAL:
+            case Arduino::EL_LOCAL:
+                newConstants.push_back(AddConstName(data, elem.name, elem.id));
+                break;
+            case Arduino::EL_CONST:
+                if (!isElementAlreadyAdded(data.d.at(i - 1), newConstants)) {
+                    SetConstName(elem, i - 1);
+                    newConstants.push_back(elem);
+                }
+                break;
+            default:
+                newConstants.push_back(elem);
+                break;
+        }
+    }
+    std::reverse(newConstants.begin(), newConstants.end());
+    data.d.swap(newConstants);
 }
 
 void Generator::generateConstantTable()

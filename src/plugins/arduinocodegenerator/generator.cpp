@@ -270,7 +270,6 @@ void Generator::UpdateConstants(Arduino::Data & data) {
     for (size_t i = data.d.size(); i > 0; i--) {
         Arduino::TableElem elem = data.d.at(i - 1);
         switch (elem.type) {
-            case Arduino::EL_EXTERN:
             case Arduino::EL_GLOBAL:
             case Arduino::EL_LOCAL:
                 newConstants.push_back(AddConstName(data, elem.name, elem.id));
@@ -915,7 +914,6 @@ void Generator::addFunction(int id, int moduleId, Arduino::ElemType type, const 
         l.type = Arduino::LINE;
         l.arg = alg->impl.headerRuntimeErrorLine;
         argHandle << l;
-        Arduino::setColumnPositionsToLineInstruction(l, 0u, 0u);
         argHandle << l;
         l.type = Arduino::ERRORR;
         l.scope = Arduino::CONSTT;
@@ -1211,8 +1209,6 @@ QList<Arduino::Instruction> Generator::makeLineInstructions(const QList<AST::Lex
             quint32 colEnd = last->linePos + last->data.length();
             if (last->type == Shared::LxConstLiteral)
                 colEnd += 2;  // two quote symbols are not in lexem data
-            Arduino::setColumnPositionsToLineInstruction(lineColInstruction, colStart, colEnd);
-            result << lineNoInstruction << lineColInstruction;
         }
     }
     return result;
@@ -1682,7 +1678,6 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
             garbage.type = Arduino::LINE;
             garbage.arg = st->headerErrorLine;
             result << garbage;
-            Arduino::setColumnPositionsToLineInstruction(garbage, 0u, 0u);
             result << garbage;
             garbage.type = Arduino::ERRORR;
             garbage.scope = Arduino::CONSTT;
@@ -1774,7 +1769,6 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
         garbage.type = Arduino::LINE;
         garbage.arg = st->headerErrorLine;
         result << garbage;
-        Arduino::setColumnPositionsToLineInstruction(garbage, 0u, 0u);
         result << garbage;
         garbage.type = Arduino::ERRORR;
         garbage.scope = Arduino::CONSTT;

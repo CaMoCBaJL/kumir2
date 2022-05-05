@@ -613,6 +613,17 @@ inline String unscreenString(String s)
     return s;
 }
 */
+inline std::string externToTextStream(const TableElem & e) {
+        std::ostringstream os;
+        os.setf(std::ios::hex, std::ios::basefield);
+        os.setf(std::ios::showbase);
+        Kumir::EncodingError encodingError;
+        os << "#include";
+        os << "<" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.moduleLocalizedName), encodingError) << ">;";
+//        os << "\"" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
+        return os.str();
+    }
+
 inline std::string constantToTextStream(const TableElem & e)
 {
     std::ostringstream os;
@@ -621,7 +632,6 @@ inline std::string constantToTextStream(const TableElem & e)
     os << "const " << parseVType(e.vtype, e.dimension) << " ";
     Kumir::EncodingError err;
     std::string constName = Kumir::Coder::encode(Kumir::UTF8, e.name, err);
-    qCritical() << constName.c_str();
     os << constName;
     os << " = ";
     os.unsetf(std::ios::basefield);
@@ -650,35 +660,6 @@ inline std::string constantToTextStream(const TableElem & e)
     return os.str();
 }
 
-inline std::string localToTextStream(const TableElem & e)
-{
-    std::ostringstream os;
-    os.setf(std::ios::hex,std::ios::basefield);
-    os.setf(std::ios::showbase);
-    os << parseVType(e.vtype, e.dimension) << " ";
-//    os << "module=" << int(e.module) << " algorithm=" << e.algId << " id=" << e.id;
-    if (e.name.length()>0) {
-        Kumir::EncodingError encodingError;
-        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "=";
-        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.initialValue.toString()), encodingError);
-        }
-    return os.str();
-}
-
-inline std::string globalToTextStream(const TableElem & e)
-{
-    std::ostringstream os;
-    os.setf(std::ios::hex,std::ios::basefield);
-    os.setf(std::ios::showbase);
-    os << parseVType(e.vtype, e.dimension) << " ";
-//    os << "module=" << int(e.module) << " id=" << e.id;
-    if (e.name.length()>0) {
-        Kumir::EncodingError encodingError;
-        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
-    }
-    return os.str();
-}
-
 inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & helpers)
 {
     std::ostringstream os;
@@ -688,6 +669,7 @@ inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & 
 //    os << "module=" << int(e.module) << " id=" << e.id << " size=" << e.instructions.size();
     if (e.name.length()>0) {
         Kumir::EncodingError encodingError;
+        qCritical() << screenString(e.name).c_str();
         os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
     }
     os << "\n";
@@ -695,39 +677,22 @@ inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & 
     os.unsetf(std::ios::showbase);
     for (size_t i=0; i<e.instructions.size(); i++) {
         os << i << ":\t";
-        os << instructionToString(e.instructions[i], helpers, e.module, e.algId);
+        std::string parsedInstruction = instructionToString(e.instructions[i], helpers, e.module, e.algId);
+        qCritical() << parsedInstruction.c_str() << "in functionToTextStream";
+        os << parsedInstruction;
         os << "\n";
     }
     return os.str();
 }
 
-inline std::string externToTextStream(const TableElem & e)
-{
-    std::ostringstream os;
-    os.setf(std::ios::hex,std::ios::basefield);
-    os.setf(std::ios::showbase);
-    Kumir::EncodingError encodingError;
-    os << "include ";
-    os << "\"" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.moduleLocalizedName), encodingError) << "\"";
-    os << "\"" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
-    return os.str();
-}
-
-
 inline void tableElemToTextStream(std::ostream &ts, const TableElem &e, const AS_Helpers & helpers)
 {
     switch(e.type) {
-        case Arduino::EL_CONST:
-            ts << constantToTextStream(e);
-            break;
         case Arduino::EL_EXTERN:
             ts << externToTextStream(e);
             break;
-        case Arduino::EL_LOCAL:
-            ts << localToTextStream(e);
-            break;
-        case Arduino::EL_GLOBAL:
-            ts << globalToTextStream(e);
+        case Arduino::EL_CONST:
+            ts << constantToTextStream(e);
             break;
         default:
             ts << functionToTextStream(e, helpers);

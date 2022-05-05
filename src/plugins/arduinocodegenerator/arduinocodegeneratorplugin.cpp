@@ -2,7 +2,6 @@
 #include <sstream>
 #include <cstdlib>
 #include <kumir2-libs/stdlib/kumirstdlib.hpp>
-#include <kumir2-libs/vm/variant.hpp>
 //#include <kumir2-libs/vm/vm_bytecode.hpp>
 #include "generator.h"
 #include "arduinocodegeneratorplugin.h"
@@ -103,6 +102,22 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     AST::ModulePtr linkedModule = AST::ModulePtr(new AST::Module);
     for (int i=0; i<modules.size(); i++) {
         AST::ModulePtr mod = modules[i];
+        std::string moduleName;
+        switch(mod->header.type){
+            case AST::ModTypeUser:
+                moduleName = "ModTypeUser";
+            case AST::ModTypeExternal:
+                moduleName = "ModTypeExternal";
+            case AST::ModTypeCached:
+                moduleName = "ModTypeCashed";
+            case AST::ModTypeTeacher:
+                moduleName = "ModTypeTeacher";
+            case AST::ModTypeUserMain:
+                moduleName = "ModTypeUserMain";
+            case AST::ModTypeTeacherMain:
+                moduleName = "ModTypeTeacherMain";
+        }
+        qCritical() <<"module type: " << moduleName.c_str();
         if (mod->header.type == AST::ModTypeUserMain) {
             userModule = mod;
         }
@@ -117,6 +132,7 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     linkedModule->impl.initializerBody = userModule->impl.initializerBody;
     linkedModule->impl.algorhitms = userModule->impl.algorhitms;
     linkedModule->header.algorhitms = userModule->header.algorhitms;
+    qCritical() << std::to_string(linkedModule->impl.algorhitms.size()).c_str();
     modules.removeAll(userModule);
     if (teacherModule) {
         linkedModule->impl.globals += teacherModule->impl.globals;

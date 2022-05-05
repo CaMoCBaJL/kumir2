@@ -95,28 +95,28 @@ inline void bytecodeFromDataStream(std::istream & is, Data & data)
     }
     bytecodeFromDataStream(bytes, data);
 }
-
+*/
 inline void makeHelpersForTextRepresentation(const Data & data, AS_Helpers & helpers)
 {
     Kumir::EncodingError encodingError;
     for (size_t i=0; i<data.d.size(); i++) {
         const TableElem & e = data.d.at(i);
-        if (e.type==Bytecode::EL_LOCAL) {
+        if (e.type==Arduino::EL_LOCAL) {
             AS_Key akey((e.module<<16)|e.algId, e.id);
             if (helpers.locals.count(akey)==0) {
                 const std::string value = Kumir::Coder::encode(Kumir::UTF8, e.name, encodingError);
                 helpers.locals.insert(std::pair<AS_Key,std::string>(akey,value));
             }
         }
-        if (e.type==Bytecode::EL_GLOBAL || e.type==Bytecode::EL_EXTERN || e.type==Bytecode::EL_FUNCTION || e.type==Bytecode::EL_MAIN ) {
-            AS_Key akey(e.module<<16, e.type==Bytecode::EL_GLOBAL? e.id : e.algId);
-            AS_Values * vals = e.type==Bytecode::EL_GLOBAL? &(helpers.globals) : &(helpers.algorithms);
+        if (e.type==Arduino::EL_GLOBAL || e.type==Arduino::EL_EXTERN || e.type==Arduino::EL_FUNCTION || e.type==Arduino::EL_MAIN ) {
+            AS_Key akey(e.module<<16, e.type==Arduino::EL_GLOBAL? e.id : e.algId);
+            AS_Values * vals = e.type==Arduino::EL_GLOBAL? &(helpers.globals) : &(helpers.algorithms);
             if (vals->count(akey)==0) {
                 const std::string value = Kumir::Coder::encode(Kumir::UTF8, e.name, encodingError);
                 vals->insert(std::pair<AS_Key,std::string>(akey,value));
             }
         }
-        if (e.type==Bytecode::EL_CONST) {
+        if (e.type==Arduino::EL_CONST) {
             AS_Key akey(0, e.id);
             if (helpers.constants.count(akey)==0) {
                 const std::string value = Kumir::Coder::encode(Kumir::UTF8, e.initialValue.toString(), encodingError);
@@ -125,25 +125,6 @@ inline void makeHelpersForTextRepresentation(const Data & data, AS_Helpers & hel
         }
     }
 }
-*/
-
-//void AddConstName(const Data & data, Kumir::String constName, uint16_t constId) {
-//        for (size_t i = 0; i < data.d.size(); i++) {
-//            if (data.d.at(i).id == constId) {
-//                TableElem e = TableElem(data.d.at(i));
-//                e.name = constName;
-//                std::deque<TableElem> updatedDeque;
-//                for (size_t j = 0; j < data.d.size(); j++) {
-//                    if (j == 0)
-//                        updatedDeque.push_back(e);
-//                    if (data.d.at(j).id != constId)
-//                        updatedDeque.push_back(data.d.at(j));
-//                }
-//                data.d.swap(updatedDeque);
-//                return;
-//            }
-//        }
-//    }
 
 inline void bytecodeToTextStream(std::ostringstream & ts, const Data & data)
 {
@@ -153,7 +134,7 @@ inline void bytecodeToTextStream(std::ostringstream & ts, const Data & data)
     for (size_t i=0; i<data.d.size(); i++) {
         tableElemToTextStream(ts, data.d.at(i), helpers);
         qCritical() << ". " << std::to_string(i).c_str()<< " " << std::string(ts.str()).c_str();
-        //makeHelpersForTextRepresentation(data, helpers);
+        makeHelpersForTextRepresentation(data, helpers);
         ts << "\n";
     }
 }

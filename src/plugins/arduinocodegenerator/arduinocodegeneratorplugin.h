@@ -3,6 +3,7 @@
 
 #include <kumir2-libs/extensionsystem/kplugin.h>
 #include <kumir2/generatorinterface.h>
+#include <kumir2-libs/dataformats/ast_module.h>
 
 #include <QObject>
 #include <QtPlugin>
@@ -39,7 +40,6 @@ public:
     inline void setVerbose(bool) {}
     inline void setTemporaryDir(const QString &, bool ) {}
     inline void updateSettings(const QStringList &) {}
-
 protected:
     void createPluginSpec();
     QString initialize(const QStringList &configurationArguments,

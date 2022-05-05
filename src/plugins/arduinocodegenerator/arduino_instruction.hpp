@@ -233,20 +233,6 @@ inline bool extractColumnPositionsFromLineInstruction(const Instruction & instr,
     }
 }
 
-inline Instruction& setColumnPositionsToLineInstruction(Instruction & instr,
-                                                        uint32_t from,
-                                                        uint32_t to)
-{
-    uint32_t value = (from << 11) | to;
-    uint16_t arg = value & 0xFFFF;
-    uint8_t scope = (value >> 16) & 0xFF;
-    scope = scope | COLUMN_START_AND_END;
-    instr.type = LINE;
-    instr.lineSpec = LineSpecification(scope);
-    instr.arg = arg;
-    return instr;
-}
-
 inline std::string instructionToString(const Instruction &instr, const AS_Helpers & helpers, uint8_t moduleId, uint16_t algId)
 {
     static std::set<InstructionType> VariableInstructions;

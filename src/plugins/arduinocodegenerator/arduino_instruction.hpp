@@ -11,6 +11,16 @@
 namespace Arduino {
 
 enum InstructionType {
+    ForLoop = 10000,
+    WhileLoop = 10001,
+    DCR = 10002,
+    INC = 10003,
+    VAR = 10004,
+    ARR = 10005,
+    FUNC = 10006,
+    CONST = 10007,
+    END_ST = 10008,
+    END_VAR = 10009,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -18,7 +28,7 @@ enum InstructionType {
     STORE       = 0x0E, // Store value in variable
     STOREARR    = 0x0F, // Store value in array
     LOAD        = 0x10, // Get value from variable
-    LOADARR     = 0x11, // Get value froma array
+    LOADARR     = 0x11, // Get value from array
     SETMON      = 0x12, // Set variable monitor
     UNSETMON    = 0x13, // Unset variable monitor
     JUMP        = 0x14, // Unconditional jump
@@ -63,7 +73,8 @@ enum InstructionType {
     LS          = 0xFB,
     GT          = 0xFC,
     LEQ         = 0xFD,
-    GEQ         = 0xFE
+    GEQ         = 0xFE,
+    ASG = 0xFF
 };
 
 enum VariableScope {
@@ -97,114 +108,121 @@ struct Instruction {
         uint8_t registerr;
     };
     uint16_t arg;
+    QString varName;
 };
 
+    inline std::string parseOperationData(Arduino::Instruction instruction) {
+        QString result;
 
-inline std::string typeToString(const InstructionType & t)
+        switch (instruction.type) {
+            case SUM:
+                result.append('+');
+                break;
+            case SUB:
+                result.append('-');
+                break;
+            case MUL:
+                result.append('*');
+                break;
+            case DIV:
+                result.append('/');
+                break;
+            case NEG:
+                result.append('^');
+                break;
+            case AND:
+                result.append('&');
+                break;
+            case OR:
+                result.append('|');
+                break;
+            case EQ:
+                result.append("==");
+                break;
+            case NEQ:
+                result.append("!=");
+                break;
+            case LS:
+                result.append('<');
+                break;
+            case GT:
+                result.append('>');
+                break;
+            case LEQ:
+                result.append("<=");
+                break;
+            case GEQ:
+                result.append(">=");
+                break;
+            case ASG:
+                result.append("=");
+                break;
+        }
+        
+        return result.toStdString();
+    }
+
+inline std::string typeToString(const Instruction &instruction)
 {
-    if (t==NOP) return ("nop");
-    else if (t==CALL) return ("call");
-    else if (t==INIT) return ("init");
-    else if (t==SETARR) return ("setarr");
-    else if (t==STORE) return ("store");
-    else if (t==STOREARR) return ("storearr");
-    else if (t==LOAD) return ("load");
-    else if (t==LOADARR) return ("loadarr");
-    else if (t==SETMON) return ("setmon");
-    else if (t==UNSETMON) return ("unsetmon");
+    InstructionType t = instruction.type;
+
+    if (t==NOP) return ("nopArduino");
+    else if (t==DCR) return (instruction.varName + "--").toStdString();
+    else if (t==INC) return (instruction.varName + "++").toStdString();
+    else if (t==END_ST) return ")\n";
+    else if (t==END_VAR) return ";";
+    else if (t==ForLoop) return ("for(");
+    else if (t==WhileLoop) return ("while(");
+    else if (t==VAR) return instruction.varName.toStdString();
+    else if (t==CONST) return std::to_string(instruction.registerr);
+    else if (t==CALL) return (instruction.varName.toStdString() + "()");
+    else if (t==SETARR) return ("setarrArduino");
+    else if (t==STORE) return ("storeArduino");
+    else if (t==STOREARR) return ("storearrArduino");
+    else if (t==LOAD) return ("=");
+    else if (t==LOADARR) return ("[]");
+    else if (t==SETMON) return ("setmonArduino");
+    else if (t==UNSETMON) return ("unsetmonArduino");
     else if (t==JUMP) return ("jump");
-    else if (t==JNZ) return ("jnz");
-    else if (t==JZ) return ("jz");
-    else if (t==POP) return ("pop");
-    else if (t==PUSH) return ("push");
-    else if (t==RET) return ("return");
-    else if (t==PAUSE) return ("pause");
-    else if (t==ERRORR) return ("error");
-    else if (t==SUM) return ("sum");
-    else if (t==SUB) return ("sub");
-    else if (t==MUL) return ("mul");
-    else if (t==DIV) return ("div");
-    else if (t==POW) return ("pow");
-    else if (t==NEG) return ("neg");
-    else if (t==AND) return ("and");
-    else if (t==OR) return ("or");
-    else if (t==EQ) return ("eq");
-    else if (t==NEQ) return ("neq");
-    else if (t==LS) return ("ls");
-    else if (t==GT) return ("gt");
-    else if (t==LEQ) return ("leq");
-    else if (t==GEQ) return ("geq");
-    else if (t==REF) return ("ref");
-    else if (t==REFARR) return ("refarr");
-    else if (t==LINE) return ("line");
-    else if (t==SHOWREG) return ("showreg");
-    else if (t==CLEARMARG) return ("clearmarg");
-    else if (t==SETREF) return ("setref");
-    else if (t==PAUSE) return ("pause");
-    else if (t==HALT) return ("halt");
-    else if (t==CTL) return ("ctl");
-    else if (t==INRANGE) return ("inrange");
-    else if (t==UPDARR) return ("updarr");
-    else if (t==CLOAD) return ("cload");
-    else if (t==CSTORE) return ("cstore");
-    else if (t==CDROPZ) return ("cdropz");
-    else if (t==CACHEBEGIN) return ("cachebegin");
-    else if (t==CACHEEND) return ("cacheend");
-    else return "nop";
-}
-
-inline InstructionType typeFromString(const std::string & ss)
-{
-    std::string s = Kumir::Core::toLowerCase(ss);
-    if (s=="nop") return NOP;
-    else if (s=="call") return CALL;
-    else if (s=="init") return INIT;
-    else if (s=="setarr") return SETARR;
-    else if (s=="store") return STORE;
-    else if (s=="storearr") return STOREARR;
-    else if (s=="load") return LOAD;
-    else if (s=="loadarr") return LOADARR;
-    else if (s=="setmon") return SETMON;
-    else if (s=="unsetmon") return UNSETMON;
-    else if (s=="jump") return JUMP;
-    else if (s=="jnz") return JNZ;
-    else if (s=="jz") return JZ;
-    else if (s=="pop") return POP;
-    else if (s=="push") return PUSH;
-    else if (s=="return") return RET;
-    else if (s=="pause") return PAUSE;
-    else if (s=="error") return ERRORR;
-    else if (s=="sum") return SUM;
-    else if (s=="sub") return SUB;
-    else if (s=="mul") return MUL;
-    else if (s=="div") return DIV;
-    else if (s=="pow") return POW;
-    else if (s=="neg") return NEG;
-    else if (s=="and") return AND;
-    else if (s=="or") return OR;
-    else if (s=="eq") return EQ;
-    else if (s=="neq") return NEQ;
-    else if (s=="ls") return LS;
-    else if (s=="gt") return GT;
-    else if (s=="leq") return LEQ;
-    else if (s=="geq") return GEQ;
-    else if (s=="ref") return REF;
-    else if (s=="refarr") return REFARR;
-    else if (s=="line") return LINE;
-    else if (s=="showreg") return SHOWREG;
-    else if (s=="clearmarg") return CLEARMARG;
-    else if (s=="setref") return SETREF;
-    else if (s=="pause") return PAUSE;
-    else if (s=="halt") return HALT;
-    else if (s=="ctl") return CTL;
-    else if (s=="inrange") return INRANGE;
-    else if (s=="updarr") return UPDARR;
-    else if (s=="cload") return CLOAD;
-    else if (s=="cstore") return CSTORE;
-    else if (s=="cdropz") return CDROPZ;
-    else if (s=="cachebegin") return CACHEBEGIN;
-    else if (s=="cacheend") return CACHEEND;
-    else return NOP;
+    else if (t==JNZ) return ("!=");
+    else if (t==JZ) return ("==");
+    else if (t==POP) return ("");
+    else if (t==PUSH) return ("pushArduino");
+    else if (t==RET) return ("\nreturn;\n}");
+    else if (t==PAUSE) return ("\n}");
+    else if (t==ERRORR) return ("errorArduino");
+    else if (t==SUM) return parseOperationData(instruction);
+    else if (t==SUB) return parseOperationData(instruction);
+    else if (t==MUL) return parseOperationData(instruction);
+    else if (t==DIV) return parseOperationData(instruction);
+    else if (t==POW) return parseOperationData(instruction);
+    else if (t==NEG) return parseOperationData(instruction);
+    else if (t==AND) return parseOperationData(instruction);
+    else if (t==OR) return parseOperationData(instruction);
+    else if (t==EQ) return parseOperationData(instruction);
+    else if (t==NEQ) return parseOperationData(instruction);
+    else if (t==LS) return parseOperationData(instruction);
+    else if (t==GT) return parseOperationData(instruction);
+    else if (t==LEQ) return parseOperationData(instruction);
+    else if (t==GEQ) return parseOperationData(instruction);
+    else if (t==ASG) return parseOperationData(instruction);
+    else if (t==REF) return ("refArduino");
+    else if (t==REFARR) return ("refarrArduino");
+    else if (t==LINE) return ("lineArduino");
+    else if (t==SHOWREG) return ("showregArduino");
+    else if (t==CLEARMARG) return ("clearmargArduino");
+    else if (t==SETREF) return ("setrefArduino");
+    else if (t==PAUSE) return ("pauseArduino");
+    else if (t==HALT) return ("haltArduino");
+    else if (t==CTL) return ("ctlArduino");
+    else if (t==INRANGE) return ("inrangeArduino");
+    else if (t==UPDARR) return ("updarrArduino");
+    else if (t==CLOAD) return ("cloadArduino");
+    else if (t==CSTORE) return ("cstoreArduino");
+    else if (t==CDROPZ) return ("cdropzArduino");
+    else if (t==CACHEBEGIN) return ("cachebeginArduino");
+    else if (t==CACHEEND) return ("cacheendArduino");
+    else return "\n\n!!!jopa!!!\n\n";
 }
 
 typedef std::pair<uint32_t, uint16_t> AS_Key;
@@ -216,22 +234,6 @@ struct AS_Helpers {
     AS_Values constants;
     AS_Values algorithms;
 };
-
-inline bool extractColumnPositionsFromLineInstruction(const Instruction & instr,
-                                                      uint32_t &from,
-                                                      uint32_t &to)
-{
-    if (instr.type == LINE && (instr.scope & COLUMN_START_AND_END) != 0) {
-        uint32_t value = ((instr.lineSpec & 0x3F) << 16) | instr.arg;
-        from = value >> 11;
-        to = value & 0x7FF;
-        return true;
-    }
-    else {
-        from = to = 0u;
-        return false;
-    }
-}
 
 inline std::string instructionToString(const Instruction &instr, const AS_Helpers & helpers, uint8_t moduleId, uint16_t algId)
 {
@@ -288,29 +290,18 @@ inline std::string instructionToString(const Instruction &instr, const AS_Helper
     result.setf(std::ios::hex,std::ios::basefield);
     result.setf(std::ios::showbase);
     InstructionType t = instr.type;
-    result << typeToString(t);
+    result << typeToString(instr);
     if (ModuleNoInstructions.count(t)) {
-        result << " " << int(instr.module);
+        result << " ";
     }
     if (VariableInstructions.count(t)) {
         VariableScope s = instr.scope;
         if (s==GLOBAL)
             result << " global";
         else if (s==LOCAL)
-            result << " local";
+            result << "local" << instr.registerr;
         else if (s==CONSTT)
             result << " constant";
-    }
-    if (t == LINE) {
-        uint32_t from, to;
-        result.unsetf(std::ios::basefield);
-        result.unsetf(std::ios::showbase);
-        if (extractColumnPositionsFromLineInstruction(instr, from, to)) {
-            result << " col " << int(from) << "-" << int(to);
-        }
-        else {
-            result << " no " << int(instr.arg);
-        }
     }
     if (HasValueInstructions.count(t) && t!=LINE) {
         if (t==JUMP || t==JNZ || t==JZ) {
@@ -347,7 +338,7 @@ inline std::string instructionToString(const Instruction &instr, const AS_Helper
         if (vals && vals->count(akey)) {
             while (r.length()<25)
                 r.push_back(' ');
-            r += std::string("# ") + vals->at(akey);
+//            r += std::string("# ") + vals->at(akey);
         }
     }
     else if (t==CALL) {
@@ -356,9 +347,11 @@ inline std::string instructionToString(const Instruction &instr, const AS_Helper
         if (vals && vals->count(akey)) {
             while (r.length()<25)
                 r.push_back(' ');
-            r += std::string("# ") + vals->at(akey);
+//            r += std::string("# ") + vals->at(akey);
         }
     }
+//    r+= "\n";
+
     return r;
 }
 

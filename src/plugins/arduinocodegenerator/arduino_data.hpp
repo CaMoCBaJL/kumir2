@@ -19,83 +19,7 @@ struct Data {
     uint8_t versionRel;
     unsigned long lastModified;
 };
-/*
-inline void arduinoCodeToDataStream(std::ostream & ds, const Data & data)
-{
-    std::list<char> bytes;
-    bytecodeToDataStream(bytes, data);
-    char * buffer = reinterpret_cast<char*>(calloc(bytes.size(), sizeof(char)));
-    size_t i = 0;
-    for (std::list<char>::const_iterator it=bytes.begin(); it!=bytes.end(); ++it) {
-        buffer[i] = *it;
-        i++;
-    }
-    ds.write(buffer, bytes.size()*sizeof(char));
-    free(buffer);
-}
 
-inline bool isValidSignature(const std::list<char> & ds)
-{
-    static const size_t MaxLineSize = 255;
-    static const char * Signature1 = "#!/usr/bin/env kumir2-run";
-    static const char * Signature2 = "#!/usr/bin/env kumir2-xrun";
-
-    char first[MaxLineSize];
-
-    typedef std::list<char>::const_iterator CIt;
-    size_t index = 0u;
-
-    for (CIt it = ds.begin(); it!=ds.end() && index<MaxLineSize; ++it, index++)
-    {
-        char ch = *it;
-        if (ch == '\n' || ch=='\0')
-            break;
-        first[index] = ch;
-    }
-
-    bool firstMatch = strncmp(Signature1, first, index) == 0;
-    bool secondMatch = strncmp(Signature2, first, index) == 0;
-    return firstMatch || secondMatch;
-}
-
-inline void bytecodeFromDataStream(std::list<char> & ds, Data & data)
-{
-    if (ds.size()>0 && ds.front()=='#') {
-        char cur;
-        while(1) {
-            cur = ds.front();
-            ds.pop_front();
-            if (cur=='\n')
-                break;
-        }
-    }
-    if (ds.size()>0)
-        valueFromDataStream(ds, data.versionMaj);
-    if (ds.size()>0)
-        valueFromDataStream(ds, data.versionMin);
-    if (ds.size()>0)
-        valueFromDataStream(ds, data.versionRel);
-    uint32_t u32_size = 0;
-    if (ds.size()>=4)
-        valueFromDataStream(ds, u32_size);
-    size_t size = size_t(u32_size);
-    data.d.resize(size);
-    for (size_t i=0; i<size; i++) {
-        tableElemFromBinaryStream(ds, data.d.at(i));
-    }
-}
-
-inline void bytecodeFromDataStream(std::istream & is, Data & data)
-{
-    std::list<char> bytes;
-    while (!is.eof()) {
-        char buffer;
-        is.read(&buffer, 1);
-        bytes.push_back(buffer);
-    }
-    bytecodeFromDataStream(bytes, data);
-}
-*/
 inline void makeHelpersForTextRepresentation(const Data & data, AS_Helpers & helpers)
 {
     Kumir::EncodingError encodingError;
@@ -133,9 +57,8 @@ inline void bytecodeToTextStream(std::ostringstream & ts, const Data & data)
     AS_Helpers helpers;
     for (size_t i=0; i<data.d.size(); i++) {
         tableElemToTextStream(ts, data.d.at(i), helpers);
-        qCritical() << ". " << std::to_string(i).c_str()<< " " << std::string(ts.str()).c_str();
         makeHelpersForTextRepresentation(data, helpers);
-        ts << "\n";
+        qCritical() << ts.str().c_str();
     }
 }
 

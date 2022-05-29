@@ -60,7 +60,8 @@ public:
     void setDebugLevel(DebugLevel debugLevel);
     void UpdateConstants(Arduino::Data & data);
 private:
-    void SetConstName(Arduino::TableElem & e, const int number);
+    Arduino::Instruction getForLoopVariable(AST::ExpressionPtr & ex);
+    void addForLoopStep(AST::ExpressionPtr & ex, QList<Arduino::Instruction> &instructions, int fromValue, int toValue);
     Arduino::TableElem AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId);
     QList<Arduino::Instruction> makeLineInstructions(const QList<AST::LexemPtr> & lexems) const;
     quint16 constantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,

@@ -117,7 +117,6 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
             case AST::ModTypeTeacherMain:
                 moduleName = "ModTypeTeacherMain";
         }
-        qCritical() <<"module type: " << moduleName.c_str();
         if (mod->header.type == AST::ModTypeUserMain) {
             userModule = mod;
         }
@@ -132,7 +131,6 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     linkedModule->impl.initializerBody = userModule->impl.initializerBody;
     linkedModule->impl.algorhitms = userModule->impl.algorhitms;
     linkedModule->header.algorhitms = userModule->header.algorhitms;
-    qCritical() << std::to_string(linkedModule->impl.algorhitms.size()).c_str();
     modules.removeAll(userModule);
     if (teacherModule) {
         linkedModule->impl.globals += teacherModule->impl.globals;

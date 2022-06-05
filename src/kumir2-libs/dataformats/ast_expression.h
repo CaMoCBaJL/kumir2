@@ -60,21 +60,21 @@ enum ExpressionType {
 
 /** Operand delimeter for subexpressions */
 enum ExpressionOperator {
-    OpNone,
-    OpSumm,
-    OpSubstract,
-    OpMultiply,
-    OpDivision,
-    OpPower,
-    OpNot,
-    OpAnd,
-    OpOr,
-    OpEqual,
-    OpNotEqual,
-    OpLess,
-    OpGreater,
-    OpLessOrEqual,
-    OpGreaterOrEqual
+    OpNone = 0,
+    OpSumm = 1,
+    OpSubstract = 2,
+    OpMultiply = 3,
+    OpDivision = 4,
+    OpPower = 5,
+    OpNot = 6,
+    OpAnd = 7,
+    OpOr = 8,
+    OpEqual = 9,
+    OpNotEqual = 10,
+    OpLess = 11,
+    OpGreater = 12,
+    OpLessOrEqual = 13,
+    OpGreaterOrEqual = 14
 };
 
 /** Expression tree-based representation */

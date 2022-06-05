@@ -17,8 +17,7 @@ namespace Arduino{
         EL_MAIN     = 0x07,     // Main (usually - first) function
         EL_TESTING  = 0x08,      // Testing function
         EL_BELOWMAIN= 0x09,      // Function evaluated below main function
-        EL_EXTERN_INIT = 0x0a,
-        counter = 11
+        EL_EXTERN_INIT = 0x0a
     };
 
 //    const std::string emptyString = "";

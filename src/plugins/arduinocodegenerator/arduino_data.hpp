@@ -50,15 +50,15 @@ inline void makeHelpersForTextRepresentation(const Data & data, AS_Helpers & hel
     }
 }
 
-inline void bytecodeToTextStream(std::ostringstream & ts, const Data & data)
+inline void bytecodeToTextStream(std::ostringstream & ts, const Data & data, const QList<QVariant> constants)
 {
     ts << "// license\n";
     ts << "// generated from kumir version " << int(data.versionMaj) << " " << int(data.versionMin) << " " << int(data.versionRel) << "\n\n";
     AS_Helpers helpers;
     for (size_t i=0; i<data.d.size(); i++) {
-        tableElemToTextStream(ts, data.d.at(i), helpers);
+        tableElemToTextStream(ts, data.d.at(i), helpers, constants);
         makeHelpersForTextRepresentation(data, helpers);
-        qCritical() << ts.str().c_str();
+//        qCritical() << ts.str().c_str();
     }
 }
 

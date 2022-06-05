@@ -24,44 +24,44 @@ struct Lexem;
 }
 
 namespace ArduinoCodeGenerator {
+    struct ConstValue{
+        QVariant value;
+        QList<Arduino::ValueType> baseType;
+        QString recordModuleName;
+        QString recordClassLocalizedName;
+        QByteArray recordClassAsciiName;
+        quint8 dimension;
+        inline bool operator==(const ConstValue & other) {
+            return
+                    baseType == other.baseType &&
+                    dimension == other.dimension &&
+                    recordModuleName == other.recordModuleName &&
+                    recordClassAsciiName == other.recordClassAsciiName &&
+                    value == other.value;
+        }
+        inline ConstValue() {
+            baseType.push_back(Arduino::VT_void);
+            dimension = 0;
+        }
+    };
+    typedef Shared::GeneratorInterface::DebugLevel DebugLevel;
 
-typedef Shared::GeneratorInterface::DebugLevel DebugLevel;
-struct ConstValue {
-    QVariant value;
-    QList<Arduino::ValueType> baseType;
-    QString recordModuleName;
-    QString recordClassLocalizedName;
-    QByteArray recordClassAsciiName;
-    quint8 dimension;
-    inline bool operator==(const ConstValue & other) {
-        return
-                baseType == other.baseType &&
-                dimension == other.dimension &&
-                recordModuleName == other.recordModuleName &&
-                recordClassAsciiName == other.recordClassAsciiName &&
-                value == other.value;
-    }
-    inline ConstValue() {
-        baseType.push_back(Arduino::VT_void);
-        dimension = 0;
-    }
-};
-
-class Generator : public QObject
+    class Generator : public QObject
 {
 
     Q_OBJECT
 public:
     explicit Generator(QObject *parent = 0);
     void reset(const AST::DataPtr ast, Arduino::Data * bc);
-    void addModule(const AST::ModulePtr  mod);
+    void addModule(const AST::ModulePtr mod);
     void generateConstantTable();
     void generateExternTable();
     void setDebugLevel(DebugLevel debugLevel);
     void UpdateConstants(Arduino::Data & data);
-private:
-    Arduino::Instruction getForLoopVariable(AST::ExpressionPtr & ex);
-    void addForLoopStep(AST::ExpressionPtr & ex, QList<Arduino::Instruction> &instructions, int fromValue, int toValue);
+    QList<QVariant> GetConstantValues();
+    private:
+    QList<Arduino::Instruction> getOperands(AST::ExpressionPtr expr);
+    Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
     Arduino::TableElem AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId);
     QList<Arduino::Instruction> makeLineInstructions(const QList<AST::LexemPtr> & lexems) const;
     quint16 constantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
@@ -79,8 +79,6 @@ private:
         const QList<AST::StatementPtr> & statements);
 
     static void shiftInstructions(QList<Arduino::Instruction> &instrs, int offset);
-    static void setBreakAddress(QList<Arduino::Instruction> &instrs, int level, int address);
-
     void ERRORR(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
     void ASSIGN(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
     void ASSERT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
@@ -93,6 +91,7 @@ private:
     void BREAK(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
 
     QList<Arduino::Instruction> calculate(int modId, int algId, int level, const AST::ExpressionPtr st);
+    QList<Arduino::Instruction> innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st);
 
     void findVariable(int modId, int algId, const AST::VariablePtr  var, Arduino::VariableScope & scope, quint16 & id) const;
     static const AST::VariablePtr  returnValue(const AST::AlgorithmPtr  alg);
@@ -109,7 +108,5 @@ private:
     QList< QPair<quint8,quint16> > externs_;
     DebugLevel debugLevel_;
 };
-
 } // namespace ArduinoCodeGenerator
-
 #endif // ARDUINOCODEGENERATOR_GENERATOR_H

@@ -47,7 +47,7 @@ enum InstructionType {
     SETREF      = 0x24, // Set reference value to variable
     HALT        = 0x26, // Terminate
     CTL         = 0x27, // Control VM behaviour
-    INRANGE     = 0x28, // Pops 4 values ... a, b, c, x from stack and returns c>=0? a<x<=b : a<=x<b
+    INRANGE     = 0x28, // Pops 4 values ... a, b, c, x from stack Fand returns c>=0? a<x<=b : a<=x<b
     UPDARR      = 0x29, // Updates array bounds
 
     CSTORE      = 0x30, // Copy value from stack head and push it to cache
@@ -111,7 +111,27 @@ struct Instruction {
     QString varName;
 };
 
-    inline std::string parseOperationData(Arduino::Instruction instruction) {
+    inline std::string parseInstructionData(Arduino::Instruction instruction, QList<QVariant> constants){
+        if (instruction.varName.isNull()) {
+            qCritical() << "\tinstruction data:";
+            qCritical() << "arg: " << std::to_string(instruction.arg).c_str();
+            qCritical() << "registerr: " << std::to_string(instruction.registerr).c_str();
+            if (instruction.arg < constants.size()) {
+                qCritical() << "constant at " << std::to_string(instruction.arg).c_str() << " "
+                            << constants[instruction.arg].toString();
+                return constants[instruction.arg].toString().toStdString();
+            } else {
+                qCritical() << "constant" << std::to_string(instruction.registerr).c_str() << " ";
+                return std::to_string(instruction.registerr);
+            }
+        } else {
+            return instruction.varName.toStdString();
+        }
+
+
+    }
+
+    inline std::string parseOperationData(Arduino::Instruction instruction, QList<QVariant> constants) {
         QString result;
 
         switch (instruction.type) {
@@ -131,10 +151,10 @@ struct Instruction {
                 result.append('^');
                 break;
             case AND:
-                result.append('&');
+                result.append("&&");
                 break;
             case OR:
-                result.append('|');
+                result.append("||");
                 break;
             case EQ:
                 result.append("==");
@@ -157,24 +177,30 @@ struct Instruction {
             case ASG:
                 result.append("=");
                 break;
+            case DCR:
+                result.append("--");
+                break;
+            case INC:
+                result.append("++");
+                break;
         }
         
         return result.toStdString();
     }
 
-inline std::string typeToString(const Instruction &instruction)
+static std::string typeToString(const Instruction &instruction, QList<QVariant> constants)
 {
     InstructionType t = instruction.type;
 
     if (t==NOP) return ("nopArduino");
-    else if (t==DCR) return (instruction.varName + "--").toStdString();
-    else if (t==INC) return (instruction.varName + "++").toStdString();
+    else if (t==DCR) return parseOperationData(instruction, constants);
+    else if (t==INC) return parseOperationData(instruction, constants);
     else if (t==END_ST) return ")\n";
     else if (t==END_VAR) return ";";
     else if (t==ForLoop) return ("for(");
     else if (t==WhileLoop) return ("while(");
     else if (t==VAR) return instruction.varName.toStdString();
-    else if (t==CONST) return std::to_string(instruction.registerr);
+    else if (t==CONST) return parseInstructionData(instruction, constants);
     else if (t==CALL) return (instruction.varName.toStdString() + "()");
     else if (t==SETARR) return ("setarrArduino");
     else if (t==STORE) return ("storeArduino");
@@ -191,21 +217,21 @@ inline std::string typeToString(const Instruction &instruction)
     else if (t==RET) return ("\nreturn;\n}");
     else if (t==PAUSE) return ("\n}");
     else if (t==ERRORR) return ("errorArduino");
-    else if (t==SUM) return parseOperationData(instruction);
-    else if (t==SUB) return parseOperationData(instruction);
-    else if (t==MUL) return parseOperationData(instruction);
-    else if (t==DIV) return parseOperationData(instruction);
-    else if (t==POW) return parseOperationData(instruction);
-    else if (t==NEG) return parseOperationData(instruction);
-    else if (t==AND) return parseOperationData(instruction);
-    else if (t==OR) return parseOperationData(instruction);
-    else if (t==EQ) return parseOperationData(instruction);
-    else if (t==NEQ) return parseOperationData(instruction);
-    else if (t==LS) return parseOperationData(instruction);
-    else if (t==GT) return parseOperationData(instruction);
-    else if (t==LEQ) return parseOperationData(instruction);
-    else if (t==GEQ) return parseOperationData(instruction);
-    else if (t==ASG) return parseOperationData(instruction);
+    else if (t==SUM) return parseOperationData(instruction, constants);
+    else if (t==SUB) return parseOperationData(instruction, constants);
+    else if (t==MUL) return parseOperationData(instruction, constants);
+    else if (t==DIV) return parseOperationData(instruction, constants);
+    else if (t==POW) return parseOperationData(instruction, constants);
+    else if (t==NEG) return parseOperationData(instruction, constants);
+    else if (t==AND) return parseOperationData(instruction, constants);
+    else if (t==OR) return parseOperationData(instruction, constants);
+    else if (t==EQ) return parseOperationData(instruction, constants);
+    else if (t==NEQ) return parseOperationData(instruction, constants);
+    else if (t==LS) return parseOperationData(instruction, constants);
+    else if (t==GT) return parseOperationData(instruction, constants);
+    else if (t==LEQ) return parseOperationData(instruction, constants);
+    else if (t==GEQ) return parseOperationData(instruction, constants);
+    else if (t==ASG) return parseOperationData(instruction, constants);
     else if (t==REF) return ("refArduino");
     else if (t==REFARR) return ("refarrArduino");
     else if (t==LINE) return ("lineArduino");
@@ -222,7 +248,14 @@ inline std::string typeToString(const Instruction &instruction)
     else if (t==CDROPZ) return ("cdropzArduino");
     else if (t==CACHEBEGIN) return ("cachebeginArduino");
     else if (t==CACHEEND) return ("cacheendArduino");
-    else return "\n\n!!!jopa!!!\n\n";
+    else
+    {
+//        qCritical() << "instructionData";
+//        qCritical() << std::to_string(instruction.type).c_str();
+//        qCritical() << instruction.varName;
+//        return " instruction: " + std::to_string(t) + " ";
+        return "";
+    }
 }
 
 typedef std::pair<uint32_t, uint16_t> AS_Key;
@@ -235,7 +268,7 @@ struct AS_Helpers {
     AS_Values algorithms;
 };
 
-inline std::string instructionToString(const Instruction &instr, const AS_Helpers & helpers, uint8_t moduleId, uint16_t algId)
+inline std::string instructionToString(const Instruction &instr, const AS_Helpers & helpers, uint8_t moduleId, uint16_t algId, QList<QVariant> constants)
 {
     static std::set<InstructionType> VariableInstructions;
     VariableInstructions.insert(INIT);
@@ -290,56 +323,37 @@ inline std::string instructionToString(const Instruction &instr, const AS_Helper
     result.setf(std::ios::hex,std::ios::basefield);
     result.setf(std::ios::showbase);
     InstructionType t = instr.type;
-    result << typeToString(instr);
+    result << typeToString(instr, constants);
     if (ModuleNoInstructions.count(t)) {
         result << " ";
-    }
-    if (VariableInstructions.count(t)) {
-        VariableScope s = instr.scope;
-        if (s==GLOBAL)
-            result << " global";
-        else if (s==LOCAL)
-            result << "local" << instr.registerr;
-        else if (s==CONSTT)
-            result << " constant";
-    }
-    if (HasValueInstructions.count(t) && t!=LINE) {
-        if (t==JUMP || t==JNZ || t==JZ) {
-            result.unsetf(std::ios::basefield);
-            result.unsetf(std::ios::showbase);
-        }
-        result << " " << int(instr.arg);
-    }
-    if (RegisterNoInstructions.count(t)) {
-        result << " " << int(instr.registerr);
     }
     std::string r = result.str();
 
     if (VariableInstructions.count(t)) {
-        VariableScope s = instr.scope;
-        AS_Key akey;
-        const AS_Values * vals = nullptr;
-        akey.first = 0;
-        if (s==LOCAL) {
-            akey.first = (moduleId << 16) | algId;
-            akey.second = instr.arg;
-            vals = &(helpers.locals);
-        }
-        else if (s==GLOBAL) {
-            akey.first = (moduleId << 16);
-            akey.second = instr.arg;
-            vals = &(helpers.globals);
-        }
-        else if (s==CONSTT) {
-            akey.first = 0;
-            akey.second = instr.arg;
-            vals = &(helpers.constants);
-        }
-        if (vals && vals->count(akey)) {
-            while (r.length()<25)
-                r.push_back(' ');
-//            r += std::string("# ") + vals->at(akey);
-        }
+//        VariableScope s = instr.scope;
+//        AS_Key akey;
+//        const AS_Values * vals = nullptr;
+//        akey.first = 0;
+//        if (s==LOCAL) {
+//            akey.first = (moduleId << 16) | algId;
+//            akey.second = instr.arg;
+//            vals = &(helpers.locals);
+//        }
+//        else if (s==GLOBAL) {
+//            akey.first = (moduleId << 16);
+//            akey.second = instr.arg;
+//            vals = &(helpers.globals);
+//        }
+//        else if (s==CONSTT) {
+//            akey.first = 0;
+//            akey.second = instr.arg;
+//            vals = &(helpers.constants);
+//        }
+//        if (vals && vals->count(akey)) {
+//            while (r.length()<25)
+//                r.push_back(' ');
+////            r += std::string("# ") + vals->at(akey);
+//        }
     }
     else if (t==CALL) {
         AS_Key akey (instr.module << 16, instr.arg);

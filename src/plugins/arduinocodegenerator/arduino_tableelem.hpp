@@ -11,6 +11,8 @@
 #include "arduino_enums.hpp"
 #include "CVariable.hpp"
 #include <QDebug>
+#include "generator.h"
+#include <QtCore>
 
 namespace Arduino {
 
@@ -19,6 +21,7 @@ using Arduino::CVariable;
 using Arduino::ElemType;
 using Arduino::ValueType;
 using Arduino::ValueKind;
+
 struct TableElem {
     ElemType type; // Element type
     std::list<ValueType> vtype; // Value type
@@ -52,6 +55,8 @@ struct TableElem {
     }
 };
 
+static QList<QVariant> _constantElemValues;
+
 inline std::string elemTypeToArduinoString(ElemType t)
 {
     if (t==Arduino::EL_LOCAL)
@@ -73,7 +78,7 @@ inline std::string elemTypeToArduinoString(ElemType t)
     else if (t==Arduino::EL_TESTING)
         return "void test_func";
     else  {
-        return "";
+        return " elem type: " + std::to_string(t) + " ";
     }
 }
 
@@ -202,9 +207,7 @@ inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & 
     std::ostringstream os;
     os.setf(std::ios::hex,std::ios::basefield);
     os.setf(std::ios::showbase);
-    os << elemTypeToArduinoString(e.type) << " " << e.name.c_str();
     qCritical() << elemTypeToArduinoString(e.type).c_str();
-    qCritical() << std::to_string(e.algId).c_str();
     qCritical() << e.signature.c_str();
 
     if (e.name.length()>0) {
@@ -215,22 +218,28 @@ inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & 
     os.unsetf(std::ios::basefield);
     os.unsetf(std::ios::showbase);
     for (size_t i=0; i<e.instructions.size(); i++) {
-        std::string parsedInstruction = instructionToString(e.instructions[i], helpers, e.module, e.algId);
+        std::string parsedInstruction = instructionToString(e.instructions[i], helpers, e.module, e.algId, _constantElemValues);
         os << parsedInstruction;
     }
     os << "\n";
     return os.str();
 }
 
-inline void tableElemToTextStream(std::ostream &ts, const TableElem &e, const AS_Helpers & helpers)
+inline void tableElemToTextStream(std::ostream &ts, const TableElem &e, const AS_Helpers & helpers, const QList<QVariant> constants)
 {
+    _constantElemValues = constants;
+
+//    for (uint16_t i = 0; i < constants.size(); i++){
+//        qCritical() << constants.at(i);
+//    }
+
     switch(e.type) {
         case Arduino::EL_EXTERN:
             ts << externToTextStream(e);
             break;
-        case Arduino::EL_CONST:
-            ts << constantToTextStream(e);
-            break;
+//        case Arduino::EL_CONST:
+//            ts << constantToTextStream(e);
+//            break;
         default:
             ts << functionToTextStream(e, helpers);
             break;

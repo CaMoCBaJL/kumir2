@@ -1806,7 +1806,6 @@ void Generator::LOOP(int modId, int algId,
     if (st->loop.type == AST::LoopWhile || st->loop.type == AST::LoopForever) {
         // Highlight line and clear margin
         if (st->loop.whileCondition) {
-
             Arduino::Instruction instr;
             instr.type = Arduino::WhileLoop;
             result << instr;
@@ -1815,10 +1814,6 @@ void Generator::LOOP(int modId, int algId,
                                                                            st->loop.whileCondition);
 
             result << whileCondInstructions;
-
-            instr.type == Arduino::END_ST;
-            result << instr;
-            // Check condition result
         }
     } else if (st->loop.type == AST::LoopTimes) {
         Arduino::Instruction instrBuffer;
@@ -1838,8 +1833,6 @@ void Generator::LOOP(int modId, int algId,
         instrBuffer.registerr = 0;
         result << instrBuffer;
 
-        instrBuffer.type = Arduino::END_ST;
-        result << instrBuffer;
     } else if (st->loop.type == AST::LoopFor) {
         Arduino::Instruction instrBuffer;
         Arduino::Instruction workCondition;
@@ -1879,14 +1872,16 @@ void Generator::LOOP(int modId, int algId,
 
         addForLoopStep(st->loop.stepValue, result, result.at(result.size() - 2).registerr,
                        result.at(result.size() - 1).registerr);
-        workCondition.type = Arduino::END_ST;
-        result << workCondition;
 
         QList <Arduino::Instruction> instructions = calculate(modId, algId, level, st->loop.fromValue);
         result << instructions;
 
         result << calculate(modId, algId, level, st->loop.toValue);
     }
+
+    Arduino::Instruction endLoopHead;
+    endLoopHead.type = Arduino::END_ST_HEAD;
+    result << endLoopHead;
 
     QList <Arduino::Instruction> instrs = instructions(modId, algId, level, st->loop.body);
     result += instrs;
@@ -1906,6 +1901,10 @@ void Generator::LOOP(int modId, int algId,
         QList <Arduino::Instruction> endCondInstructions = calculate(modId, algId, level, st->loop.endCondition);
         result << endCondInstructions;
     }
+
+    Arduino::Instruction endLoop;
+    endLoop.type = Arduino::END_ST;
+    result << endLoop;
 }
 
 } // namespace ArduinoCodeGenerator

@@ -21,6 +21,7 @@ enum InstructionType {
     CONST = 10007,
     END_ST = 10008,
     END_VAR = 10009,
+    END_ST_HEAD = 10010,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -113,19 +114,13 @@ struct Instruction {
 
     inline std::string parseInstructionData(Arduino::Instruction instruction, QList<QVariant> constants){
         if (instruction.varName.isNull()) {
-            qCritical() << "\tinstruction data:";
-            qCritical() << "arg: " << std::to_string(instruction.arg).c_str();
-            qCritical() << "registerr: " << std::to_string(instruction.registerr).c_str();
             if (instruction.arg < constants.size()) {
-                qCritical() << "constant at " << std::to_string(instruction.arg).c_str() << " "
-                            << constants[instruction.arg].toString();
-                return constants[instruction.arg].toString().toStdString();
+                return " " + constants[instruction.arg].toString().toStdString();
             } else {
-                qCritical() << "constant" << std::to_string(instruction.registerr).c_str() << " ";
-                return std::to_string(instruction.registerr);
+                return " " + std::to_string(instruction.registerr);
             }
         } else {
-            return instruction.varName.toStdString();
+            return " " + instruction.varName.toStdString();
         }
 
 
@@ -136,46 +131,46 @@ struct Instruction {
 
         switch (instruction.type) {
             case SUM:
-                result.append('+');
+                result.append(" +");
                 break;
             case SUB:
-                result.append('-');
+                result.append(" -");
                 break;
             case MUL:
-                result.append('*');
+                result.append(" *");
                 break;
             case DIV:
-                result.append('/');
+                result.append(" /");
                 break;
             case NEG:
-                result.append('^');
+                result.append(" ^");
                 break;
             case AND:
-                result.append("&&");
+                result.append(" &&");
                 break;
             case OR:
-                result.append("||");
+                result.append(" ||");
                 break;
             case EQ:
-                result.append("==");
+                result.append(" ==");
                 break;
             case NEQ:
-                result.append("!=");
+                result.append(" !=");
                 break;
             case LS:
-                result.append('<');
+                result.append(" <");
                 break;
             case GT:
-                result.append('>');
+                result.append(" >");
                 break;
             case LEQ:
-                result.append("<=");
+                result.append(" <=");
                 break;
             case GEQ:
-                result.append(">=");
+                result.append(" >=");
                 break;
             case ASG:
-                result.append("=");
+                result.append(" =");
                 break;
             case DCR:
                 result.append("--");
@@ -195,17 +190,17 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     if (t==NOP) return ("nopArduino");
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);
-    else if (t==END_ST) return ")\n";
+    else if (t==END_ST) return "\n}\n";
     else if (t==END_VAR) return ";";
+    else if (t==END_ST_HEAD) return ")\n{\n";
     else if (t==ForLoop) return ("for(");
     else if (t==WhileLoop) return ("while(");
-    else if (t==VAR) return instruction.varName.toStdString();
+    else if (t==VAR) return parseInstructionData(instruction, constants);
     else if (t==CONST) return parseInstructionData(instruction, constants);
-    else if (t==CALL) return (instruction.varName.toStdString() + "()");
+    else if (t==CALL) return instruction.varName.toStdString() + "()";
     else if (t==SETARR) return ("setarrArduino");
     else if (t==STORE) return ("storeArduino");
     else if (t==STOREARR) return ("storearrArduino");
-    else if (t==LOAD) return ("=");
     else if (t==LOADARR) return ("[]");
     else if (t==SETMON) return ("setmonArduino");
     else if (t==UNSETMON) return ("unsetmonArduino");

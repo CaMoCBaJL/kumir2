@@ -70,7 +70,7 @@ namespace ArduinoCodeGenerator {
             case Arduino::VT_int:
                 result = Arduino::CAnyValue(val.toInt());
                 break;
-            case Arduino::VT_real:
+            case Arduino::VT_float:
                 result = Arduino::CAnyValue(val.toDouble());
                 break;
             case Arduino::VT_bool:
@@ -82,7 +82,7 @@ namespace ArduinoCodeGenerator {
             case Arduino::VT_string:
                 result = Arduino::CAnyValue(val.toString().toStdWString());
                 break;
-            case Arduino::VT_record: {
+            case Arduino::VT_struct: {
                 QVariantList valueFields = val.toList();
                 Arduino::Record record;
                 for (int i = 1; i < vt.size(); i++) {
@@ -91,7 +91,7 @@ namespace ArduinoCodeGenerator {
                         case Arduino::VT_int:
                             record.fields.push_back(Arduino::CAnyValue(valueFields[i - 1].toInt()));
                             break;
-                        case Arduino::VT_real:
+                        case Arduino::VT_struct:
                             record.fields.push_back(Arduino::CAnyValue(valueFields[i - 1].toDouble()));
                             break;
                         case Arduino::VT_bool:
@@ -457,7 +457,7 @@ namespace ArduinoCodeGenerator {
         if (t.kind == AST::TypeInteger)
             result << Arduino::VT_int;
         else if (t.kind == AST::TypeReal)
-            result << Arduino::VT_real;
+            result << Arduino::VT_float;
         else if (t.kind == AST::TypeBoolean)
             result << Arduino::VT_bool;
         else if (t.kind == AST::TypeString)
@@ -465,7 +465,7 @@ namespace ArduinoCodeGenerator {
         else if (t.kind == AST::TypeCharect)
             result << Arduino::VT_char;
         else if (t.kind == AST::TypeUser) {
-            result << Arduino::VT_record;
+            result << Arduino::VT_struct;
             for (int i = 0; i < t.userTypeFields.size(); i++) {
                 AST::Field field = t.userTypeFields[i];
                 result << valueType(field.second);
@@ -697,7 +697,7 @@ namespace ArduinoCodeGenerator {
                 call.type = Arduino::CALL;
                 call.module = 0xFF;
                 call.arg = 0xBB01;
-
+                qCritical() << "call name: " << alg->header.name;
                 instrs << varId << call;
             }
             if (var->accessType == AST::AccessArgumentOut || var->accessType == AST::AccessArgumentInOut) {
@@ -1061,6 +1061,10 @@ namespace ArduinoCodeGenerator {
                 default:
                     break;
             }
+
+            Arduino::Instruction delimiter;
+            delimiter.type = Arduino::STR_DELIM;
+            result << delimiter;
         }
         return result;
     }
@@ -1133,23 +1137,19 @@ namespace ArduinoCodeGenerator {
 
     void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr st,
                            QList <Arduino::Instruction> &result) {
-        const AST::ExpressionPtr rvalue = st->expressions[0];
-        QList <Arduino::Instruction> rvalueInstructions = calculate(modId, algId, level, rvalue);
-        result << rvalueInstructions;
-
-
         if (st->expressions.size() > 1) {
             const AST::ExpressionPtr lvalue = st->expressions[1];
-
             int diff = lvalue->operands.size() - lvalue->variable->dimension;
 
-            if (diff > 0) {
+            if (diff == 0) {
                 Arduino::Instruction load;
                 findVariable(modId, algId, lvalue->variable, load.scope, load.arg);
-                load.type = lvalue->variable->dimension > 0 ? Arduino::ARR : Arduino::VAR;
+                load.type = Arduino::VAR;
                 for (int i = lvalue->variable->dimension - 1; i >= 0; i--) {
                     result << calculate(modId, algId, level, lvalue->operands[i]);
                 }
+
+                load.varName = lvalue->variable->name;
                 result << load;
             }
 
@@ -1185,7 +1185,32 @@ namespace ArduinoCodeGenerator {
                 }
             }
 
+            Arduino::Instruction asg;
+            asg.type =  Arduino::ASG;
+            result << asg;
         }
+
+        qCritical() << "left side: " << std::to_string(result.last().type).c_str();
+        if (result.last().type == Arduino::VAR){
+            qCritical() << "var name: " << result.last().varName;
+        }
+
+        const AST::ExpressionPtr rvalue = st->expressions[0];
+        QList <Arduino::Instruction> rvalueInstructions = calculate(modId, algId, level, rvalue);
+        result << rvalueInstructions;
+
+        for (uint16_t i = 0; i < rvalueInstructions.size(); i++){
+            qCritical() << "rvalue instr in assign method: " << std::to_string(rvalueInstructions.at(i).type).c_str();
+        }
+
+        if(rvalue->kind == AST::ExprFunctionCall){
+            qCritical() << "function call";
+            qCritical() << "right";
+        }
+
+        Arduino::Instruction endAsg;
+        endAsg.type = Arduino::END_VAR;
+        result << endAsg;
     }
 
     Arduino::InstructionType parseInstructionType(AST::ExpressionPtr st) {
@@ -1223,6 +1248,27 @@ namespace ArduinoCodeGenerator {
         }
     }
 
+    Arduino::ValueType parseVarType(AST::VariablePtr variable){
+        switch (variable->baseType.kind) {
+            case AST::TypeInteger:
+                return Arduino::VT_int;
+            case AST::TypeBoolean:
+                return Arduino::VT_bool;
+            case AST::TypeCharect:
+                return Arduino::VT_char;
+            case AST::TypeReal:
+                return Arduino::VT_float;
+            case AST::TypeString:
+                return Arduino::VT_string;
+            case AST::TypeUser:
+                return Arduino::VT_struct;
+            case AST::TypeNone:
+                return Arduino::VT_void;
+            default:
+                return Arduino::VT_void;
+        }
+    }
+
     QList<Arduino::Instruction> Generator::innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st){
         QList <Arduino::Instruction> result;
         if (st->kind == AST::ExprConst) {
@@ -1239,8 +1285,9 @@ namespace ArduinoCodeGenerator {
         } else if (st->kind == AST::ExprVariable) {
             Arduino::Instruction instr;
             instr.type = Arduino::VAR;
-            findVariable(modId, algId, st->variable, instr.scope, instr.arg);
+            instr.varType = parseVarType(st->variable);
             instr.varName = st->variable->name;
+//            findVariable(modId, algId, st->variable, instr.scope, instr.arg);
             result << instr;
         } else if (st->kind == AST::ExprArrayElement) {
             Arduino::Instruction instr;
@@ -1250,7 +1297,7 @@ namespace ArduinoCodeGenerator {
                 for (int i = st->variable->dimension - 1; i >= 0; i--) {
                     result << innerCalculation(modId, algId, level, st->operands[i]);
                 }
-                instr.type = Arduino::VAR;
+                instr.type = Arduino::CONST;
             }
             result << instr;
             int diff = st->operands.size() - st->variable->dimension;
@@ -1281,21 +1328,31 @@ namespace ArduinoCodeGenerator {
             }
         } else if (st->kind == AST::ExprFunctionCall) {
             const AST::AlgorithmPtr alg = st->function;
-
+            Arduino::Instruction func;
+            func.type = Arduino::FUNC;
+            func.varName = alg->header.name;
+            result << func;
+            qCritical() << "func name: " << alg->header.name;
+            for (int16_t i = 0; i < alg->header.arguments.size(); i++){
+                qCritical() << "func arg: " << alg->header.arguments.at(i)->name;
+            }
             // Push calculable arguments to stack
             int argsCount = 0;
             for (int i = 0; i < st->operands.size(); i++) {
                 AST::VariableAccessType t = alg->header.arguments[i]->accessType;
                 bool arr = alg->header.arguments[i]->dimension > 0;
+                qCritical() << "argument: " << alg->header.arguments[i]->name;
+                qCritical() << "value: " << alg->header.arguments[i]->initialValue.toString();
                 if (t == AST::AccessArgumentOut || t == AST::AccessArgumentInOut) {
-                    Arduino::Instruction func;
-                    func.type = Arduino::FUNC;
-                    findVariable(modId, algId, st->operands[i]->variable, func.scope, func.arg);
+                    Arduino::Instruction arg;
+                    arg.type = Arduino::VAR;
+                    arg.varName = alg->header.arguments[i]->name;
+                    arg.varType = parseVarType(alg->header.arguments[i]);
+//                    findVariable(modId, algId, st->operands[i]->variable, func.scope, func.arg);
                     result << func;
                 } else if (t == AST::AccessArgumentIn && !arr)
                     result << innerCalculation(modId, algId, level, st->operands[i]);
                 else if (t == AST::AccessArgumentIn && arr) {
-                    // load the whole array into stack
                     Arduino::Instruction load;
                     load.type = Arduino::ARR;
                     findVariable(modId, algId, st->operands[i]->variable, load.scope, load.arg);
@@ -1303,15 +1360,17 @@ namespace ArduinoCodeGenerator {
                 }
                 argsCount++;
             }
-            Arduino::Instruction b;
-            b.type = Arduino::CONST;
-            b.scope = Arduino::CONSTT;
-            b.arg = constantValue(Arduino::VT_int, 0, argsCount, QString(), QString());
-            result << b;
-            Arduino::Instruction instr;
-            instr.type = Arduino::FUNC;
-            findFunction(st->function, instr.module, instr.arg);
-            result << instr;
+            func.type = Arduino::END_ST_HEAD;
+            result<< func;
+//            Arduino::Instruction b;
+//            b.type = Arduino::CONST;
+//            b.scope = Arduino::CONSTT;
+//            b.arg = constantValue(Arduino::VT_int, 0, argsCount, QString(), QString());
+//            result << b;
+//            Arduino::Instruction instr;
+//            instr.type = Arduino::FUNC;
+//            findFunction(st->function, instr.module, instr.arg);
+//            result << instr;
         } else if (st->kind == AST::ExprSubexpression) {
             QList <Arduino::Instruction> instrs;
             QList <AST::ExpressionPtr> operands = st->operands;
@@ -1346,7 +1405,6 @@ namespace ArduinoCodeGenerator {
         } else{
             instr.type = Arduino::CONST;
             instr.arg = constantValue(Arduino::VT_string, 0, expr->constant, QString(), QString());
-            qCritical() << std::to_string(instr.arg).c_str();
         }
 
         return instr;
@@ -1481,20 +1539,17 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
 
     if (st->type==AST::StOutput) {
         int varsCount = st->expressions.size() / 3;
-
+        Arduino::Instruction output;
+        output.type = Arduino::OUTPUT;
+        result << output;
         for (int i = 0; i<varsCount; ++i) {
             const AST::ExpressionPtr  expr = st->expressions[3*i];
-            const AST::ExpressionPtr  format1 = st->expressions[3*i+1];
-            const AST::ExpressionPtr  format2 = st->expressions[3*i+2];
-            QList<Arduino::Instruction> instrs;
-            instrs = calculate(modId, algId, level, expr);
-            result << instrs;
+            result << calculate(modId, algId, level, expr);
 
-            instrs = calculate(modId, algId, level, format1);
-            result << instrs;
-
-            instrs = calculate(modId, algId, level, format2);
-            result << instrs;
+            if (i + 1 < varsCount) {
+                output.type = Arduino::SUM;
+                result << output;
+            }
         }
 
         if (st->expressions.size() % 3) {
@@ -1506,6 +1561,10 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
         argsCount = st->expressions.size();
     }
     else if (st->type==AST::StInput) {
+        Arduino::Instruction input;
+        input.type = Arduino::INPUT;
+        result << input;
+
         int varsCount = st->expressions.size();
         for (int i = varsCount-1; i>=0; i--) {
             const AST::ExpressionPtr  varExpr = st->expressions[i];
@@ -1541,21 +1600,31 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
         argsCount = st->expressions.size();
     }
 
-    Arduino::Instruction pushCount;
-    pushCount.type = Arduino::LOAD;
-    pushCount.scope = Arduino::CONSTT;
-    pushCount.arg = constantValue(Arduino::VT_int, 0, argsCount, QString(), QString());
-    result << pushCount;
 
-    Arduino::Instruction call;
-    call.type = Arduino::CALL;
-    call.module = 0xFF;
-    if (st->type==AST::StInput)
-        call.arg = 0x0000;
-    else if (st->type==AST::StOutput)
-        call.arg = 0x0001;
 
-    result << call;
+    Arduino::Instruction endCall;
+    endCall.type = Arduino::END_VAR;
+    result << endCall;
+//    pushCount.scope = Arduino::CONSTT;
+//    pushCount.arg = constantValue(Arduino::VT_int, 0, argsCount, QString(), QString());
+//    result << pushCount;
+//
+//    Arduino::Instruction call;
+//    call.type = Arduino::CALL;
+//    call.module = 0xFF;
+//    if (st->type==AST::StInput)
+//        call.arg = 0x0000;
+//    else if (st->type==AST::StOutput)
+//        call.arg = 0x0001;
+//    result << call;
+
+    qCritical() << "function call: " << std::to_string(st->type).c_str();
+    for (uint16_t i = 0; i < st->expressions.size(); i++){
+        qCritical() << "expr type:" << std::to_string(st->expressions.at(i)->kind).c_str();
+        if (st->expressions.at(i)->kind == AST::ExprFunctionCall){
+            qCritical() << st->expressions.at(i)->function->header.name;
+        }
+    }
 }
 
 
@@ -1872,18 +1941,18 @@ void Generator::LOOP(int modId, int algId,
 
         addForLoopStep(st->loop.stepValue, result, result.at(result.size() - 2).registerr,
                        result.at(result.size() - 1).registerr);
-
-        QList <Arduino::Instruction> instructions = calculate(modId, algId, level, st->loop.fromValue);
-        result << instructions;
-
-        result << calculate(modId, algId, level, st->loop.toValue);
     }
 
     Arduino::Instruction endLoopHead;
     endLoopHead.type = Arduino::END_ST_HEAD;
     result << endLoopHead;
 
+    qCritical() << "\n\nloop body instucrions count: " << std::to_string(st->loop.body.size()).c_str() << "\n\n\n";
+
     QList <Arduino::Instruction> instrs = instructions(modId, algId, level, st->loop.body);
+    for (uint16_t i = 0; i < instrs.size(); i++){
+        qCritical() << "loop body instruction: " << std::to_string(instrs.at(i).type).c_str();
+    }
     result += instrs;
 
     bool endsWithError = st->endBlockError.length() > 0;

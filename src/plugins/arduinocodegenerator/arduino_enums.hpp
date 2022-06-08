@@ -20,18 +20,14 @@ namespace Arduino{
         EL_EXTERN_INIT = 0x0a
     };
 
-//    const std::string emptyString = "";
-
-//    const std::string ElemTypeName[ElemType::counter] = {"stream delimiter", emptyString, "const", };
-
     enum ValueType {
         VT_void     = 0x00,
         VT_int      = 0x01,
-        VT_real    = 0x02,
+        VT_float    = 0x02,
         VT_char     = 0x03,
         VT_bool     = 0x04,
         VT_string   = 0x05,
-        VT_record     = 0xFF
+        VT_struct     = 0xFF
     };
 
     enum ValueKind {

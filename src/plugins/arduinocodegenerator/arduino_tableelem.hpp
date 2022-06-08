@@ -87,7 +87,7 @@ inline std::string vtypeToString(ValueType instructionType)
         switch(instructionType){
             case (Arduino::VT_int):
                 return "int";
-            case (Arduino::VT_real):
+            case (Arduino::VT_float):
                 return "float";
             case (Arduino::VT_char):
                 return "char";
@@ -95,7 +95,7 @@ inline std::string vtypeToString(ValueType instructionType)
                 return "string";
             case (Arduino::VT_bool):
                 return "boolean";
-            case (Arduino::VT_record):
+            case (Arduino::VT_struct):
                 return "struct{\n";
             default:
                 return "";
@@ -106,7 +106,7 @@ inline std::string parseVType(const std::list<ValueType> & type, uint8_t dim)
     {
         std::string result;
         ValueType t = type.front();
-        if (t == Arduino::VT_record)
+        if (t == Arduino::VT_struct)
         {
             std::list<ValueType>::const_iterator it = type.begin();
             it ++;
@@ -182,7 +182,7 @@ inline std::string constantToTextStream(const TableElem & e)
         const int32_t val = e.initialValue.toInt();
         os << val;
     }
-    else if (e.vtype.front()==Arduino::VT_real) {
+    else if (e.vtype.front()==Arduino::VT_float) {
         const double val = e.initialValue.toDouble();
         os << val;
     }

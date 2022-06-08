@@ -42,7 +42,7 @@ namespace Arduino {
             }
             if (type_==VT_int)
                 ivalue_ = other.ivalue_;
-            if (type_==VT_real)
+            if (type_==VT_float)
                 rvalue_ = other.rvalue_;
             if (type_==VT_bool)
                 bvalue_ = other.bvalue_;
@@ -56,25 +56,25 @@ namespace Arduino {
             type_ = VT_int;
             ivalue_ = v;
         }
-        inline explicit CAnyValue(double v): svalue_(0), avalue_(0), uvalue_(0) { __init__(); type_ = VT_real;  rvalue_ = v; }
+        inline explicit CAnyValue(double v): svalue_(0), avalue_(0), uvalue_(0) { __init__(); type_ = VT_float;  rvalue_ = v; }
         inline explicit CAnyValue(bool v): svalue_(0), avalue_(0), uvalue_(0) { __init__(); type_ = VT_bool; bvalue_ = v; }
         inline explicit CAnyValue(Char v): svalue_(0), avalue_(0), uvalue_(0) { __init__(); type_ = VT_char; cvalue_ = v; }
         inline explicit CAnyValue(const String & v): svalue_(0), avalue_(0), uvalue_(0) { __init__(); type_ = VT_string; svalue_ = new String(v); }
         inline explicit CAnyValue(const Record & value): svalue_(0), avalue_(0), uvalue_(0) {
             __init__();
-            type_ = VT_record;
+            type_ = VT_struct;
             uvalue_ = new Record(value);
         }
 
         inline void operator=(ValueType t) { __init__(); type_ = t;  svalue_ = t==VT_string? new String() : 0; }
         inline void operator=(int v) { __init__(); type_ = VT_int;  ivalue_ = v; }
-        inline void operator=(double v) { __init__(); type_ = VT_real; rvalue_ = v; }
+        inline void operator=(double v) { __init__(); type_ = VT_float; rvalue_ = v; }
         inline void operator=(bool v) { __init__(); type_ = VT_bool; bvalue_ = v; }
         inline void operator=(Char v) { __init__(); type_ = VT_char; cvalue_ = v; }
         inline void operator=(const String & v) { __init__(); type_ = VT_string; svalue_ = new String(v); }
         inline void operator=(const Record & value) {
             __init__();
-            type_ = VT_record;
+            type_ = VT_struct;
             uvalue_ = new Record(value);
         }
         inline void operator=(const CAnyValue &other) {
@@ -91,7 +91,7 @@ namespace Arduino {
             }
             if (type_==VT_int)
                 ivalue_ = other.ivalue_;
-            if (type_==VT_real)
+            if (type_==VT_float)
                 rvalue_ = other.rvalue_;
             if (type_==VT_bool)
                 bvalue_ = other.bvalue_;
@@ -110,7 +110,7 @@ namespace Arduino {
         }
         inline bool toBool() const {
             if (type_==VT_int) return ivalue_ > 0;
-            else if (type_==VT_real) return rvalue_ > 0.0;
+            else if (type_==VT_float) return rvalue_ > 0.0;
             else if (type_==VT_char) return cvalue_ != '\0';
             else if (type_==VT_string) return svalue_ && svalue_->length() > 0;
             else return bvalue_;
@@ -122,7 +122,7 @@ namespace Arduino {
         }
         inline String toString() const {
             if (type_==VT_int) return Kumir::Converter::sprintfInt(ivalue_, 10, 0, 0);
-            else if (type_==VT_real) return Kumir::Converter::sprintfReal(rvalue_, '.', false, 0, -1, 0);
+            else if (type_==VT_float) return Kumir::Converter::sprintfReal(rvalue_, '.', false, 0, -1, 0);
             else if (type_==VT_bool) return bvalue_? Kumir::Core::fromUtf8("да") : Kumir::Core::fromUtf8("нет");
             else if (type_==VT_char) {
                 String sval;
@@ -237,13 +237,13 @@ namespace Arduino {
         /*static bool ignoreUndefinedError;*/
 
         inline explicit CVariable(int v) { create() ; baseType_ = VT_int; value_ = v; }
-        inline explicit CVariable(double v) { create(); baseType_ = VT_real; value_ = v; }
+        inline explicit CVariable(double v) { create(); baseType_ = VT_float; value_ = v; }
         inline explicit CVariable(Char & v) { create(); baseType_ = VT_char; value_ = v; }
         inline explicit CVariable(const String & v) { create(); baseType_ = VT_string; value_ = v; }
         inline explicit CVariable(bool v) { create(); baseType_ = VT_bool; value_ = v; }
         inline explicit CVariable(const Record & value, const String & clazz, const std::string & asciiClazz) {
             create();
-            baseType_ = VT_record;
+            baseType_ = VT_struct;
             value_ = value;
             setRecordClassLocalizedName(clazz);
             setRecordClassAsciiName(asciiClazz);
@@ -544,7 +544,7 @@ namespace Arduino {
                 else
                     result = Kumir::Core::fromUtf8("нет");
                 break;
-            case VT_real:
+            case VT_float:
                 result = Kumir::Converter::sprintfReal(value().toReal(), '.', false, 0,-1,0);
                 break;
             case VT_int:
@@ -573,7 +573,7 @@ namespace Arduino {
                 else
                     result = Kumir::Core::fromUtf8("нет");
                 break;
-            case VT_real:
+            case VT_float:
                 result = Kumir::Converter::sprintfReal(value(indeces).toReal(), '.', false, 0,-1,0);
                 break;
             case VT_int:

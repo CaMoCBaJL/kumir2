@@ -7,6 +7,7 @@
 #include <algorithm>
 #define DO_NOT_DECLARE_STATIC
 #include <kumir2-libs/stdlib/kumirstdlib.hpp>
+#include "arduino_enums.hpp"
 
 namespace Arduino {
 
@@ -22,6 +23,9 @@ enum InstructionType {
     END_ST = 10008,
     END_VAR = 10009,
     END_ST_HEAD = 10010,
+    INPUT = 10011,
+    OUTPUT = 10012,
+    STR_DELIM = 10013,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -110,20 +114,28 @@ struct Instruction {
     };
     uint16_t arg;
     QString varName;
+    Arduino::ValueType varType;
 };
 
     inline std::string parseInstructionData(Arduino::Instruction instruction, QList<QVariant> constants){
         if (instruction.varName.isNull()) {
+            std::string result;
             if (instruction.arg < constants.size()) {
-                return " " + constants[instruction.arg].toString().toStdString();
+                result = constants[instruction.arg].toString().toStdString();
+                if (constants[instruction.arg].type() == QMetaType::QString){
+                    result = "\"" + result + "\"";
+                }
+                else {
+                    result = result;
+                }
             } else {
-                return " " + std::to_string(instruction.registerr);
+                result =  std::to_string(instruction.registerr);
             }
+
+            return result;
         } else {
-            return " " + instruction.varName.toStdString();
+            return instruction.varName.toStdString();
         }
-
-
     }
 
     inline std::string parseOperationData(Arduino::Instruction instruction, QList<QVariant> constants) {
@@ -131,46 +143,46 @@ struct Instruction {
 
         switch (instruction.type) {
             case SUM:
-                result.append(" +");
+                result.append(" + ");
                 break;
             case SUB:
-                result.append(" -");
+                result.append(" - ");
                 break;
             case MUL:
-                result.append(" *");
+                result.append(" * ");
                 break;
             case DIV:
-                result.append(" /");
+                result.append(" / ");
                 break;
             case NEG:
-                result.append(" ^");
+                result.append(" ^ ");
                 break;
             case AND:
-                result.append(" &&");
+                result.append(" && ");
                 break;
             case OR:
-                result.append(" ||");
+                result.append(" || ");
                 break;
             case EQ:
-                result.append(" ==");
+                result.append(" == ");
                 break;
             case NEQ:
-                result.append(" !=");
+                result.append(" != ");
                 break;
             case LS:
-                result.append(" <");
+                result.append(" < ");
                 break;
             case GT:
-                result.append(" >");
+                result.append(" > ");
                 break;
             case LEQ:
-                result.append(" <=");
+                result.append(" <= ");
                 break;
             case GEQ:
-                result.append(" >=");
+                result.append(" >= ");
                 break;
             case ASG:
-                result.append(" =");
+                result.append(" = ");
                 break;
             case DCR:
                 result.append("--");
@@ -188,6 +200,10 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     InstructionType t = instruction.type;
 
     if (t==NOP) return ("nopArduino");
+    else if (t==OUTPUT) return "cout << ";
+    else if (t==INPUT) return "cin >> ";
+    else if (t==STR_DELIM) return "\n";
+    else if (t==FUNC) return instruction.varName.toStdString() + "(";
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);
     else if (t==END_ST) return "\n}\n";

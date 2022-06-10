@@ -26,6 +26,9 @@ enum InstructionType {
     INPUT = 10011,
     OUTPUT = 10012,
     STR_DELIM = 10013,
+    BREAK = 10014,
+    END_ARG = 10015,
+    END_FUNC = 10016,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -117,6 +120,20 @@ struct Instruction {
     Arduino::ValueType varType;
 };
 
+static std::string parseValueType(Arduino::ValueType type){
+    switch (type){
+        case VT_void: return "void ";
+        case VT_int: return "int ";
+        case VT_float: return "float ";
+        case VT_char: return "char ";
+        case VT_bool: return "bool ";
+        case VT_string: return "std::string ";
+        case VT_struct: return "struct ";
+        case VT_None: return "";
+        default: return "";
+    }
+}
+
     inline std::string parseInstructionData(Arduino::Instruction instruction, QList<QVariant> constants){
         if (instruction.varName.isNull()) {
             std::string result;
@@ -134,7 +151,7 @@ struct Instruction {
 
             return result;
         } else {
-            return instruction.varName.toStdString();
+            return parseValueType(instruction.varType) + instruction.varName.toStdString();
         }
     }
 
@@ -202,7 +219,10 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     if (t==NOP) return ("nopArduino");
     else if (t==OUTPUT) return "cout << ";
     else if (t==INPUT) return "cin >> ";
+    else if (t==BREAK) return "break;\n";
     else if (t==STR_DELIM) return "\n";
+    else if (t==END_ARG) return ", ";
+    else if (t==END_FUNC) return ")";
     else if (t==FUNC) return instruction.varName.toStdString() + "(";
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);

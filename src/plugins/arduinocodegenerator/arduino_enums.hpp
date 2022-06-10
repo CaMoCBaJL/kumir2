@@ -27,7 +27,8 @@ namespace Arduino{
         VT_char     = 0x03,
         VT_bool     = 0x04,
         VT_string   = 0x05,
-        VT_struct     = 0xFF
+        VT_struct     = 0xFF,
+        VT_None = -1
     };
 
     enum ValueKind {

@@ -29,6 +29,7 @@ enum InstructionType {
     BREAK = 10014,
     END_ARG = 10015,
     END_FUNC = 10016,
+    END_ARR = 10017,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -134,19 +135,21 @@ static std::string parseValueType(Arduino::ValueType type){
     }
 }
 
-    inline std::string parseInstructionData(Arduino::Instruction instruction, QList<QVariant> constants){
+    inline std::string parseInstructionData(Arduino::Instruction instruction, QList<QVariant> constants) {
+        if (instruction.type == ARR) {
+            return parseValueType(instruction.varType) + instruction.varName.toStdString() + "[";
+        }
         if (instruction.varName.isNull()) {
             std::string result;
             if (instruction.arg < constants.size()) {
                 result = constants[instruction.arg].toString().toStdString();
-                if (constants[instruction.arg].type() == QMetaType::QString){
+                if (constants[instruction.arg].type() == QMetaType::QString) {
                     result = "\"" + result + "\"";
-                }
-                else {
+                } else {
                     result = result;
                 }
             } else {
-                result =  std::to_string(instruction.registerr);
+                result = std::to_string(instruction.registerr);
             }
 
             return result;
@@ -223,6 +226,7 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==STR_DELIM) return "\n";
     else if (t==END_ARG) return ", ";
     else if (t==END_FUNC) return ")";
+    else if (t==END_ARR) return "]";
     else if (t==FUNC) return instruction.varName.toStdString() + "(";
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);
@@ -234,17 +238,7 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==VAR) return parseInstructionData(instruction, constants);
     else if (t==CONST) return parseInstructionData(instruction, constants);
     else if (t==CALL) return instruction.varName.toStdString() + "()";
-    else if (t==SETARR) return ("setarrArduino");
-    else if (t==STORE) return ("storeArduino");
-    else if (t==STOREARR) return ("storearrArduino");
-    else if (t==LOADARR) return ("[]");
-    else if (t==SETMON) return ("setmonArduino");
-    else if (t==UNSETMON) return ("unsetmonArduino");
-    else if (t==JUMP) return ("jump");
-    else if (t==JNZ) return ("!=");
-    else if (t==JZ) return ("==");
-    else if (t==POP) return ("");
-    else if (t==PUSH) return ("pushArduino");
+    else if (t==ARR) return parseInstructionData(instruction, constants);
     else if (t==RET) return ("\nreturn;\n}");
     else if (t==PAUSE) return ("\n}");
     else if (t==ERRORR) return ("errorArduino");

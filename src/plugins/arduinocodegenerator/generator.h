@@ -60,6 +60,7 @@ public:
     void UpdateConstants(Arduino::Data & data);
     QList<QVariant> GetConstantValues();
     private:
+    int findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer<AST::Expression>> bounds);
     QList<Arduino::Instruction> getOperands(AST::ExpressionPtr expr);
     Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
     Arduino::TableElem AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId);

@@ -10,6 +10,7 @@
 #include "CVariable.hpp"
 #include <deque>
 #include <cmath>
+#include <limits>
 
 namespace ArduinoCodeGenerator {
 
@@ -262,26 +263,6 @@ namespace ArduinoCodeGenerator {
         }
 
         return false;
-    }
-
-    void Generator::UpdateConstants(Arduino::Data &data) {
-        std::deque <Arduino::TableElem> newConstants;
-        for (size_t i = data.d.size(); i > 0; i--) {
-            Arduino::TableElem elem = data.d.at(i - 1);
-            switch (elem.type) {
-                case Arduino::EL_GLOBAL:
-                case Arduino::EL_LOCAL:
-                    if (!(elem.name.empty())) {
-                        newConstants.push_back(AddConstName(data, elem.name, elem.id));
-                    }
-                    break;
-                default:
-                    newConstants.push_back(elem);
-                    break;
-            }
-        }
-        std::reverse(newConstants.begin(), newConstants.end());
-        data.d.swap(newConstants);
     }
 
     void Generator::generateConstantTable() {
@@ -1032,9 +1013,6 @@ namespace ArduinoCodeGenerator {
                     CALL_SPECIAL(modId, algId, level, st, result);
                     break;
                 case AST::StLoop:
-                    qCritical() << "\n***************\n";
-                    qCritical() << "Loop type: " << loopTypes[st->loop.type].c_str();
-                    qCritical() << "\n***************\n";
                     LOOP(modId, algId, level + 1, st, result);
                     break;
                 case AST::StIfThenElse:
@@ -1310,11 +1288,13 @@ namespace ArduinoCodeGenerator {
             Arduino::Instruction instr;
             findVariable(modId, algId, st->variable, instr.scope, instr.arg);
             instr.type = Arduino::ARR;
+            instr.varName = st->variable->name;
+            result << instr;
             if (st->variable->dimension > 0) {
                 for (int i = st->variable->dimension - 1; i >= 0; i--) {
                     result << innerCalculation(modId, algId, level, st->operands[i]);
+                    qCritical() << "arr dim:" << st->operands.at(i)->constant;
                 }
-                instr.type = Arduino::CONST;
             }
             result << instr;
             int diff = st->operands.size() - st->variable->dimension;
@@ -1357,12 +1337,9 @@ namespace ArduinoCodeGenerator {
             func.type = Arduino::FUNC;
             func.varName = alg->header.name;
             result << func;
-            qCritical() << "added func!";
 
             for (int i = 0; i < st->operands.size(); i++) {
                 AST::VariableAccessType t = alg->header.arguments[i]->accessType;
-                qCritical() << "operand: " << std::to_string(st->operands.at(i)->kind).c_str()
-                            << "in parse operands cycle)";
                 bool arr = alg->header.arguments[i]->dimension > 0;
                 if (t == AST::AccessArgumentIn && !arr) {
                     result << innerCalculation(modId, algId, level, st->operands[i]);
@@ -1498,19 +1475,63 @@ void Generator::ASSERT(int modId, int algId, int level, const AST::StatementPtr 
     }
 }
 
+int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer<AST::Expression>> bounds){
+    int result = 0;
+    quint16 indx = 0;
+
+    if (!bounds.first->variable) {
+        result = abs(bounds.first->constant.toInt());
+    }
+    else{
+        AST::VariablePtr var = bounds.first->variable;
+        indx = constantValue(valueType(var->baseType), var->dimension, var->initialValue,
+                                 var->baseType.actor ? var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
+                                 var->baseType.name
+        );
+        result = abs(constants_[indx].value.toInt());
+    }
+
+    if (!bounds.second->variable) {
+        result += abs(bounds.second->constant.toInt());
+    }
+    else{
+        AST::VariablePtr var = bounds.second->variable;
+        indx = constantValue(valueType(var->baseType), var->dimension, var->initialValue,
+                                 var->baseType.actor ? var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
+                                 var->baseType.name
+        );
+
+        result += abs(constants_[indx].value.toInt());
+    }
+
+    return  result;
+}
+
 void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
 {
     for (int i=0; i<st->variables.size(); i++) {
         const AST::VariablePtr  var = st->variables[i];
+        Arduino::Instruction instr;
         if (var->dimension > 0 && var->bounds.size()>0) {
+            instr.type = Arduino::ARR;
+            instr.varName = var->name;
+            instr.varType = parseVarType(var);
+            result << instr;
             for (int i=var->dimension-1; i>=0 ; i--) {
-                result << calculate(modId, algId, level, var->bounds[i].second);
-                result << calculate(modId, algId, level, var->bounds[i].first);
+                instr.varName = nullptr;
+                instr.type = Arduino::CONST;
+                instr.arg = std::numeric_limits<int>::max();
+                instr.registerr = findArrSize(var->bounds[i]);
+                result << instr;
+                if (i != 0) {
+                    instr.type = Arduino::END_ARG;
+                    result << instr;
+                }
             }
-            Arduino::Instruction bounds;
-            bounds.type = Arduino::SETARR;
-            findVariable(modId, algId, var, bounds.scope, bounds.arg);
-            result << bounds;
+            instr.type = Arduino::END_ARR;
+            result << instr;
+            instr.type = Arduino::END_VAR;
+            result << instr;
         }
         else if (var->dimension > 0 && var->bounds.size()==0) {
             // TODO : Implement me after compiler support

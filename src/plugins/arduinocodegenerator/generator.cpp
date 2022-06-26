@@ -60,6 +60,27 @@ namespace ArduinoCodeGenerator {
         sizes[fromDim] = qMax(sizes[fromDim], elems.size());
     }
 
+    Arduino::ValueType parseVarType(AST::VariablePtr variable){
+        switch (variable->baseType.kind) {
+            case AST::TypeInteger:
+                return Arduino::VT_int;
+            case AST::TypeBoolean:
+                return Arduino::VT_bool;
+            case AST::TypeCharect:
+                return Arduino::VT_char;
+            case AST::TypeReal:
+                return Arduino::VT_float;
+            case AST::TypeString:
+                return Arduino::VT_string;
+            case AST::TypeUser:
+                return Arduino::VT_struct;
+            case AST::TypeNone:
+                return Arduino::VT_void;
+            default:
+                return Arduino::VT_void;
+        }
+    }
+
     static Arduino::CAnyValue
     makeAnyValue(const QVariant &val, const QList <Arduino::ValueType> &vt, const QString &moduleName,
                  const QString &className
@@ -132,159 +153,6 @@ namespace ArduinoCodeGenerator {
         } else {
             return constants_.indexOf(c);
         }
-    }
-
-    static Arduino::TableElem makeConstant(const ConstValue &val) {
-        Arduino::TableElem e;
-        e.type = Arduino::EL_CONST;
-        e.vtype = val.baseType.toStdList();
-        e.dimension = val.dimension;
-        e.recordModuleLocalizedName = val.recordModuleName.toStdWString();
-        e.recordClassLocalizedName = val.recordClassLocalizedName.toStdWString();
-        if (val.dimension == 0) {
-            Arduino::CVariable var;
-            Arduino::CAnyValue vv = makeAnyValue(val.value,
-                                                 val.baseType,
-                                                 val.recordModuleName,
-                                                 val.recordClassLocalizedName
-            );
-            var.setValue(vv);
-            var.setBaseType(val.baseType.front());
-            var.setDimension(val.dimension);
-            var.setConstantFlag(true);
-            e.initialValue = var;
-        } else {
-            int sizes[3];
-            getVarListSizes(val.value, sizes, 0);
-            Arduino::CVariable var;
-            var.setConstantFlag(true);
-            var.setBaseType(val.baseType.front());
-            var.setDimension(val.dimension);
-            int bounds[7] = {1, sizes[0], 1, sizes[1], 1, sizes[2], var.dimension() * 2};
-            var.setBounds(bounds);
-            var.init();
-            if (var.dimension() == 1) {
-                QVariantList listX = val.value.toList();
-                for (int x = 1; x <= sizes[0]; x++) {
-                    if (x - 1 < listX.size()) {
-                        var.setValue(x, makeAnyValue(
-                                listX[x - 1],
-                                val.baseType,
-                                val.recordModuleName,
-                                val.recordClassLocalizedName
-                        ));
-                    } else {
-                        var.setValue(x, Arduino::CAnyValue());
-                    }
-                }
-            } // end if (var.dimension()==1)
-            else if (var.dimension() == 2) {
-                QVariantList listY = val.value.toList();
-                for (int y = 1; y <= sizes[0]; y++) {
-                    if (y - 1 < listY.size()) {
-                        QVariantList listX = listY[y - 1].toList();
-                        for (int x = 1; x <= sizes[1]; x++) {
-                            if (x - 1 < listX.size()) {
-                                var.setValue(y, x, makeAnyValue(
-                                        listX[x - 1],
-                                        val.baseType,
-                                        val.recordModuleName,
-                                        val.recordClassLocalizedName
-                                ));
-                            } else {
-                                var.setValue(y, x, Arduino::CAnyValue());
-                            }
-                        }
-                    } else {
-                        for (int x = 1; x <= sizes[1]; x++) {
-                            var.setValue(y, x, Arduino::CAnyValue());
-                        }
-                    }
-                }
-            } // end else if (var.dimension()==2)
-            else if (var.dimension() == 3) {
-                QVariantList listZ = val.value.toList();
-                for (int z = 1; z <= sizes[0]; z++) {
-                    if (z - 1 < listZ.size()) {
-                        QVariantList listY = listZ[z - 1].toList();
-                        for (int y = 1; y <= sizes[1]; y++) {
-                            if (y - 1 < listY.size()) {
-                                QVariantList listX = listY[y - 1].toList();
-                                for (int x = 1; x <= sizes[2]; x++) {
-                                    if (x - 1 < listX.size()) {
-                                        var.setValue(z, y, x, makeAnyValue(
-                                                listX[x - 1],
-                                                val.baseType,
-                                                val.recordModuleName,
-                                                val.recordClassLocalizedName
-                                        ));
-                                    } else {
-                                        var.setValue(z, y, x, Arduino::CAnyValue());
-                                    }
-                                }
-                            } else {
-                                for (int x = 1; x <= sizes[1]; x++) {
-                                    var.setValue(z, y, x, Arduino::CAnyValue());
-                                }
-                            }
-                        }
-                    } else {
-                        for (int y = 1; y <= sizes[1]; y++) {
-                            for (int x = 1; x <= sizes[2]; x++) {
-                                var.setValue(z, y, x, Arduino::CAnyValue());
-                            }
-                        }
-                    }
-                }
-            } // end else if (var.dimension()==2)
-            e.initialValue = var;
-        }
-        return e;
-    }
-
-    Arduino::TableElem Generator::AddConstName(Arduino::Data &data, Kumir::String constName, uint16_t constId) {
-        for (size_t i = 0; i < data.d.size(); i++) {
-            if (data.d.at(i).id == constId) {
-                Arduino::TableElem e = Arduino::TableElem(data.d.at(i));
-                e.name = constName;
-                return e;
-            }
-        }
-
-        return Arduino::TableElem();
-    }
-
-    bool
-    isElementAlreadyAdded(const Arduino::TableElem elemFromSource, const std::deque <Arduino::TableElem> newElements) {
-        for (size_t j = 0; j < newElements.size(); j++) {
-            if (newElements.at(j).id == elemFromSource.id) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void Generator::generateConstantTable() {
-        for (int i = constants_.size() - 1; i >= 0; i--) {
-            const ConstValue cons = constants_[i];
-            Arduino::TableElem e = makeConstant(cons);
-            e.id = i;
-            byteCode_->d.push_front(e);
-        }
-    }
-
-    static const Shared::ActorInterface::Function &
-    functionByInternalId(const Shared::ActorInterface *actor, uint32_t id) {
-        static Shared::ActorInterface::Function dummy;
-        const Shared::ActorInterface::FunctionList &alist = actor->functionList();
-        foreach(
-        const Shared::ActorInterface::Function &func, alist) {
-            if (func.id == id) {
-                return func;
-            }
-        }
-        return dummy;
     }
 
     static QString typeToSignature(const AST::Type &t) {
@@ -566,15 +434,6 @@ namespace ArduinoCodeGenerator {
         }
     }
 
-    void Generator::shiftInstructions(QList <Arduino::Instruction> &instrs, int offset) {
-        for (int i = 0; i < instrs.size(); i++) {
-            Arduino::InstructionType t = instrs.at(i).type;
-            if (t == Arduino::JNZ || t == Arduino::JZ || t == Arduino::JUMP) {
-                instrs[i].arg += offset;
-            }
-        }
-    }
-
     void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, const AST::ModulePtr mod,
                                                    const AST::AlgorithmPtr alg) {
         // Generate hidden algorhitm, which will called before main to input arguments
@@ -646,25 +505,6 @@ namespace ArduinoCodeGenerator {
                 bounds.arg = quint16(i + locOffset);
                 instrs << bounds;
             }
-            Arduino::Instruction init;
-            init.type = Arduino::INIT;
-            init.scope = Arduino::LOCAL;
-            init.arg = quint16(i + locOffset);
-            instrs << init;
-            if (var->initialValue.isValid() && var->dimension == 0) {
-                Arduino::Instruction load;
-                load.type = Arduino::LOAD;
-                load.scope = Arduino::CONSTT;
-                load.arg = constantValue(valueType(var->baseType),
-                                         0,
-                                         var->initialValue,
-                                         var->baseType.actor ?
-                                         var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
-                                         var->baseType.name
-                );
-                instrs << load;
-            }
-
             // If IN of INOUT argument -- require input
             // This made by special function call
             if (var->accessType == AST::AccessArgumentIn || var->accessType == AST::AccessArgumentInOut) {
@@ -784,6 +624,16 @@ namespace ArduinoCodeGenerator {
         return signature;
     }
 
+    int findLastInstruction(QList<Arduino::Instruction> instructions, Arduino::InstructionType type){
+        for (int i = instructions.size() - 1; i > -1; --i){
+            if (instructions.at(i).type == type) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     void Generator::addFunction(int id, int moduleId, Arduino::ElemType type, const AST::ModulePtr mod,
                                 const AST::AlgorithmPtr alg) {
         QString headerError = "";
@@ -829,34 +679,16 @@ namespace ArduinoCodeGenerator {
                 signature += ",";
         }
 
-        for (int i = 0; i < alg->impl.locals.size(); i++) {
-            const AST::VariablePtr var = alg->impl.locals[i];
-            Arduino::TableElem loc;
-            loc.type = Arduino::EL_LOCAL;
-            loc.module = moduleId;
-            loc.algId = id;
-            loc.id = i;
-            loc.name = var->name.toStdWString();
-            loc.dimension = var->dimension;
-            loc.vtype = valueType(var->baseType).toStdList();
-            loc.refvalue = valueKind(var->accessType);
-            loc.recordModuleAsciiName = var->baseType.actor ?
-                                        std::string(var->baseType.actor->asciiModuleName().constData()) : std::string();
-            loc.recordModuleLocalizedName = var->baseType.actor ?
-                                            var->baseType.actor->localizedModuleName(QLocale::Russian).toStdWString()
-                                                                : std::wstring();
-            loc.recordClassAsciiName = std::string(var->baseType.asciiName);
-            loc.recordClassLocalizedName = var->baseType.name.toStdWString();
-            byteCode_->d.push_back(loc);
-        }
         Arduino::TableElem func;
         func.type = type;
         func.module = moduleId;
         func.algId = func.id = id;
-        func.name = alg->header.name.toStdWString();
+        std::string algName = alg->header.name.toStdString();
+        func.name = std::wstring(algName.begin(), algName.end());
         func.signature = signature.toStdWString();
         func.moduleLocalizedName = mod->header.name.toStdWString();
         QList <Arduino::Instruction> argHandle;
+
 
         if (headerError.length() > 0) {
             Arduino::Instruction err;
@@ -878,14 +710,6 @@ namespace ArduinoCodeGenerator {
             argHandle << l;
         }
 
-        if (alg->impl.endLexems.size() > 0 && debugLevel_ == GeneratorInterface::LinesAndVariables) {
-
-        }
-
-
-        for (int i = alg->header.arguments.size() - 1; i >= 0; i--) {
-        }
-
         for (int i = 0; i < alg->header.arguments.size(); i++) {
             const AST::VariablePtr var = alg->header.arguments[i];
             if (var->dimension > 0) {
@@ -897,14 +721,37 @@ namespace ArduinoCodeGenerator {
                 bounds.type = Arduino::UPDARR;
                 findVariable(moduleId, id, var, bounds.scope, bounds.arg);
                 argHandle << bounds;
-            }
-            if (var->accessType == AST::AccessArgumentOut) {
-                Arduino::Instruction init;
-                init.type = Arduino::INIT;
-                findVariable(moduleId, id, var, init.scope, init.arg);
-                argHandle << init;
+            } else {
+                Arduino::Instruction headerArg;
+                headerArg.type = Arduino::VAR;
+                headerArg.varName = var->name;
+                headerArg.varType = parseVarType(var);
+                switch (var->accessType) {
+                    case AST::AccessArgumentOut:
+                        headerArg.kind = Arduino::VK_Out;
+                        break;
+                    case AST::AccessArgumentInOut:
+                        headerArg.kind = Arduino::VK_InOut;
+                        break;
+                    case AST::AccessArgumentIn:
+                        headerArg.kind = Arduino::VK_In;
+                        break;
+                    default:
+                        headerArg.kind = Arduino::VK_Plain;
+                        break;
+                }
+
+                argHandle << headerArg;
+                if (i + 1 < alg->header.arguments.size()) {
+                    headerArg.type = Arduino::END_ARG;
+                    argHandle << headerArg;
+                }
             }
         }
+
+        Arduino::Instruction endFuncDeclaration;
+        endFuncDeclaration.type = Arduino::END_ST_HEAD;
+        argHandle << endFuncDeclaration;
 
         if (beginError.length() > 0) {
             Arduino::Instruction err;
@@ -924,7 +771,6 @@ namespace ArduinoCodeGenerator {
 
         int retIp = argHandle.size() + pre.size() + body.size() + post.size();
 
-
         if (alg->impl.endLexems.size() > 0) {
             QString endError;
             for (int i = 0; i < alg->impl.endLexems.size(); i++) {
@@ -942,19 +788,57 @@ namespace ArduinoCodeGenerator {
             }
         }
 
-
-        const AST::VariablePtr retval = returnValue(alg);
-        if (retval) {
-            Arduino::Instruction loadRetval;
-            loadRetval.type = Arduino::LOAD;
-            findVariable(moduleId, id, retval, loadRetval.scope, loadRetval.arg);
-            ret << loadRetval;
-
-        }
-
         Arduino::Instruction retturn;
         retturn.type = Arduino::RET;
         ret << retturn;
+
+        const AST::VariablePtr retval = returnValue(alg);
+        if (retval != nullptr) {
+            qCritical() << "function " << alg->header.name << "returns " << retval->name;
+            Arduino::Instruction loadRetval;
+            loadRetval.type = Arduino::VAR;
+            loadRetval.varName = retval->name;
+            ret << loadRetval;
+        } else {
+//            qCritical() << "\nbefore:\n";
+//            for (int i = 0; i < argHandle.size(); ++i){
+//                qCritical() << "instr: " << std::to_string(argHandle.at(i).type).c_str();
+//            }
+//            qCritical() << "\n";
+
+            int lastArgIndex = findLastInstruction(argHandle, Arduino::VAR);
+            if (lastArgIndex > -1 && argHandle.at(lastArgIndex).kind > 1) {
+                Arduino::Instruction funcResult;
+                funcResult.type = Arduino::VAR;
+                funcResult.varName = argHandle.at(lastArgIndex).varName;
+                ret << funcResult;
+                Arduino::Instruction newRetArg = argHandle.at(lastArgIndex);
+                newRetArg.varName = QString::null;
+
+                argHandle.removeAt(lastArgIndex);
+                argHandle.insert(lastArgIndex, newRetArg);
+
+                int lastArgDelimiterIndex = findLastInstruction(argHandle, Arduino::END_ARG);
+                if (lastArgDelimiterIndex > 0){
+                    argHandle.removeAt(lastArgDelimiterIndex);
+                }
+
+//                qCritical() << "\nafter:\n";
+//                for (int i = 0; i < argHandle.size(); ++i){
+//                    qCritical() << "instr: " << std::to_string(argHandle.at(i).type).c_str();
+//                }
+//                qCritical() << "\n";
+            }
+        }
+
+        retturn.type = Arduino::END_VAR;
+        ret << retturn;
+        retturn.type = Arduino::END_ST;
+        ret << retturn;
+
+        for (int i = 0; i < argHandle.size(); ++i){
+            qCritical() << "arg: " << argHandle.at(i).varName << " type: " << std::to_string(argHandle.at(i).kind).c_str();
+        }
 
         QList <Arduino::Instruction> instrs = argHandle + pre + body + post + ret;
         func.instructions = instrs.toVector().toStdVector();
@@ -989,9 +873,6 @@ namespace ArduinoCodeGenerator {
         QList <Arduino::Instruction> result;
         for (int i = 0; i < statements.size(); i++) {
             const AST::StatementPtr st = statements[i];
-            qCritical() << "\n***************\n";
-            qCritical() << "Statement: " << types[st->type].c_str();
-            qCritical() << "\n***************\n";
             switch (st->type) {
                 case AST::StError:
                     if (!st->skipErrorEvaluation)
@@ -1107,27 +988,6 @@ namespace ArduinoCodeGenerator {
         }
     }
 
-    Arduino::ValueType parseVarType(AST::VariablePtr variable){
-        switch (variable->baseType.kind) {
-            case AST::TypeInteger:
-                return Arduino::VT_int;
-            case AST::TypeBoolean:
-                return Arduino::VT_bool;
-            case AST::TypeCharect:
-                return Arduino::VT_char;
-            case AST::TypeReal:
-                return Arduino::VT_float;
-            case AST::TypeString:
-                return Arduino::VT_string;
-            case AST::TypeUser:
-                return Arduino::VT_struct;
-            case AST::TypeNone:
-                return Arduino::VT_void;
-            default:
-                return Arduino::VT_void;
-        }
-    }
-
     void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr st,
                            QList <Arduino::Instruction> &result) {
         if (st->expressions.size() > 1) {
@@ -1141,7 +1001,6 @@ namespace ArduinoCodeGenerator {
                 for (int i = lvalue->variable->dimension - 1; i >= 0; i--) {
                     result << calculate(modId, algId, level, lvalue->operands[i]);
                 }
-
                 load.varName = lvalue->variable->name;
                 load.varType = parseVarType(lvalue->variable);
                 result << load;
@@ -1188,9 +1047,6 @@ namespace ArduinoCodeGenerator {
 
         const AST::ExpressionPtr rvalue = st->expressions[0];
         QList <Arduino::Instruction> rvalueInstructions = calculate(modId, algId, level, rvalue);
-        for (uint16_t i = 0; i < rvalueInstructions.size(); i++) {
-            qCritical() << "right type: " << std::to_string(rvalueInstructions.at(i).type).c_str();
-        }
         Arduino::Instruction endFuncArg;
         if (st->expressions[0]->kind == AST::ExprFunctionCall) {
             for (uint16_t i = 0; i < rvalueInstructions.size(); i++) {
@@ -1336,6 +1192,7 @@ namespace ArduinoCodeGenerator {
             Arduino::Instruction func;
             func.type = Arduino::FUNC;
             func.varName = alg->header.name;
+            func.varType = Arduino::VT_None;
             result << func;
 
             for (int i = 0; i < st->operands.size(); i++) {
@@ -1510,7 +1367,7 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
 void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
 {
     for (int i=0; i<st->variables.size(); i++) {
-        const AST::VariablePtr  var = st->variables[i];
+        const AST::VariablePtr var = st->variables[i];
         Arduino::Instruction instr;
         if (var->dimension > 0 && var->bounds.size()>0) {
             instr.type = Arduino::ARR;
@@ -1536,22 +1393,23 @@ void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  s
         else if (var->dimension > 0 && var->bounds.size()==0) {
             // TODO : Implement me after compiler support
         }
-        Arduino::Instruction init;
-        init.type = Arduino::INIT;
-        findVariable(modId, algId, var, init.scope, init.arg);
-        result << init;
-        if (var->initialValue.isValid()) {
-            Arduino::Instruction load;
-            load.type = Arduino::LOAD;
-            load.scope = Arduino::CONSTT;
-            load.arg = constantValue(valueType(var->baseType), var->dimension, var->initialValue,
-                                     var->baseType.actor ? var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
-                                     var->baseType.name
-                                     );
-            result << load;
-        }
         else {
-            // TODO constant values for dimension > 0
+            instr.type = Arduino::VAR;
+            instr.varName = var->name;
+            Arduino::ValueType varType = parseVarType(var);
+            instr.varType = varType;
+            result << instr;
+            if (var->initialValue.type() != QMetaType::UnknownType) {
+                instr.type = Arduino::ASG;
+                result << instr;
+                instr.type = Arduino::CONST;
+                instr.varName = nullptr;
+                qCritical() << var->name << " " << var->initialValue;
+                instr.arg = constantValue(varType, 0, var->initialValue, QString(), QString());
+                result << instr;
+            }
+            instr.type = Arduino::END_VAR;
+            result << instr;
         }
     }
 }
@@ -1772,10 +1630,12 @@ const AST::VariablePtr  Generator::returnValue(const AST::AlgorithmPtr  alg)
 {
     const QString name = alg->header.name;
     for (int i=0; i<alg->impl.locals.size(); i++) {
-        if (alg->impl.locals[i]->name == name)
+        if (alg->impl.locals[i]->name == name) {
+            qCritical() << "1231";
             return alg->impl.locals[i];
+        }
     }
-    return AST::VariablePtr();
+    return nullptr;
 }
 
 void Generator::BREAK(int , int , int level,

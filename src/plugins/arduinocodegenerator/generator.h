@@ -54,17 +54,14 @@ public:
     explicit Generator(QObject *parent = 0);
     void reset(const AST::DataPtr ast, Arduino::Data * bc);
     void addModule(const AST::ModulePtr mod);
-    void generateConstantTable();
     void generateExternTable();
     void setDebugLevel(DebugLevel debugLevel);
-    void UpdateConstants(Arduino::Data & data);
     QList<QVariant> GetConstantValues();
     private:
     int findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer<AST::Expression>> bounds);
     QList<Arduino::Instruction> getOperands(AST::ExpressionPtr expr);
     Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
     Arduino::TableElem AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId);
-    QList<Arduino::Instruction> makeLineInstructions(const QList<AST::LexemPtr> & lexems) const;
     quint16 constantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass
                           );
@@ -79,7 +76,6 @@ public:
         int modId, int algId, int level,
         const QList<AST::StatementPtr> & statements);
 
-    static void shiftInstructions(QList<Arduino::Instruction> &instrs, int offset);
     void ERRORR(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
     void ASSIGN(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
     void ASSERT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);

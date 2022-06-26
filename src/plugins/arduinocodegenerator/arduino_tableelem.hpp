@@ -162,63 +162,36 @@ inline std::string externToTextStream(const TableElem & e) {
         Kumir::EncodingError encodingError;
         os << "#include";
         os << "<" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.moduleLocalizedName), encodingError) << ">;";
-//        os << "\"" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
+        os << "\"" << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
         return os.str();
     }
 
-inline std::string constantToTextStream(const TableElem & e)
-{
+
+inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & helpers) {
     std::ostringstream os;
-    os.setf(std::ios::hex,std::ios::basefield);
+    os.setf(std::ios::hex, std::ios::basefield);
     os.setf(std::ios::showbase);
-    os << "const " << parseVType(e.vtype, e.dimension) << " ";
-    Kumir::EncodingError err;
-    std::string constName = Kumir::Coder::encode(Kumir::UTF8, e.name, err);
-    os << constName;
-    os << " = ";
+    qCritical() << "func name: " << std::string(e.name.begin(), e.name.end()).c_str();
+    if (e.type == Arduino::EL_MAIN){
+        os << "void main(";
+    } else {
+        for (int16_t i = 0; i < e.instructions.size(); ++i){
+            Instruction instr = e.instructions.at(i);
+            if(instr.type == VAR) {
+                qCritical() << instr.varName;
+                if (instr.kind > 1){
+                    os << parseValueType(instr.varType);
+                }
+            }
+        }
+        os << std::string(e.name.begin(), e.name.end()) << '(';
+    }
+
     os.unsetf(std::ios::basefield);
     os.unsetf(std::ios::showbase);
-    if (e.vtype.front()==Arduino::VT_int) {
-        const int32_t val = e.initialValue.toInt();
-        os << val;
-    }
-    else if (e.vtype.front()==Arduino::VT_float) {
-        const double val = e.initialValue.toDouble();
-        os << val;
-    }
-    else if (e.vtype.front()==Arduino::VT_bool) {
-        const bool val = e.initialValue.toBool();
-        os << ( val? "true" : "false" );
-    }
-    else {
-        const Kumir::String stringConstant = e.initialValue.toString();
-        const Kumir::String screenedValue = screenString(stringConstant);
-        Kumir::EncodingError encodingError;
-        const std::string utf8Value = Kumir::Coder::encode(Kumir::UTF8, screenedValue, encodingError);
-        os << "\"";
-        os << utf8Value;
-        os << "\"";
-    }
-    return os.str();
-}
-
-inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & helpers)
-{
-    std::ostringstream os;
-    os.setf(std::ios::hex,std::ios::basefield);
-    os.setf(std::ios::showbase);
-    qCritical() << elemTypeToArduinoString(e.type).c_str();
-    qCritical() << e.signature.c_str();
-
-    if (e.name.length()>0) {
-        Kumir::EncodingError encodingError;
-        qCritical() << screenString(e.name).c_str();
-        os << Kumir::Coder::encode(Kumir::UTF8, screenString(e.name), encodingError) << "\"";
-    }
-    os.unsetf(std::ios::basefield);
-    os.unsetf(std::ios::showbase);
-    for (size_t i=0; i<e.instructions.size(); i++) {
-        std::string parsedInstruction = instructionToString(e.instructions[i], helpers, e.module, e.algId, _constantElemValues);
+    for (size_t i = 0; i < e.instructions.size(); i++) {
+        std::string parsedInstruction = instructionToString(e.instructions[i], helpers, e.module, e.algId,
+                                                            _constantElemValues);
         os << parsedInstruction;
     }
     os << "\n";
@@ -229,17 +202,10 @@ inline void tableElemToTextStream(std::ostream &ts, const TableElem &e, const AS
 {
     _constantElemValues = constants;
 
-//    for (uint16_t i = 0; i < constants.size(); i++){
-//        qCritical() << constants.at(i);
-//    }
-
     switch(e.type) {
         case Arduino::EL_EXTERN:
             ts << externToTextStream(e);
             break;
-//        case Arduino::EL_CONST:
-//            ts << constantToTextStream(e);
-//            break;
         default:
             ts << functionToTextStream(e, helpers);
             break;

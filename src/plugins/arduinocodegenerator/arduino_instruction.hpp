@@ -113,6 +113,7 @@ struct Instruction {
     union {
         LineSpecification lineSpec;
         VariableScope scope;
+        ValueKind kind;
         uint8_t module;
         uint8_t registerr;
     };
@@ -141,6 +142,10 @@ static std::string parseValueType(Arduino::ValueType type){
         }
         if (instruction.varName.isNull()) {
             std::string result;
+            if (instruction.type == VAR){
+                return result;
+            }
+
             if (instruction.arg < constants.size()) {
                 result = constants[instruction.arg].toString().toStdString();
                 if (constants[instruction.arg].type() == QMetaType::QString) {
@@ -148,10 +153,10 @@ static std::string parseValueType(Arduino::ValueType type){
                 } else {
                     result = result;
                 }
+
             } else {
                 result = std::to_string(instruction.registerr);
             }
-
             return result;
         } else {
             return parseValueType(instruction.varType) + instruction.varName.toStdString();
@@ -215,6 +220,16 @@ static std::string parseValueType(Arduino::ValueType type){
         return result.toStdString();
     }
 
+inline std::string parseFunctionInstruction(const Instruction instruction){
+    std::string result;
+    if (instruction.varType > 0){
+        result = parseValueType(instruction.varType);
+    }
+
+    result += instruction.varName.toStdString() + "(";
+    return result;
+}
+
 static std::string typeToString(const Instruction &instruction, QList<QVariant> constants)
 {
     InstructionType t = instruction.type;
@@ -227,7 +242,7 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==END_ARG) return ", ";
     else if (t==END_FUNC) return ")";
     else if (t==END_ARR) return "]";
-    else if (t==FUNC) return instruction.varName.toStdString() + "(";
+    else if (t==FUNC) return parseFunctionInstruction(instruction);
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);
     else if (t==END_ST) return "\n}\n";
@@ -239,8 +254,8 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==CONST) return parseInstructionData(instruction, constants);
     else if (t==CALL) return instruction.varName.toStdString() + "()";
     else if (t==ARR) return parseInstructionData(instruction, constants);
-    else if (t==RET) return ("\nreturn;\n}");
-    else if (t==PAUSE) return ("\n}");
+    else if (t==RET) return ("\nreturn ");
+    else if (t==PAUSE) return ("\n}\n");
     else if (t==ERRORR) return ("errorArduino");
     else if (t==SUM) return parseOperationData(instruction, constants);
     else if (t==SUB) return parseOperationData(instruction, constants);
@@ -354,42 +369,14 @@ inline std::string instructionToString(const Instruction &instr, const AS_Helper
     }
     std::string r = result.str();
 
-    if (VariableInstructions.count(t)) {
-//        VariableScope s = instr.scope;
-//        AS_Key akey;
-//        const AS_Values * vals = nullptr;
-//        akey.first = 0;
-//        if (s==LOCAL) {
-//            akey.first = (moduleId << 16) | algId;
-//            akey.second = instr.arg;
-//            vals = &(helpers.locals);
-//        }
-//        else if (s==GLOBAL) {
-//            akey.first = (moduleId << 16);
-//            akey.second = instr.arg;
-//            vals = &(helpers.globals);
-//        }
-//        else if (s==CONSTT) {
-//            akey.first = 0;
-//            akey.second = instr.arg;
-//            vals = &(helpers.constants);
-//        }
-//        if (vals && vals->count(akey)) {
-//            while (r.length()<25)
-//                r.push_back(' ');
-////            r += std::string("# ") + vals->at(akey);
-//        }
-    }
-    else if (t==CALL) {
+    if (t==CALL) {
         AS_Key akey (instr.module << 16, instr.arg);
         const AS_Values * vals = &(helpers.algorithms);
         if (vals && vals->count(akey)) {
             while (r.length()<25)
                 r.push_back(' ');
-//            r += std::string("# ") + vals->at(akey);
         }
     }
-//    r+= "\n";
 
     return r;
 }

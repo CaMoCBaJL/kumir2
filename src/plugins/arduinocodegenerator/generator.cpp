@@ -1359,7 +1359,7 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
     quint16 indx = 0;
 
     if (!bounds.first->variable) {
-        result = abs(bounds.first->constant.toInt());
+        result = bounds.first->constant.toInt();
     }
     else{
         AST::VariablePtr var = bounds.first->variable;
@@ -1367,11 +1367,11 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
                                  var->baseType.actor ? var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
                                  var->baseType.name
         );
-        result = abs(constants_[indx].value.toInt());
+        result = constants_[indx].value.toInt();
     }
 
     if (!bounds.second->variable) {
-        result += abs(bounds.second->constant.toInt());
+        result = abs(result - bounds.second->constant.toInt());
     }
     else{
         AST::VariablePtr var = bounds.second->variable;
@@ -1380,7 +1380,7 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
                                  var->baseType.name
         );
 
-        result += abs(constants_[indx].value.toInt());
+        result = abs(result - constants_[indx].value.toInt());
     }
 
     return  result;
@@ -1396,13 +1396,13 @@ void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  s
             instr.varName = var->name;
             instr.varType = parseVarType(var);
             result << instr;
-            for (int i=var->dimension-1; i>=0 ; i--) {
+            for (int i=0; i< var->dimension; i++) {
                 instr.varName = nullptr;
                 instr.type = Arduino::CONST;
                 instr.arg = std::numeric_limits<int>::max();
                 instr.registerr = findArrSize(var->bounds[i]);
                 result << instr;
-                if (i != 0) {
+                if (i + 1 < var->dimension) {
                     instr.type = Arduino::END_ARG;
                     result << instr;
                 }

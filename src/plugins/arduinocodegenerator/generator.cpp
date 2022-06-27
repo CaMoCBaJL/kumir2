@@ -794,7 +794,6 @@ namespace ArduinoCodeGenerator {
 
         const AST::VariablePtr retval = returnValue(alg);
         if (retval != nullptr) {
-            qCritical() << "function " << alg->header.name << "returns " << retval->name;
             Arduino::Instruction loadRetval;
             loadRetval.type = Arduino::VAR;
             loadRetval.varName = retval->name;
@@ -814,6 +813,16 @@ namespace ArduinoCodeGenerator {
                 ret << funcResult;
                 Arduino::Instruction newRetArg = argHandle.at(lastArgIndex);
                 newRetArg.varName = QString::null;
+
+                //insert declaration of return var in the begining of func body
+                //insert order reversed(str_delim -> end_var -> var), because each time
+                //we insert instruction in the beginning of body instruction list
+                //first will move to second position
+                funcResult.type = Arduino::STR_DELIM;
+                body.push_front(funcResult);
+                funcResult.type = Arduino::END_VAR;
+                body.push_front(funcResult);
+                body.push_front(argHandle.at(lastArgIndex));
 
                 argHandle.removeAt(lastArgIndex);
                 argHandle.insert(lastArgIndex, newRetArg);
@@ -835,10 +844,6 @@ namespace ArduinoCodeGenerator {
         ret << retturn;
         retturn.type = Arduino::END_ST;
         ret << retturn;
-
-        for (int i = 0; i < argHandle.size(); ++i){
-            qCritical() << "arg: " << argHandle.at(i).varName << " type: " << std::to_string(argHandle.at(i).kind).c_str();
-        }
 
         QList <Arduino::Instruction> instrs = argHandle + pre + body + post + ret;
         func.instructions = instrs.toVector().toStdVector();
@@ -988,6 +993,20 @@ namespace ArduinoCodeGenerator {
         }
     }
 
+    bool wasVarAlreadyDeclared(QString varName, QList<Arduino::Instruction> instructions){
+        qCritical() << "instructions.size() = " << std::to_string(instructions.size()).c_str();
+        for (int i = 0; i < instructions.size(); ++i){
+            Arduino::Instruction instruction = instructions.at(i);
+            if (instruction.type == Arduino::VAR && instruction.varType != Arduino::VT_None &&
+                    instruction.varName == varName){
+                qCritical() << "123123";
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr st,
                            QList <Arduino::Instruction> &result) {
         if (st->expressions.size() > 1) {
@@ -995,15 +1014,17 @@ namespace ArduinoCodeGenerator {
             int diff = lvalue->operands.size() - lvalue->variable->dimension;
 
             if (diff == 0) {
-                Arduino::Instruction load;
-                findVariable(modId, algId, lvalue->variable, load.scope, load.arg);
-                load.type = Arduino::VAR;
+                Arduino::Instruction lVar;
+                findVariable(modId, algId, lvalue->variable, lVar.scope, lVar.arg);
+                lVar.type = Arduino::VAR;
+
                 for (int i = lvalue->variable->dimension - 1; i >= 0; i--) {
                     result << calculate(modId, algId, level, lvalue->operands[i]);
                 }
-                load.varName = lvalue->variable->name;
-                load.varType = parseVarType(lvalue->variable);
-                result << load;
+
+                lVar.varName = lvalue->variable->name;
+                lVar.varType = Arduino::VT_None;
+                result << lVar;
             }
 
             if (diff == 1) {
@@ -1063,8 +1084,10 @@ namespace ArduinoCodeGenerator {
         }
 
         Arduino::Instruction endAsg;
-        endAsg.type = Arduino::END_FUNC;
-        result << endAsg;
+        if (rvalue->kind == AST::ExprFunctionCall) {
+            endAsg.type = Arduino::END_FUNC;
+            result << endAsg;
+        }
         endAsg.type = Arduino::END_VAR;
         result << endAsg;
     }
@@ -1115,7 +1138,7 @@ namespace ArduinoCodeGenerator {
             case QMetaType::Char: return Arduino::VT_char;
             case QMetaType::QString: return Arduino::VT_string;
             case QMetaType::User: return Arduino::VT_struct;
-            default: return Arduino::VT_void;
+            default: return Arduino::VT_None;
         }
     }
 
@@ -1138,7 +1161,6 @@ namespace ArduinoCodeGenerator {
             instr.type = Arduino::VAR;
             instr.varName = st->variable->name;
             instr.varType = Arduino::VT_None;
-//            findVariable(modId, algId, st->variable, instr.scope, instr.arg);
             result << instr;
         } else if (st->kind == AST::ExprArrayElement) {
             Arduino::Instruction instr;
@@ -1149,7 +1171,6 @@ namespace ArduinoCodeGenerator {
             if (st->variable->dimension > 0) {
                 for (int i = st->variable->dimension - 1; i >= 0; i--) {
                     result << innerCalculation(modId, algId, level, st->operands[i]);
-                    qCritical() << "arr dim:" << st->operands.at(i)->constant;
                 }
             }
             result << instr;
@@ -1236,9 +1257,11 @@ namespace ArduinoCodeGenerator {
 
     Arduino::Instruction Generator::parseConstOrVarExpr(AST::ExpressionPtr expr){
         Arduino::Instruction instr;
+
         if (expr->variable){
             instr.type = Arduino::VAR;
             instr.varName = expr->variable->name;
+            instr.varType = Arduino::VT_None;
         } else{
             instr.type = Arduino::CONST;
             instr.arg = constantValue(Arduino::VT_string, 0, expr->constant, QString(), QString());
@@ -1301,7 +1324,6 @@ QList<QVariant> Generator::GetConstantValues(){
 
     return result;
 }
-
 
 void Generator::ASSERT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
 {
@@ -1404,7 +1426,6 @@ void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  s
                 result << instr;
                 instr.type = Arduino::CONST;
                 instr.varName = nullptr;
-                qCritical() << var->name << " " << var->initialValue;
                 instr.arg = constantValue(varType, 0, var->initialValue, QString(), QString());
                 result << instr;
             }
@@ -1631,7 +1652,6 @@ const AST::VariablePtr  Generator::returnValue(const AST::AlgorithmPtr  alg)
     const QString name = alg->header.name;
     for (int i=0; i<alg->impl.locals.size(); i++) {
         if (alg->impl.locals[i]->name == name) {
-            qCritical() << "1231";
             return alg->impl.locals[i];
         }
     }

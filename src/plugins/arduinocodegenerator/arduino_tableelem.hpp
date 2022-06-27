@@ -171,16 +171,15 @@ inline std::string functionToTextStream(const TableElem & e, const AS_Helpers & 
     std::ostringstream os;
     os.setf(std::ios::hex, std::ios::basefield);
     os.setf(std::ios::showbase);
-    qCritical() << "func name: " << std::string(e.name.begin(), e.name.end()).c_str();
     if (e.type == Arduino::EL_MAIN){
         os << "void main(";
     } else {
         for (int16_t i = 0; i < e.instructions.size(); ++i){
             Instruction instr = e.instructions.at(i);
             if(instr.type == VAR) {
-                qCritical() << instr.varName;
                 if (instr.kind > 1){
                     os << parseValueType(instr.varType);
+                    break;
                 }
             }
         }

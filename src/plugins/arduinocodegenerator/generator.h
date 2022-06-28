@@ -58,6 +58,8 @@ public:
     void setDebugLevel(DebugLevel debugLevel);
     QList<QVariant> GetConstantValues();
     private:
+    void addTimesLoopWithoutVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result);
+    void addTimesLoopWithVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result);
     int findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer<AST::Expression>> bounds);
     QList<Arduino::Instruction> getOperands(AST::ExpressionPtr expr);
     Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);

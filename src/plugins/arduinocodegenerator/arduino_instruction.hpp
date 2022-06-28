@@ -32,6 +32,7 @@ enum InstructionType {
     END_ARR = 10017,
     IF = 10018,
     ELSE = 10019,
+    DO = 10020,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -249,6 +250,7 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==INC) return parseOperationData(instruction, constants);
     else if (t==END_ST) return "\n}\n";
     else if (t==END_VAR) return ";";
+    else if (t==DO) return "do{\n";
     else if (t==END_ST_HEAD) return ")\n{\n";
     else if (t==ForLoop) return ("for(");
     else if (t==WhileLoop) return ("while(");

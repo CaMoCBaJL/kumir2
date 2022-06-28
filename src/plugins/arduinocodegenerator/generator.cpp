@@ -1699,10 +1699,101 @@ void addForLoopStep(AST::ExpressionPtr & ex, QList<Arduino::Instruction> &instru
         instructions << step;
     }
 
+static int loopIteratorCounter = 0;
+
+void Generator::addTimesLoopWithVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result){
+    Arduino::Instruction timesVar;
+    Arduino::Instruction instrBuffer;
+
+    timesVar.type = Arduino::VAR;
+    timesVar.varName = st->loop.timesValue->variable->name;
+    result << timesVar;
+
+    instrBuffer.type = Arduino::END_VAR;
+    result << instrBuffer;
+
+    timesVar.varType = Arduino::VT_None;
+    result << timesVar;
+    if (st->loop.timesValue->variable->initialValue > 0){
+        instrBuffer.type = Arduino::GT;
+        result << instrBuffer;
+    } else {
+        instrBuffer.type = Arduino::LS;
+        result << instrBuffer;
+    }
+
+    instrBuffer.type = Arduino::CONST;
+    instrBuffer.arg = constantValue(Arduino::VT_int, 0, st->loop.timesValue->variable->initialValue, QString(), QString());
+    result << instrBuffer;
+
+    instrBuffer.type = Arduino::END_VAR;
+    result << instrBuffer;
+
+    result << timesVar;
+
+    if (st->loop.timesValue->variable->initialValue > 0){
+        instrBuffer.type = Arduino::INC;
+        result << instrBuffer;
+    } else {
+        instrBuffer.type = Arduino::DCR;
+        result << instrBuffer;
+    }
+
+    instrBuffer.type = Arduino::END_VAR;
+    result << instrBuffer;
+}
+
+void Generator::addTimesLoopWithoutVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result) {
+    Arduino::Instruction timesVar;
+    Arduino::Instruction instrBuffer;
+
+    timesVar.type = Arduino::VAR;
+    timesVar.varName = QString::fromStdString("loopIterator" + std::to_string(loopIteratorCounter));
+    timesVar.varType = Arduino::VT_int;
+    result << timesVar;
+
+    loopIteratorCounter++;
+
+    instrBuffer.type = Arduino::ASG;
+    result << instrBuffer;
+
+    instrBuffer.type = Arduino::CONST;
+    instrBuffer.arg = constantValue(Arduino::VT_int, 0, 0, QString(), QString());
+    result << instrBuffer;
+
+    instrBuffer.type = Arduino::END_VAR;
+    result << instrBuffer;
+
+    timesVar.varType = Arduino::VT_None;
+    result << timesVar;
+
+    instrBuffer.type = Arduino::LS;
+    result << instrBuffer;
+
+    instrBuffer.type = Arduino::CONST;
+    instrBuffer.arg = constantValue(Arduino::VT_int, 0, st->loop.timesValue->constant.toInt(), QString(),
+                                    QString());
+    result << instrBuffer;
+
+    instrBuffer.type = Arduino::END_VAR;
+    result << instrBuffer;
+
+    result << timesVar;
+
+    instrBuffer.type = Arduino::INC;
+    result << instrBuffer;
+
+    instrBuffer.type = Arduino::END_VAR;
+    result << instrBuffer;
+}
+
 void Generator::LOOP(int modId, int algId,
                      int level,
                      const AST::StatementPtr st,
                      QList<Arduino::Instruction> &result) {
+
+    qCritical() << "loop type: " << std::to_string(st->loop.type).c_str();
+
     if (st->beginBlockError.size() > 0) {
         const QString error = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->beginBlockError);
         Arduino::Instruction err;
@@ -1713,39 +1804,36 @@ void Generator::LOOP(int modId, int algId,
         return;
     }
 
-    int beginIp = result.size();
-    int jzIp = -1;
+    if ((st->loop.type == AST::LoopWhile || st->loop.type == AST::LoopForever) && !st->loop.endCondition) {
+        Arduino::Instruction instr;
+        instr.type = Arduino::WhileLoop;
+        result << instr;
 
-
-    if (st->loop.type == AST::LoopWhile || st->loop.type == AST::LoopForever) {
-        // Highlight line and clear margin
         if (st->loop.whileCondition) {
-            Arduino::Instruction instr;
-            instr.type = Arduino::WhileLoop;
-            result << instr;
-
             QList <Arduino::Instruction> whileCondInstructions = calculate(modId, algId, level,
                                                                            st->loop.whileCondition);
-
             result << whileCondInstructions;
+        } else {
+            instr.type = Arduino::CONST;
+            instr.arg = constantValue(Arduino::VT_bool, 0, true, QString(), QString());
+            result << instr;
         }
     } else if (st->loop.type == AST::LoopTimes) {
+        if (st->loop.timesValue->constant.toInt() < 1){
+            return;
+        }
+
         Arduino::Instruction instrBuffer;
         Arduino::Instruction timesVar;
 
-        instrBuffer.type = Arduino::WhileLoop;
+        instrBuffer.type = Arduino::ForLoop;
         result << instrBuffer;
 
-        timesVar.type = Arduino::VAR;
-        timesVar.varName = st->loop.timesValue->variable->name;
-        result << timesVar;
-
-        instrBuffer.type = Arduino::GT;
-        result << instrBuffer;
-
-        instrBuffer.type = Arduino::CONST;
-        instrBuffer.registerr = 0;
-        result << instrBuffer;
+        if (st->loop.timesValue->variable) {
+            addTimesLoopWithVarHead(st, result);
+        } else {
+            addTimesLoopWithoutVarHead(st, result);
+        }
 
     } else if (st->loop.type == AST::LoopFor) {
         Arduino::Instruction instrBuffer;
@@ -1788,9 +1876,15 @@ void Generator::LOOP(int modId, int algId,
                        result.at(result.size() - 1).registerr);
     }
 
-    Arduino::Instruction endLoopHead;
-    endLoopHead.type = Arduino::END_ST_HEAD;
-    result << endLoopHead;
+    if (st->loop.endCondition){
+        Arduino::Instruction beginDo;
+        beginDo.type = Arduino::DO;
+        result << beginDo;
+    } else {
+        Arduino::Instruction endLoopHead;
+        endLoopHead.type = Arduino::END_ST_HEAD;
+        result << endLoopHead;
+    }
 
     QList <Arduino::Instruction> instrs = instructions(modId, algId, level, st->loop.body);
     result += instrs;
@@ -1806,14 +1900,21 @@ void Generator::LOOP(int modId, int algId,
         return;
     }
 
-    if (st->loop.endCondition) {
-        QList <Arduino::Instruction> endCondInstructions = calculate(modId, algId, level, st->loop.endCondition);
-        result << endCondInstructions;
-    }
-
     Arduino::Instruction endLoop;
     endLoop.type = Arduino::END_ST;
     result << endLoop;
+
+    if (st->loop.endCondition) {
+        Arduino::Instruction endCondition;
+        endCondition.type = Arduino::WhileLoop;
+        result << endCondition;
+
+        QList <Arduino::Instruction> endCondInstructions = calculate(modId, algId, level, st->loop.endCondition);
+        result << endCondInstructions;
+
+        endCondition.type = Arduino::END_FUNC;
+        result << endCondition;
+    }
 }
 
 } // namespace ArduinoCodeGenerator

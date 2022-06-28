@@ -971,18 +971,6 @@ namespace ArduinoCodeGenerator {
         }
     }
 
-    bool wasVarAlreadyDeclared(QString varName, QList<Arduino::Instruction> instructions){
-        for (int i = 0; i < instructions.size(); ++i){
-            Arduino::Instruction instruction = instructions.at(i);
-            if (instruction.type == Arduino::VAR && instruction.varType != Arduino::VT_None &&
-                    instruction.varName == varName){
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr st,
                            QList <Arduino::Instruction> &result) {
         if (st->expressions.size() > 1) {
@@ -1588,15 +1576,16 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
         return;
     }
 
-    int lastJzIp = -1;
-    QList<int> jumpIps;
-
-
-
     for (int i=0; i<st->conditionals.size(); i++) {
-        if (lastJzIp!=-1) {
-            result[lastJzIp].arg = result.size();
-            lastJzIp = -1;
+        Arduino::Instruction ifInstr;
+        if (i > 0){
+            ifInstr.type = Arduino::ELSE;
+            result << ifInstr;
+        }
+
+        if (i + 1 != st->conditionals.size()) {
+            ifInstr.type = Arduino::IF;
+            result << ifInstr;
         }
         if (!st->conditionals[i].conditionError.isEmpty()) {
             const QString error = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->conditionals[i].conditionError);
@@ -1610,34 +1599,16 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
             if (st->conditionals[i].condition) {
                 QList<Arduino::Instruction> condInstrs = calculate(modId, algId, level, st->conditionals[i].condition);
                 result << condInstrs;
-                Arduino::Instruction pop;
-                pop.type = Arduino::POP;
-                pop.registerr = 0;
-                result << pop;
-                Arduino::Instruction showreg;
-                showreg.type = Arduino::SHOWREG;
-                showreg.registerr = 0;
-                result << showreg;
-                Arduino::Instruction jz;
-                jz.type = Arduino::JZ;
-                jz.registerr = 0;
-                lastJzIp = result.size();
-                result << jz;
+
+                ifInstr.type = Arduino::END_ST_HEAD;
+                result << ifInstr;
             }
             QList<Arduino::Instruction> instrs = instructions(modId, algId, level, st->conditionals[i].body);
             result += instrs;
-            if (i<st->conditionals.size()-1) {
-                Arduino::Instruction jump;
-                jump.type = Arduino::JUMP;
-                jumpIps << result.size();
-                result << jump;
-            }
+
+            ifInstr.type = Arduino::END_ST;
+            result << ifInstr;
         }
-    }
-    if (lastJzIp!=-1)
-        result[lastJzIp].arg = result.size();
-    for (int i=0; i<jumpIps.size(); i++) {
-        result[jumpIps[i]].arg = result.size();
     }
 }
 

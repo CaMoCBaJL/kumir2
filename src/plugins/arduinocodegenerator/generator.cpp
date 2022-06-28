@@ -31,7 +31,6 @@ namespace ArduinoCodeGenerator {
         return vec;
     }
 
-
     Generator::Generator(QObject *parent)
             : QObject(parent), byteCode_(nullptr), debugLevel_(Shared::GeneratorInterface::LinesAndVariables) {
     }
@@ -854,27 +853,6 @@ namespace ArduinoCodeGenerator {
             int modId, int algId, int level,
             const QList <AST::StatementPtr> &statements) {
 
-        std::string types[] = {
-                "Error",
-                "Assign",
-                "Assert",
-                "VarInitialize",
-                "Input",
-                "Output",
-                "Loop",
-                "IfElse",
-                "SwitchCase",
-                "Break",
-                "Pause",
-                "Halt"};
-
-        std::string loopTypes[] = {
-                "For",
-                "While",
-                "Times",
-                "Forever"
-        };
-
         QList <Arduino::Instruction> result;
         for (int i = 0; i < statements.size(); i++) {
             const AST::StatementPtr st = statements[i];
@@ -994,12 +972,10 @@ namespace ArduinoCodeGenerator {
     }
 
     bool wasVarAlreadyDeclared(QString varName, QList<Arduino::Instruction> instructions){
-        qCritical() << "instructions.size() = " << std::to_string(instructions.size()).c_str();
         for (int i = 0; i < instructions.size(); ++i){
             Arduino::Instruction instruction = instructions.at(i);
             if (instruction.type == Arduino::VAR && instruction.varType != Arduino::VT_None &&
                     instruction.varName == varName){
-                qCritical() << "123123";
                 return true;
             }
         }
@@ -1012,7 +988,6 @@ namespace ArduinoCodeGenerator {
         if (st->expressions.size() > 1) {
             const AST::ExpressionPtr lvalue = st->expressions[1];
             int diff = lvalue->operands.size() - lvalue->variable->dimension;
-
             if (diff == 0) {
                 Arduino::Instruction lVar;
                 findVariable(modId, algId, lvalue->variable, lVar.scope, lVar.arg);
@@ -1142,6 +1117,27 @@ namespace ArduinoCodeGenerator {
         }
     }
 
+    QString parseOperatorType(AST::ExpressionOperator op){
+        switch (op) {
+            case AST::OpNone: return "var";
+            case AST::OpSumm: return "+";
+            case AST::OpSubstract: return "-";
+            case AST::OpMultiply: return "*";
+            case AST::OpDivision: return "/";
+            case AST::OpPower: return "Math.pow()";
+            case AST::OpNot : return "!";
+            case AST::OpAnd: return "&&";
+            case AST::OpOr: return "||";
+            case AST::OpEqual: return "==";
+            case AST::OpNotEqual: return "!=";
+            case AST::OpLess: return "<";
+            case AST::OpGreater: return ">";
+            case AST::OpLessOrEqual: return "<=";
+            case AST::OpGreaterOrEqual: return ">=";
+            default: return "nanananana";
+        }
+    }
+
     QList<Arduino::Instruction> Generator::innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st){
         QList <Arduino::Instruction> result;
         if (st->kind == AST::ExprConst) {
@@ -1196,13 +1192,12 @@ namespace ArduinoCodeGenerator {
         } else if (st->kind == AST::ExprFunctionCall) {
             const AST::AlgorithmPtr alg = st->function;
 
-            for (int i = 0; i < alg->header.arguments.size(); i++) {
-                AST::VariablePtr argument = alg->header.arguments.at(i);
-                if (argument->accessType == AST::AccessArgumentOut) {
+            for (int i = 0; i < st->operands.size(); i++) {
+                AST::VariablePtr argument = st->operands.at(i)->variable;
+                if (argument && !argument->name.isNull()) {
                     Arduino::Instruction instr;
                     instr.type = Arduino::VAR;
                     instr.varName = argument->name;
-                    instr.varType = parseVarType(argument);
                     result << instr;
                     instr.type = Arduino::ASG;
                     result << instr;
@@ -1234,6 +1229,8 @@ namespace ArduinoCodeGenerator {
             QList <AST::ExpressionPtr> operands = st->operands;
             for (int i = 0; i < operands.size(); i++) {
                 AST::ExpressionPtr operand = st->operands.at(i);
+                Arduino::Instruction instr;
+                instr.type = parseInstructionType(st);
                 if (operand->operatorr > 0 && i - 2 > 0 &&
                     (operands.at(i - 2)->operatorr == AST::OpNone && operands.at(i - 1)->operatorr == AST::OpNone)) {
                     operands.replace(i - 1, operand);
@@ -1273,6 +1270,9 @@ namespace ArduinoCodeGenerator {
     QList<Arduino::Instruction> Generator::getOperands(AST::ExpressionPtr expr){
         QList<Arduino::Instruction> result;
         for (uint16_t i = 0; i < expr->operands.size(); i++){
+            AST::ExpressionPtr e = expr->operands.at(i);
+            Arduino::Instruction instruction;
+            instruction.type = parseInstructionType(e);
             if (expr->operands.at(i)->operands.size() == 0){
                 result << parseConstOrVarExpr(expr->operands.at(0));
 
@@ -1289,22 +1289,22 @@ namespace ArduinoCodeGenerator {
                     break;
                 }
 
-                Arduino::Instruction instr;
-                instr.type = parseInstructionType(expr);
-                result << instr;
+                if (expr->operatorr == AST::OpOr || expr->operatorr == AST::OpAnd) {
+                    Arduino::Instruction instr;
+                    instr.type = parseInstructionType(expr);
+                    result << instr;
+                }
             }
         }
 
         return result;
     }
 
-
     QList <Arduino::Instruction> Generator::calculate(int modId, int algId, int level, const AST::ExpressionPtr st) {
         QList<Arduino::Instruction> result = innerCalculation(modId, algId, level, st);
         if (st->kind == AST::ExprSubexpression){
             result = getOperands(st);
         }
-
         return result;
     }
 
@@ -1511,18 +1511,15 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
 
 void Generator::IFTHENELSE(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> &result)
 {
-    int jzIP = -1;
+    Arduino::Instruction ifInstr;
+    ifInstr.type = Arduino::IF;
+    result << ifInstr;
     if (st->conditionals[0].condition) {
         QList<Arduino::Instruction> conditionInstructions = calculate(modId, algId, level, st->conditionals[0].condition);
         result << conditionInstructions;
-
-        jzIP = result.size();
-        Arduino::Instruction jz;
-        jz.type = Arduino::JZ;
-        jz.registerr = 0;
-        result << jz;
+        ifInstr.type = Arduino::END_ST_HEAD;
+        result << ifInstr;
     }
-
 
     Arduino::Instruction error;
     if (st->conditionals[0].conditionError.size()>0) {
@@ -1535,17 +1532,11 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
     else {
         QList<Arduino::Instruction> thenInstrs = instructions(modId, algId, level, st->conditionals[0].body);
         result += thenInstrs;
+        ifInstr.type = Arduino::END_ST;
+        result << ifInstr;
     }
 
-    if (jzIP!=-1)
-        result[jzIP].arg = result.size();
-
     if (st->conditionals.size()>1) {
-        int jumpIp = result.size();
-        Arduino::Instruction jump;
-        jump.type = Arduino::JUMP;
-        result << jump;
-        result[jzIP].arg = result.size();
         if (st->conditionals[1].conditionError.size()>0) {
             const QString msg = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->conditionals[1].conditionError);
             error.type = Arduino::ERRORR;
@@ -1554,10 +1545,13 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
             result << error;
         }
         else {
+            ifInstr.type = Arduino::ELSE;
+            result << ifInstr;
             QList<Arduino::Instruction> elseInstrs = instructions(modId, algId, level, st->conditionals[1].body);
             result += elseInstrs;
+            ifInstr.type = Arduino::END_ST;
+            result << ifInstr;
         }
-        result[jumpIp].arg = result.size();
     }
 
     if (st->endBlockError.size()>0) {

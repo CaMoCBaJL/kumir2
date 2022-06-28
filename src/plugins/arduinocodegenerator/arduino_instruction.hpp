@@ -30,6 +30,8 @@ enum InstructionType {
     END_ARG = 10015,
     END_FUNC = 10016,
     END_ARR = 10017,
+    IF = 10018,
+    ELSE = 10019,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -255,6 +257,8 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==CALL) return instruction.varName.toStdString() + "()";
     else if (t==ARR) return parseInstructionData(instruction, constants);
     else if (t==RET) return ("\nreturn ");
+    else if (t==IF) return "if (";
+    else if (t==ELSE) return "else ";
     else if (t==PAUSE) return ("\n}\n");
     else if (t==ERRORR) return ("errorArduino");
     else if (t==SUM) return parseOperationData(instruction, constants);

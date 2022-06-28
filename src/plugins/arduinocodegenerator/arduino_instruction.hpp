@@ -33,6 +33,8 @@ enum InstructionType {
     IF = 10018,
     ELSE = 10019,
     DO = 10020,
+    START_SUB_EXPR = 10021,
+    END_SUB_EXPR = 10022,
     NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
     INIT        = 0x0C, // Initialize variable
@@ -59,7 +61,7 @@ enum InstructionType {
     SETREF      = 0x24, // Set reference value to variable
     HALT        = 0x26, // Terminate
     CTL         = 0x27, // Control VM behaviour
-    INRANGE     = 0x28, // Pops 4 values ... a, b, c, x from stack Fand returns c>=0? a<x<=b : a<=x<b
+    INRANGE     = 0x28, // Pops 4 values ... a, b, c, x from stack and returns c>=0? a<x<=b : a<=x<b
     UPDARR      = 0x29, // Updates array bounds
 
     CSTORE      = 0x30, // Copy value from stack head and push it to cache
@@ -183,7 +185,7 @@ static std::string parseValueType(Arduino::ValueType type){
                 result.append(" / ");
                 break;
             case NEG:
-                result.append(" ^ ");
+                result.append(" ! ");
                 break;
             case AND:
                 result.append(" && ");
@@ -245,6 +247,8 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==END_ARG) return ", ";
     else if (t==END_FUNC) return ")";
     else if (t==END_ARR) return "]";
+    else if (t==START_SUB_EXPR) return "(";
+    else if (t==END_SUB_EXPR) return ")";
     else if (t==FUNC) return parseFunctionInstruction(instruction);
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);
@@ -259,7 +263,7 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==CALL) return instruction.varName.toStdString() + "()";
     else if (t==ARR) return parseInstructionData(instruction, constants);
     else if (t==RET) return ("\nreturn ");
-    else if (t==IF) return "if (";
+    else if (t==IF) return "if ";
     else if (t==ELSE) return "else ";
     else if (t==PAUSE) return ("\n}\n");
     else if (t==ERRORR) return ("errorArduino");

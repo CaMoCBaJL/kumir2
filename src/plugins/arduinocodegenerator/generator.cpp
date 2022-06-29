@@ -1027,20 +1027,7 @@ namespace ArduinoCodeGenerator {
 
         const AST::ExpressionPtr rvalue = st->expressions[0];
         QList <Arduino::Instruction> rvalueInstructions = calculate(modId, algId, level, rvalue);
-        Arduino::Instruction endFuncArg;
-        if (st->expressions[0]->kind == AST::ExprFunctionCall) {
-            for (uint16_t i = 0; i < rvalueInstructions.size(); i++) {
-                Arduino::Instruction instr = rvalueInstructions.at(i);
-                result << instr;
-                if ((instr.type == Arduino::VAR && !instr.varType || rvalueInstructions.at(i).type == Arduino::CONST) && i + 1 < rvalueInstructions.size()) {
-                    endFuncArg.type = Arduino::END_ARG;
-                    result << endFuncArg;
-                }
-            }
-        }
-        else{
-            result << rvalueInstructions;
-        }
+        result << rvalueInstructions;
 
         Arduino::Instruction endAsg;
         if (rvalue->kind == AST::ExprFunctionCall) {
@@ -1196,8 +1183,20 @@ namespace ArduinoCodeGenerator {
             result << func;
 
             for (int i = 0; i < st->operands.size(); i++) {
+                if (i > 0){
+                    Arduino::Instruction argDelim;
+                    argDelim.type = Arduino::END_ARG;
+                    result << argDelim;
+                }
+
                 AST::VariableAccessType t = alg->header.arguments[i]->accessType;
                 bool arr = alg->header.arguments[i]->dimension > 0;
+
+                if (st->operands.at(i)->kind == AST::ExprSubexpression){
+                    result << calculate(modId, algId, level, st->operands.at(i));
+                    continue;
+                }
+
                 if (t == AST::AccessArgumentIn && !arr) {
                     result << innerCalculation(modId, algId, level, st->operands[i]);
                 } else if (t == AST::AccessArgumentIn && arr) {
@@ -1255,20 +1254,37 @@ namespace ArduinoCodeGenerator {
         QList<Arduino::Instruction> result;
         for (uint16_t i = 0; i < expr->operands.size(); i++){
             AST::ExpressionPtr e = expr->operands.at(i);
-            Arduino::Instruction instruction;
-            instruction.type = parseInstructionType(e);
-            if (expr->operands.at(i)->operands.size() == 0){
-                result << parseConstOrVarExpr(expr->operands.at(0));
 
+            bool hasChildren;
+
+            for (int j = 0; j < expr->operands.size(); ++j){
+                if (expr->operands.at(i)->operands.size() != 0){
+                    hasChildren = true;
+                }
+            }
+
+            if (i == 1 && hasChildren){
                 Arduino::Instruction instr;
                 instr.type = parseInstructionType(expr);
                 result << instr;
+            }
 
-                result << parseConstOrVarExpr(expr->operands.at(1));
-                break;
+            if (expr->operands.at(i)->operands.size() == 0){
+                result << parseConstOrVarExpr(expr->operands.at(i));
+                continue;
             }
             else{
+                Arduino::Instruction brace;
+                if (e->expressionIsClosed){
+                    brace.type = Arduino::START_SUB_EXPR;
+                    result << brace;
+                }
                 result << getOperands(expr->operands.at(i));
+
+                if (e->expressionIsClosed){
+                    brace.type = Arduino::END_SUB_EXPR;
+                    result << brace;
+                }
                 if (i + 1 == expr->operands.size()){
                     break;
                 }
@@ -1286,9 +1302,16 @@ namespace ArduinoCodeGenerator {
 
     QList <Arduino::Instruction> Generator::calculate(int modId, int algId, int level, const AST::ExpressionPtr st) {
         QList<Arduino::Instruction> result = innerCalculation(modId, algId, level, st);
+
         if (st->kind == AST::ExprSubexpression){
             result = getOperands(st);
+
+            qCritical() << "subexpr instructions!: ";
+            for (int i = 0; i < result.size(); ++i){
+                qCritical() << std::to_string(result.at(i).type).c_str();
+            }
         }
+
         return result;
     }
 

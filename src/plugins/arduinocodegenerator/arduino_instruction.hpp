@@ -28,49 +28,16 @@ enum InstructionType {
     STR_DELIM = 10013,
     BREAK = 10014,
     END_ARG = 10015,
-    END_FUNC = 10016,
     END_ARR = 10017,
     IF = 10018,
     ELSE = 10019,
     DO = 10020,
     START_SUB_EXPR = 10021,
     END_SUB_EXPR = 10022,
-    NOP         = 0x00,
     CALL        = 0x0A, // Call compiled function
-    INIT        = 0x0C, // Initialize variable
-    SETARR      = 0x0D, // Set array bounds
-    STORE       = 0x0E, // Store value in variable
-    STOREARR    = 0x0F, // Store value in array
-    LOAD        = 0x10, // Get value from variable
-    LOADARR     = 0x11, // Get value from array
-    SETMON      = 0x12, // Set variable monitor
-    UNSETMON    = 0x13, // Unset variable monitor
-    JUMP        = 0x14, // Unconditional jump
-    JNZ         = 0x15, // Conditional jump if non-zero value in specified register
-    JZ          = 0x16, // Conditional jump if zero value in specified register
-    POP         = 0x18, // Pop from stack to register
-    PUSH        = 0x19, // Push to stack from register
     RET         = 0x1B, // Return from function
-    PAUSE       = 0x1D, // Force pause
-    ERRORR       = 0x1E, // Abort evaluation
-    LINE        = 0x1F, // Emit line number
-    REF         = 0x20, // Get reference to variable
-    REFARR      = 0x21, // Get reference to array element
-    SHOWREG     = 0x22, // Show register value at margin
-    CLEARMARG   = 0x23, // Clear margin text from current line to specified
-    SETREF      = 0x24, // Set reference value to variable
-    HALT        = 0x26, // Terminate
-    CTL         = 0x27, // Control VM behaviour
-    INRANGE     = 0x28, // Pops 4 values ... a, b, c, x from stack and returns c>=0? a<x<=b : a<=x<b
-    UPDARR      = 0x29, // Updates array bounds
-
-    CSTORE      = 0x30, // Copy value from stack head and push it to cache
-    CLOAD       = 0x31, // Pop value from cache to push it to main stack
-    CDROPZ      = 0x32, // Drop cache value in case of zero value in specified register
-
-    CACHEBEGIN  = 0x33, // Push begin marker into cache
-    CACHEEND    = 0x34, // Clear cache until marker
-
+    ERRORR,
+    NOP,
 
     // Common operations -- no comments need
 
@@ -239,34 +206,30 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
 {
     InstructionType t = instruction.type;
 
-    if (t==NOP) return ("nopArduino");
-    else if (t==OUTPUT) return "cout << ";
+    if (t==OUTPUT) return "cout << ";
     else if (t==INPUT) return "cin >> ";
-    else if (t==BREAK) return "break;\n";
+    else if (t==BREAK) return "break;";
     else if (t==STR_DELIM) return "\n";
     else if (t==END_ARG) return ", ";
-    else if (t==END_FUNC) return ")";
     else if (t==END_ARR) return "]";
     else if (t==START_SUB_EXPR) return "(";
     else if (t==END_SUB_EXPR) return ")";
     else if (t==FUNC) return parseFunctionInstruction(instruction);
     else if (t==DCR) return parseOperationData(instruction, constants);
     else if (t==INC) return parseOperationData(instruction, constants);
-    else if (t==END_ST) return "\n}\n";
+    else if (t==END_ST) return "\n}";
     else if (t==END_VAR) return ";";
     else if (t==DO) return "do{\n";
     else if (t==END_ST_HEAD) return ")\n{\n";
-    else if (t==ForLoop) return ("for(");
-    else if (t==WhileLoop) return ("while(");
+    else if (t==ForLoop) return ("for ");
+    else if (t==WhileLoop) return ("while ");
     else if (t==VAR) return parseInstructionData(instruction, constants);
     else if (t==CONST) return parseInstructionData(instruction, constants);
     else if (t==CALL) return instruction.varName.toStdString() + "()";
     else if (t==ARR) return parseInstructionData(instruction, constants);
-    else if (t==RET) return ("\nreturn ");
+    else if (t==RET) return ("return ");
     else if (t==IF) return "if ";
     else if (t==ELSE) return "else ";
-    else if (t==PAUSE) return ("\n}\n");
-    else if (t==ERRORR) return ("errorArduino");
     else if (t==SUM) return parseOperationData(instruction, constants);
     else if (t==SUB) return parseOperationData(instruction, constants);
     else if (t==MUL) return parseOperationData(instruction, constants);
@@ -282,30 +245,8 @@ static std::string typeToString(const Instruction &instruction, QList<QVariant> 
     else if (t==LEQ) return parseOperationData(instruction, constants);
     else if (t==GEQ) return parseOperationData(instruction, constants);
     else if (t==ASG) return parseOperationData(instruction, constants);
-    else if (t==REF) return ("refArduino");
-    else if (t==REFARR) return ("refarrArduino");
-    else if (t==LINE) return ("lineArduino");
-    else if (t==SHOWREG) return ("showregArduino");
-    else if (t==CLEARMARG) return ("clearmargArduino");
-    else if (t==SETREF) return ("setrefArduino");
-    else if (t==PAUSE) return ("pauseArduino");
-    else if (t==HALT) return ("haltArduino");
-    else if (t==CTL) return ("ctlArduino");
-    else if (t==INRANGE) return ("inrangeArduino");
-    else if (t==UPDARR) return ("updarrArduino");
-    else if (t==CLOAD) return ("cloadArduino");
-    else if (t==CSTORE) return ("cstoreArduino");
-    else if (t==CDROPZ) return ("cdropzArduino");
-    else if (t==CACHEBEGIN) return ("cachebeginArduino");
-    else if (t==CACHEEND) return ("cacheendArduino");
-    else
-    {
-//        qCritical() << "instructionData";
-//        qCritical() << std::to_string(instruction.type).c_str();
-//        qCritical() << instruction.varName;
-//        return " instruction: " + std::to_string(t) + " ";
-        return "";
-    }
+    else if (t==ERRORR) return "\n\nERROR! \n\n" + parseInstructionData(instruction, constants);
+    else return "";
 }
 
 typedef std::pair<uint32_t, uint16_t> AS_Key;
@@ -320,54 +261,11 @@ struct AS_Helpers {
 
 inline std::string instructionToString(const Instruction &instr, const AS_Helpers & helpers, uint8_t moduleId, uint16_t algId, QList<QVariant> constants)
 {
-    static std::set<InstructionType> VariableInstructions;
-    VariableInstructions.insert(INIT);
-    VariableInstructions.insert(SETARR);
-    VariableInstructions.insert(STORE);
-    VariableInstructions.insert(STOREARR);
-    VariableInstructions.insert(LOAD);
-    VariableInstructions.insert(LOADARR);
-    VariableInstructions.insert(SETMON);
-    VariableInstructions.insert(UNSETMON);
-    VariableInstructions.insert(REF);
-    VariableInstructions.insert(REFARR);
-    VariableInstructions.insert(SETREF);
-    VariableInstructions.insert(UPDARR);
-
     static std::set<InstructionType> ModuleNoInstructions;
     ModuleNoInstructions.insert(CALL);
-    ModuleNoInstructions.insert(CTL);
-
-    static std::set<InstructionType> RegisterNoInstructions;
-    RegisterNoInstructions.insert(POP);
-    RegisterNoInstructions.insert(PUSH);
-    RegisterNoInstructions.insert(JZ);
-    RegisterNoInstructions.insert(JNZ);
-    RegisterNoInstructions.insert(SHOWREG);
 
     static std::set<InstructionType> HasValueInstructions;
     HasValueInstructions.insert(CALL);
-    HasValueInstructions.insert(INIT);
-    HasValueInstructions.insert(SETARR);
-    HasValueInstructions.insert(STORE);
-    HasValueInstructions.insert(STOREARR);
-    HasValueInstructions.insert(LOAD);
-    HasValueInstructions.insert(LOADARR);
-    HasValueInstructions.insert(SETMON);
-    HasValueInstructions.insert(UNSETMON);
-    HasValueInstructions.insert(JUMP);
-    HasValueInstructions.insert(JNZ);
-    HasValueInstructions.insert(JZ);
-    HasValueInstructions.insert(ERRORR);
-    HasValueInstructions.insert(LINE);
-    HasValueInstructions.insert(REF);
-    HasValueInstructions.insert(REFARR);
-    HasValueInstructions.insert(CLEARMARG);
-    HasValueInstructions.insert(SETREF);
-    HasValueInstructions.insert(HALT);
-    HasValueInstructions.insert(PAUSE);
-    HasValueInstructions.insert(CTL);
-    HasValueInstructions.insert(UPDARR);
 
     std::stringstream result;
     result.setf(std::ios::hex,std::ios::basefield);
@@ -390,73 +288,6 @@ inline std::string instructionToString(const Instruction &instr, const AS_Helper
 
     return r;
 }
-
-inline uint32_t toUint32(const Instruction &instr)
-{
-    static std::set<InstructionType> ModuleNoInstructions;
-    ModuleNoInstructions.insert(CALL);
-    ModuleNoInstructions.insert(CTL);
-
-    static std::set<InstructionType> RegisterNoInstructions;
-    RegisterNoInstructions.insert(POP);
-    RegisterNoInstructions.insert(PUSH);
-    RegisterNoInstructions.insert(JZ);
-    RegisterNoInstructions.insert(JNZ);
-    RegisterNoInstructions.insert(SHOWREG);
-
-    uint32_t first = uint8_t(instr.type);
-    first = first << 24;
-    uint32_t second = 0u;
-    if (ModuleNoInstructions.count(instr.type))
-        second = uint8_t(instr.module);
-    else if (RegisterNoInstructions.count(instr.type))
-        second = uint8_t(instr.registerr);
-    else
-        second = uint8_t(instr.scope);
-    if (instr.type == LINE) {
-        second = uint8_t(instr.lineSpec);
-    }
-    second = second << 16;
-    uint32_t last = instr.arg;
-    last = last << 16; // Ensure first two bytes are 0x0000
-    last = last >> 16;
-    uint32_t result = first | second | last;
-    return result;
-}
-
-inline Instruction fromUint32(uint32_t value)
-{
-    static std::set<InstructionType> ModuleNoInstructions;
-    ModuleNoInstructions.insert(CALL);
-    ModuleNoInstructions.insert(CTL);
-
-    static std::set<InstructionType> RegisterNoInstructions;
-    RegisterNoInstructions.insert(POP);
-    RegisterNoInstructions.insert(PUSH);
-    RegisterNoInstructions.insert(JZ);
-    RegisterNoInstructions.insert(JNZ);
-    RegisterNoInstructions.insert(SHOWREG);
-
-    uint32_t first  = value & 0xFF000000;
-    uint32_t second = value & 0x00FF0000;
-    uint32_t last   = value & 0x0000FFFF;
-    first = first >> 24;
-    second = second >> 16;
-    Instruction i;
-    i.type = InstructionType(first);
-    if (ModuleNoInstructions.count(i.type))
-        i.module = uint8_t(second);
-    else if (RegisterNoInstructions.count(i.type))
-        i.registerr = uint8_t(second);
-    else
-        i.scope = VariableScope(second);
-    if (i.type == LINE) {
-        i.lineSpec = LineSpecification(second);
-    }
-    i.arg = uint16_t(last);
-    return i;
-}
-
 
 } // end namespace Arduino
 

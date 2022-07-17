@@ -4,6 +4,7 @@
 
 #ifndef KUMIR2_DATA_H
 #define KUMIR2_DATA_H
+#include "TableElem.h"
 namespace Arduino{
     struct Data {
         std::deque <TableElem> d;

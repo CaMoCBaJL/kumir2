@@ -6,11 +6,14 @@
 #include <kumir2-libs/stdlib/kumirstdlib.hpp>
 
 #include "arduino_data.hpp"
-#include "arduino_enums.hpp"
-#include "CVariable.hpp"
+#include "entities/CVariable.h"
 #include <deque>
 #include <cmath>
 #include <limits>
+#include "enums/enums.h"
+#include "entities/Instruction.h"
+#include "entities/TableElem.h"
+#include "entities/Data.h"
 
 namespace ArduinoCodeGenerator {
 

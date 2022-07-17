@@ -7,68 +7,11 @@
 #include <algorithm>
 #define DO_NOT_DECLARE_STATIC
 #include <kumir2-libs/stdlib/kumirstdlib.hpp>
-#include "arduino_enums.hpp"
+#include "enums/enums.h"
+#include "entities/Instruction.h"
+
 
 namespace Arduino {
-
-enum InstructionType {
-    ForLoop = 10000,
-    WhileLoop = 10001,
-    DCR = 10002,
-    INC = 10003,
-    VAR = 10004,
-    ARR = 10005,
-    FUNC = 10006,
-    CONST = 10007,
-    END_ST = 10008,
-    END_VAR = 10009,
-    END_ST_HEAD = 10010,
-    INPUT = 10011,
-    OUTPUT = 10012,
-    STR_DELIM = 10013,
-    BREAK = 10014,
-    END_ARG = 10015,
-    END_ARR = 10017,
-    IF = 10018,
-    ELSE = 10019,
-    DO = 10020,
-    START_SUB_EXPR = 10021,
-    END_SUB_EXPR = 10022,
-    CALL        = 0x0A, // Call compiled function
-    RET         = 0x1B, // Return from function
-    ERRORR,
-    NOP,
-
-    // Common operations -- no comments need
-
-    SUM         = 0xF1,
-    SUB         = 0xF2,
-    MUL         = 0xF3,
-    DIV         = 0xF4,
-    POW         = 0xF5,
-    NEG         = 0xF6,
-    AND         = 0xF7,
-    OR          = 0xF8,
-    EQ          = 0xF9,
-    NEQ         = 0xFA,
-    LS          = 0xFB,
-    GT          = 0xFC,
-    LEQ         = 0xFD,
-    GEQ         = 0xFE,
-    ASG = 0xFF
-};
-
-enum VariableScope {
-    UNDEF = 0x00, // Undefined if not need
-    CONSTT = 0x01, // Value from constants table
-    LOCAL = 0x02, // Value from locals table
-    GLOBAL= 0x03  // Value from globals table
-};
-
-enum LineSpecification {
-    LINE_NUMBER = 0x00,
-    COLUMN_START_AND_END = 0x80
-};
 
 /* Instruction has optimal (aka serialized) size of 32 bit:
   - first byte is Instruction Type
@@ -79,20 +22,6 @@ enum LineSpecification {
   - last two bytes is instruction argument value
     (or 0x0000 if not defined)
 */
-
-struct Instruction {
-    InstructionType type;
-    union {
-        LineSpecification lineSpec;
-        VariableScope scope;
-        ValueKind kind;
-        uint8_t module;
-        uint8_t registerr;
-    };
-    uint16_t arg;
-    QString varName;
-    Arduino::ValueType varType;
-};
 
 static std::string parseValueType(Arduino::ValueType type){
     switch (type){

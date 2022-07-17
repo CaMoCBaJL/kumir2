@@ -9,10 +9,8 @@
 #include <kumir2-libs/dataformats/lexem.h>
 #include <kumir2-libs/errormessages/errormessages.h>
 #include <kumir2/generatorinterface.h>
-#include "arduino_enums.hpp"
 #include "arduino_instruction.hpp"
 #include "arduino_tableelem.hpp"
-
 
 
 namespace Arduino {

@@ -4,8 +4,6 @@
 
 #ifndef KUMIR2_TABLEELEM_H
 #define KUMIR2_TABLEELEM_H
-#include "../enums/enums.h"
-#include "Instruction.h"
 namespace Arduino {
 
     using Kumir::String;

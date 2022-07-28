@@ -13,7 +13,6 @@
 #include <kumir2-libs/stdlib/kumirstdlib.hpp>
 #include "../enums/enums.h"
 
-
 namespace Arduino {
 
     using Kumir::Char;

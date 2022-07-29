@@ -172,7 +172,7 @@ namespace ArduinoCodeGenerator{
             result << instr;
 
             if (st->loop.whileCondition) {
-                QList <Arduino::Instruction> whileCondInstructions = calculate(modId, algId, level,
+                QList <Arduino::Instruction> whileCondInstructions = calculateStatement(modId, algId, level,
                                                                                st->loop.whileCondition);
                 result << whileCondInstructions;
             } else {
@@ -326,7 +326,7 @@ namespace ArduinoCodeGenerator{
             endCondition.type = Arduino::START_SUB_EXPR;
             result << endCondition;
 
-            QList <Arduino::Instruction> endCondInstructions = calculate(modId, algId, level, st->loop.endCondition);
+            QList <Arduino::Instruction> endCondInstructions = calculateStatement(modId, algId, level, st->loop.endCondition);
             result << endCondInstructions;
 
             endCondition.type = Arduino::END_SUB_EXPR;

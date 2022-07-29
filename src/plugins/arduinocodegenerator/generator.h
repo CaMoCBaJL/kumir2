@@ -67,11 +67,11 @@ public:
                                      const AST::StatementPtr st,
                                      QList<Arduino::Instruction> &result);
 #pragma endregion
-#pragma region expressionCalculations
+#pragma region statement calculations
     int findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer<AST::Expression>> bounds);
     QList<Arduino::Instruction> additionalSubExpressionCalculations(AST::ExpressionPtr expr);
-    QList<Arduino::Instruction> calculate(int modId, int algId, int level, const AST::ExpressionPtr st);
-    QList<Arduino::Instruction> innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st);
+    QList<Arduino::Instruction> calculateStatement(int modId, int algId, int level, const AST::ExpressionPtr st);
+    QList<Arduino::Instruction> parseStatement(int modId, int algId, int level, const AST::ExpressionPtr st);
 #pragma endregion
     Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
     quint16 calculateConstantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,

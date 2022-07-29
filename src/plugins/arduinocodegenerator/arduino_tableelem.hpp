@@ -15,87 +15,10 @@
 #include "entities/TableElem.h"
 #include "enums/enums.h"
 #include "entities/Instruction.h"
-
+#include "converters/ArduinoToStringConverter.h"
 namespace Arduino {
 
 static QList<QVariant> _constantElemValues;
-
-inline std::string elemTypeToArduinoString(ElemType t)
-{
-    if (t==Arduino::EL_LOCAL)
-        return "Arduino_local";
-    else if (t==Arduino::EL_GLOBAL)
-        return "Arduino_global";
-    else if (t==Arduino::EL_CONST)
-        return "Arduino_constant";
-    else if (t==Arduino::EL_FUNCTION)
-        return "func_name";
-    else if (t==Arduino::EL_EXTERN)
-        return "Arduino_extern";
-    else if (t==Arduino::EL_INIT)
-        return "void init_func";
-    else if (t==Arduino::EL_MAIN)
-        return "void main_func(){\n";
-    else if (t==Arduino::EL_BELOWMAIN)
-        return "Arduino_belowmain";
-    else if (t==Arduino::EL_TESTING)
-        return "void test_func";
-    else  {
-        return " elem type: " + std::to_string(t) + " ";
-    }
-}
-
-inline std::string vtypeToString(ValueType instructionType)
-    {
-        switch(instructionType){
-            case (Arduino::VT_int):
-                return "int";
-            case (Arduino::VT_float):
-                return "float";
-            case (Arduino::VT_char):
-                return "char";
-            case (Arduino::VT_string):
-                return "string";
-            case (Arduino::VT_bool):
-                return "boolean";
-            case (Arduino::VT_struct):
-                return "struct{\n";
-            default:
-                return "";
-        }
-    }
-
-inline std::string parseVType(const std::list<ValueType> & type, uint8_t dim)
-    {
-        std::string result;
-        ValueType t = type.front();
-        if (t == Arduino::VT_struct)
-        {
-            std::list<ValueType>::const_iterator it = type.begin();
-            it ++;
-            std::list<ValueType>::const_iterator itt;
-            for ( ; it!=type.end(); ++it) {
-                t = *it;
-                result += vtypeToString(t);
-                itt = it;
-                itt++;
-                if ( itt != type.end() ) {
-                    result += ",";
-                }
-            }
-            result += "}\n";
-        }
-        else
-        if (result.length()>0) {
-            for (uint8_t i=0; i<dim; i++) {
-                result += "[]";
-            }
-        }
-        else
-            return vtypeToString(t);
-
-        return result;
-    }
 
 inline void replaceAll(String &str, const String & from, const String & to)
 {

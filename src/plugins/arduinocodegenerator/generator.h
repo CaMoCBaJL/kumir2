@@ -11,7 +11,7 @@
 #include <kumir2/generatorinterface.h>
 #include "arduino_instruction.hpp"
 #include "arduino_tableelem.hpp"
-
+#include "entities/ConstValue.h"
 
 namespace Arduino {
 struct Data;
@@ -21,27 +21,7 @@ namespace AST {
 struct Lexem;
 }
 
-namespace ArduinoCodeGenerator {
-    struct ConstValue{
-        QVariant value;
-        QList<Arduino::ValueType> baseType;
-        QString recordModuleName;
-        QString recordClassLocalizedName;
-        QByteArray recordClassAsciiName;
-        quint8 dimension;
-        inline bool operator==(const ConstValue & other) {
-            return
-                    baseType == other.baseType &&
-                    dimension == other.dimension &&
-                    recordModuleName == other.recordModuleName &&
-                    recordClassAsciiName == other.recordClassAsciiName &&
-                    value == other.value;
-        }
-        inline ConstValue() {
-            baseType.push_back(Arduino::VT_void);
-            dimension = 0;
-        }
-    };
+namespace ArduinoCodeGenerator{
     typedef Shared::GeneratorInterface::DebugLevel DebugLevel;
 
     class Generator : public QObject
@@ -54,18 +34,50 @@ public:
     void addModule(const AST::ModulePtr mod);
     void generateExternTable();
     void setDebugLevel(DebugLevel debugLevel);
-    QList<QVariant> GetConstantValues();
+    QList<QVariant> getConstantValues();
     private:
+#pragma region loopGeneration
     void addTimesLoopWithoutVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result);
     void addTimesLoopWithVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result);
+    void generateWhileLoopHeader(int modId, int algId,
+                                 int level,
+                                 const AST::StatementPtr st,
+                                 QList<Arduino::Instruction> &result);
+    void generateForLoopHeader(int modId, int algId,
+                               int level,
+                               const AST::StatementPtr st,
+                               QList<Arduino::Instruction> &result);
+    void generateTimesLoopHeader(int modId, int algId,
+                                 int level,
+                                 const AST::StatementPtr st,
+                                 QList<Arduino::Instruction> &result);
+    Arduino::InstructionType getForLoopValuesRelation(int fromValue, int toValue);
+    Arduino::Instruction getForLoopVariable(AST::ExpressionPtr & ex);
+    void addForLoopStep(AST::ExpressionPtr & ex, QList<Arduino::Instruction> &instructions, int fromValue, int toValue);
+    void generateLoopHead(int modId, int algId,
+                          int level,
+                          const AST::StatementPtr st,
+                          QList<Arduino::Instruction> &result);
+    void generateLoopBody(int modId, int algId,
+                          int level,
+                          const AST::StatementPtr st,
+                          QList<Arduino::Instruction> &result);
+    void generateLoopTail(int modId, int algId,
+                                     int level,
+                                     const AST::StatementPtr st,
+                                     QList<Arduino::Instruction> &result);
+#pragma endregion
+#pragma region expressionCalculations
     int findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer<AST::Expression>> bounds);
-    QList<Arduino::Instruction> getOperands(AST::ExpressionPtr expr);
+    QList<Arduino::Instruction> additionalSubExpressionCalculations(AST::ExpressionPtr expr);
+    QList<Arduino::Instruction> calculate(int modId, int algId, int level, const AST::ExpressionPtr st);
+    QList<Arduino::Instruction> innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st);
+#pragma endregion
     Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
-    Arduino::TableElem AddConstName(Arduino::Data & data, Kumir::String constName, uint16_t constId);
-    quint16 constantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
+    quint16 calculateConstantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass
                           );
-    quint16 constantValue(const QList<Arduino::ValueType> & type, quint8 dimension, const QVariant & value,
+    quint16 calculateConstantValue(const QList<Arduino::ValueType> & type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass
                           );
     void addKumirModule(int id, const AST::ModulePtr  mod);
@@ -75,35 +87,32 @@ public:
     QList<Arduino::Instruction> instructions(
         int modId, int algId, int level,
         const QList<AST::StatementPtr> & statements);
-
-    void ERRORR(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void ASSIGN(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void ASSERT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void PAUSE_STOP(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void INIT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void CALL_SPECIAL(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void LOOP(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void IFTHENELSE(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void SWITCHCASEELSE(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-    void BREAK(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
-
-    QList<Arduino::Instruction> calculate(int modId, int algId, int level, const AST::ExpressionPtr st);
-    QList<Arduino::Instruction> innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st);
-
+#pragma region main generation methods
+    void generateErrorInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateAssignInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateAssertInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateBreakInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateVarInitInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateTerminalIOInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateConditionInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateChoiceInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateLoopInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+#pragma endregion
     void findVariable(int modId, int algId, const AST::VariablePtr  var, Arduino::VariableScope & scope, quint16 & id) const;
-    static const AST::VariablePtr  returnValue(const AST::AlgorithmPtr  alg);
+    static const AST::VariablePtr generateReturnValue(const AST::AlgorithmPtr  alg);
     void findFunction(const AST::AlgorithmPtr  alg, quint8 & module, quint16 & id) ;
 
 
-    static QList<Arduino::ValueType> valueType(const AST::Type & t);
-    static Arduino::ValueKind valueKind(AST::VariableAccessType t);
-    static Arduino::InstructionType operation(AST::ExpressionOperator op);
+    static QList<Arduino::ValueType> parseValueType(const AST::Type & t);
+    static Arduino::ValueKind parseValueKind(AST::VariableAccessType t);
+    static Arduino::InstructionType parseOperationType(AST::ExpressionOperator op);
 
     AST::DataPtr ast_;
     Arduino::Data * byteCode_;
     QList< ConstValue > constants_;
     QList< QPair<quint8,quint16> > externs_;
     DebugLevel debugLevel_;
+    int loopIteratorCounter_;
 };
 } // namespace ArduinoCodeGenerator
 #endif // ARDUINOCODEGENERATOR_GENERATOR_H

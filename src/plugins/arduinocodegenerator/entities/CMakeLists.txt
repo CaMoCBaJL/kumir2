@@ -6,4 +6,5 @@ set(MOC_HEADERS
         Instruction.h
         TableElem.h
         CVariable.h
+        ConstValue.h
         )

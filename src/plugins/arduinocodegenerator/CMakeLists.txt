@@ -12,6 +12,7 @@ set(SOURCES
 
 add_subdirectory(enums/)
 add_subdirectory(entities/)
+add_subdirectory(generators/)
 
 set(MOC_HEADERS
     arduinocodegeneratorplugin.h

@@ -154,7 +154,7 @@ void ArduinoCodeGeneratorPlugin::generateExecutable(
     std::list<char> buffer;
 
     std::ostringstream stream;
-    Arduino::bytecodeToTextStream(stream, data, d->GetConstantValues());
+    Arduino::bytecodeToTextStream(stream, data, d->getConstantValues());
     const std::string text = stream.str();
     out = QByteArray(text.c_str(), text.size());
     mimeType = MIME_ARDUINO_C_SOURCE;

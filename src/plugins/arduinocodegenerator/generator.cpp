@@ -14,6 +14,7 @@
 #include "entities/Instruction.h"
 #include "entities/TableElem.h"
 #include "entities/Data.h"
+#include "generators/generators.h"
 
 namespace ArduinoCodeGenerator {
 
@@ -36,6 +37,7 @@ namespace ArduinoCodeGenerator {
 
     Generator::Generator(QObject *parent)
             : QObject(parent), byteCode_(nullptr), debugLevel_(Shared::GeneratorInterface::LinesAndVariables) {
+                this->loopIteratorCounter_ = 0;
     }
 
     void Generator::setDebugLevel(DebugLevel debugLevel) {
@@ -60,6 +62,15 @@ namespace ArduinoCodeGenerator {
             }
         }
         sizes[fromDim] = qMax(sizes[fromDim], elems.size());
+    }
+
+    QList<QVariant> Generator::getConstantValues(){
+        QList<QVariant> result = QList<QVariant>();
+        for (uint16_t i = 0; i < constants_.size();i++){
+            result.append(constants_[i].value);
+        }
+
+        return result;
     }
 
     Arduino::ValueType parseVarType(AST::VariablePtr variable){
@@ -140,7 +151,7 @@ namespace ArduinoCodeGenerator {
         return result;
     }
 
-    quint16 Generator::constantValue(const QList <Arduino::ValueType> &type, quint8 dimension, const QVariant &value,
+    quint16 Generator::calculateConstantValue(const QList <Arduino::ValueType> &type, quint8 dimension, const QVariant &value,
                                      const QString &moduleName, const QString &className
     ) {
         ConstValue c;
@@ -302,7 +313,7 @@ namespace ArduinoCodeGenerator {
     }
 
 
-    QList <Arduino::ValueType> Generator::valueType(const AST::Type &t) {
+    QList <Arduino::ValueType> Generator::parseValueType(const AST::Type &t) {
         QList <Arduino::ValueType> result;
         if (t.kind == AST::TypeInteger)
             result << Arduino::VT_int;
@@ -318,14 +329,14 @@ namespace ArduinoCodeGenerator {
             result << Arduino::VT_struct;
             for (int i = 0; i < t.userTypeFields.size(); i++) {
                 AST::Field field = t.userTypeFields[i];
-                result << valueType(field.second);
+                result << parseValueType(field.second);
             }
         } else
             result << Arduino::VT_void;
         return result;
     }
 
-    Arduino::ValueKind Generator::valueKind(AST::VariableAccessType t) {
+    Arduino::ValueKind Generator::parseValueKind(AST::VariableAccessType t) {
         if (t == AST::AccessArgumentIn)
             return Arduino::VK_In;
         else if (t == AST::AccessArgumentOut)
@@ -336,7 +347,7 @@ namespace ArduinoCodeGenerator {
             return Arduino::VK_Plain;
     }
 
-    Arduino::InstructionType Generator::operation(AST::ExpressionOperator op) {
+    Arduino::InstructionType Generator::parseOperationType(AST::ExpressionOperator op) {
         if (op == AST::OpSumm)
             return Arduino::SUM;
         else if (op == AST::OpSubstract)
@@ -388,8 +399,8 @@ namespace ArduinoCodeGenerator {
             glob.id = quint16(i);
             glob.name = var->name.toStdWString();
             glob.dimension = quint8(var->dimension);
-            glob.vtype = valueType(var->baseType).toStdList();
-            glob.refvalue = valueKind(var->accessType);
+            glob.vtype = parseValueType(var->baseType).toStdList();
+            glob.refvalue = parseValueKind(var->accessType);
             glob.recordModuleAsciiName = var->baseType.actor ?
                                          std::string(var->baseType.actor->asciiModuleName().constData())
                                                              : std::string();
@@ -446,7 +457,7 @@ namespace ArduinoCodeGenerator {
 
         // Add function return as local
         if (alg->header.returnType.kind != AST::TypeNone) {
-            const AST::VariablePtr retval = returnValue(alg);
+            const AST::VariablePtr retval = generateReturnValue(alg);
             Arduino::TableElem loc;
             loc.type = Arduino::EL_LOCAL;
             loc.module = moduleId;
@@ -454,10 +465,10 @@ namespace ArduinoCodeGenerator {
             loc.id = 0;
             loc.name = tr("Function return value").toStdWString();
             loc.dimension = 0;
-            loc.vtype = valueType(retval->baseType).toStdList();
+            loc.vtype = parseValueType(retval->baseType).toStdList();
             loc.refvalue = Arduino::VK_Plain;
             byteCode_->d.push_back(loc);
-            varsToOut << constantValue(Arduino::VT_int, 0, 0, QString(), QString());
+            varsToOut << calculateConstantValue(Arduino::VT_int, 0, 0, QString(), QString());
             locOffset = 1;
         }
 
@@ -471,7 +482,7 @@ namespace ArduinoCodeGenerator {
             loc.id = locOffset + i;
             loc.name = var->name.toStdWString();
             loc.dimension = var->dimension;
-            loc.vtype = valueType(var->baseType).toStdList();
+            loc.vtype = parseValueType(var->baseType).toStdList();
             loc.recordModuleAsciiName = var->baseType.actor ?
                                         std::string(var->baseType.actor->asciiModuleName().constData()) : std::string();
             loc.recordModuleLocalizedName = var->baseType.actor ?
@@ -610,7 +621,7 @@ namespace ArduinoCodeGenerator {
             Arduino::Instruction err;
             err.type = Arduino::ERRORR;
             err.scope = Arduino::CONSTT;
-            err.arg = constantValue(Arduino::VT_string, 0, beginError, QString(), QString());
+            err.arg = calculateConstantValue(Arduino::VT_string, 0, beginError, QString(), QString());
             argHandle << err;
         }
 
@@ -636,7 +647,7 @@ namespace ArduinoCodeGenerator {
                 Arduino::Instruction err;
                 err.type = Arduino::ERRORR;
                 err.scope = Arduino::CONSTT;
-                err.arg = constantValue(Arduino::VT_string, 0, endError, QString(), QString());
+                err.arg = calculateConstantValue(Arduino::VT_string, 0, endError, QString(), QString());
                 ret << err;
             }
         }
@@ -645,7 +656,7 @@ namespace ArduinoCodeGenerator {
         retturn.type = Arduino::RET;
         ret << retturn;
 
-        const AST::VariablePtr retval = returnValue(alg);
+        const AST::VariablePtr retval = generateReturnValue(alg);
         if (retval != nullptr) {
             Arduino::Instruction delim;
             delim.type = Arduino::STR_DELIM;
@@ -733,40 +744,36 @@ namespace ArduinoCodeGenerator {
             switch (st->type) {
                 case AST::StError:
                     if (!st->skipErrorEvaluation)
-                        ERRORR(modId, algId, level, st, result);
+                        generateErrorInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StAssign:
-                    ASSIGN(modId, algId, level, st, result);
+                    generateAssignInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StAssert:
-                    ASSERT(modId, algId, level, st, result);
+                    generateAssertInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StVarInitialize:
-                    INIT(modId, algId, level, st, result);
+                    generateVarInitInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StInput:
-                    CALL_SPECIAL(modId, algId, level, st, result);
+                    generateTerminalIOInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StOutput:
-                    CALL_SPECIAL(modId, algId, level, st, result);
+                    generateTerminalIOInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StLoop:
-                    LOOP(modId, algId, level + 1, st, result);
+                    generateLoopInstruction(modId, algId, level + 1, st, result);
                     break;
                 case AST::StIfThenElse:
-                    IFTHENELSE(modId, algId, level, st, result);
+                    generateConditionInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StSwitchCaseElse:
-                    SWITCHCASEELSE(modId, algId, level, st, result);
-                    break;
-                case AST::StBreak:
-                    BREAK(modId, algId, level, st, result);
-                    break;
-                case AST::StPause:
-                    PAUSE_STOP(modId, algId, level, st, result);
+                    generateChoiceInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StHalt:
-                    PAUSE_STOP(modId, algId, level, st, result);
+                case AST::StBreak:
+                case AST::StPause:
+                    generateBreakInstruction(modId, algId, level, st, result);
                     break;
                 default:
                     break;
@@ -779,19 +786,19 @@ namespace ArduinoCodeGenerator {
         return result;
     }
 
-    quint16 Generator::constantValue(Arduino::ValueType type, quint8 dimension, const QVariant &value,
+    quint16 Generator::calculateConstantValue(Arduino::ValueType type, quint8 dimension, const QVariant &value,
                                      const QString &moduleName, const QString &className) {
         QList <Arduino::ValueType> vt;
         vt.push_back(type);
-        return constantValue(vt, dimension, value, QString(), QString());
+        return calculateConstantValue(vt, dimension, value, QString(), QString());
     }
 
-    void Generator::ERRORR(int, int, int, const AST::StatementPtr st, QList <Arduino::Instruction> &result) {
+    void Generator::generateErrorInstruction(int, int, int, const AST::StatementPtr st, QList <Arduino::Instruction> &result) {
         const QString error = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->error);
         Arduino::Instruction e;
         e.type = Arduino::ERRORR;
         e.scope = Arduino::CONSTT;
-        e.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
+        e.arg = calculateConstantValue(Arduino::VT_string, 0, error, QString(), QString());
         result << e;
     }
 
@@ -845,7 +852,7 @@ namespace ArduinoCodeGenerator {
         }
     }
 
-    void Generator::ASSIGN(int modId, int algId, int level, const AST::StatementPtr st,
+    void Generator::generateAssignInstruction(int modId, int algId, int level, const AST::StatementPtr st,
                            QList <Arduino::Instruction> &result) {
         if (st->expressions.size() > 1) {
             const AST::ExpressionPtr lvalue = st->expressions[1];
@@ -874,7 +881,7 @@ namespace ArduinoCodeGenerator {
                 argsCount.type = Arduino::VAR;
                 argsCount.scope = Arduino::CONSTT;
                 argsCount.varType = parseVarType(lvalue->variable);
-                argsCount.arg = constantValue(Arduino::VT_int, 0, 3, QString(), QString());
+                argsCount.arg = calculateConstantValue(Arduino::VT_int, 0, 3, QString(), QString());
                 result << argsCount;
             }
 
@@ -889,7 +896,7 @@ namespace ArduinoCodeGenerator {
                 argsCount.type = Arduino::ARR;
                 argsCount.scope = Arduino::CONSTT;
                 argsCount.varType = parseVarType(lvalue->variable);
-                argsCount.arg = constantValue(Arduino::VT_int, 0, 4, QString(), QString());
+                argsCount.arg = calculateConstantValue(Arduino::VT_int, 0, 4, QString(), QString());
                 result << argsCount;
             }
 
@@ -967,31 +974,10 @@ namespace ArduinoCodeGenerator {
         }
     }
 
-    QString parseOperatorType(AST::ExpressionOperator op){
-        switch (op) {
-            case AST::OpNone: return "var";
-            case AST::OpSumm: return "+";
-            case AST::OpSubstract: return "-";
-            case AST::OpMultiply: return "*";
-            case AST::OpDivision: return "/";
-            case AST::OpPower: return "Math.pow()";
-            case AST::OpNot : return "!";
-            case AST::OpAnd: return "&&";
-            case AST::OpOr: return "||";
-            case AST::OpEqual: return "==";
-            case AST::OpNotEqual: return "!=";
-            case AST::OpLess: return "<";
-            case AST::OpGreater: return ">";
-            case AST::OpLessOrEqual: return "<=";
-            case AST::OpGreaterOrEqual: return ">=";
-            default: return "nanananana";
-        }
-    }
-
     QList<Arduino::Instruction> Generator::innerCalculation(int modId, int algId, int level, const AST::ExpressionPtr st){
         QList <Arduino::Instruction> result;
         if (st->kind == AST::ExprConst) {
-            int constId = constantValue(valueType(st->baseType), st->dimension, st->constant,
+            int constId = calculateConstantValue(parseValueType(st->baseType), st->dimension, st->constant,
                                         st->baseType.actor ? st->baseType.actor->localizedModuleName(QLocale::Russian)
                                                            : "",
                                         st->baseType.name
@@ -1028,7 +1014,7 @@ namespace ArduinoCodeGenerator {
                 // Get char
                 result << innerCalculation(modId, algId, level,
                                     st->operands[st->operands.count() - 1]);
-                argsCount.arg = constantValue(Arduino::VT_int, 0, 2, QString(), QString());
+                argsCount.arg = calculateConstantValue(Arduino::VT_int, 0, 2, QString(), QString());
                 result << argsCount;
             } else if (diff == 2) {
                 // Get slice
@@ -1036,7 +1022,7 @@ namespace ArduinoCodeGenerator {
                                     st->operands[st->operands.count() - 2]);
                 result << innerCalculation(modId, algId, level,
                                     st->operands[st->operands.count() - 1]);
-                argsCount.arg = constantValue(Arduino::VT_int, 0, 3, QString(), QString());
+                argsCount.arg = calculateConstantValue(Arduino::VT_int, 0, 3, QString(), QString());
                 result << argsCount;
             }
         } else if (st->kind == AST::ExprFunctionCall) {
@@ -1123,13 +1109,13 @@ namespace ArduinoCodeGenerator {
             instr.varType = Arduino::VT_None;
         } else{
             instr.type = Arduino::CONST;
-            instr.arg = constantValue(Arduino::VT_string, 0, expr->constant, QString(), QString());
+            instr.arg = calculateConstantValue(Arduino::VT_string, 0, expr->constant, QString(), QString());
         }
 
         return instr;
     }
 
-    QList<Arduino::Instruction> Generator::getOperands(AST::ExpressionPtr expr){
+    QList<Arduino::Instruction> Generator::additionalSubExpressionCalculations(AST::ExpressionPtr expr){
         QList<Arduino::Instruction> result;
         for (uint16_t i = 0; i < expr->operands.size(); i++){
             AST::ExpressionPtr e = expr->operands.at(i);
@@ -1139,16 +1125,19 @@ namespace ArduinoCodeGenerator {
             for (int j = 0; j < expr->operands.size(); ++j){
                 if (expr->operands.at(i)->operands.size() != 0){
                     hasChildren = true;
+                    break;
                 }
             }
 
             if (i == 1 && hasChildren){
                 Arduino::Instruction instr;
-                instr.type = parseInstructionType(expr);
-                result << instr;
+                if (expr->operatorr != AST::OpOr && expr->operatorr != AST::OpAnd) {
+                    instr.type = parseInstructionType(expr);
+                    result << instr;
+                }
             }
 
-            if (expr->operands.at(i)->operands.size() == 0){
+            if (expr->operands.at(i)->operands.size() == 0) {
                 result << parseConstOrVarExpr(expr->operands.at(i));
                 continue;
             }
@@ -1158,7 +1147,7 @@ namespace ArduinoCodeGenerator {
                     brace.type = Arduino::START_SUB_EXPR;
                     result << brace;
                 }
-                result << getOperands(expr->operands.at(i));
+                result << additionalSubExpressionCalculations(expr->operands.at(i));
 
                 if (e->expressionIsClosed){
                     brace.type = Arduino::END_SUB_EXPR;
@@ -1183,13 +1172,13 @@ namespace ArduinoCodeGenerator {
         QList<Arduino::Instruction> result = innerCalculation(modId, algId, level, st);
 
         if (st->kind == AST::ExprSubexpression){
-            result = getOperands(st);
+            result = additionalSubExpressionCalculations(st);
         }
 
         return result;
     }
 
-void Generator::PAUSE_STOP(int , int , int , const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
+void Generator::generateBreakInstruction(int , int , int , const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
 {
     Arduino::Instruction a;
     a.type = Arduino::BREAK;
@@ -1197,16 +1186,7 @@ void Generator::PAUSE_STOP(int , int , int , const AST::StatementPtr  st, QList<
     result << a;
 }
 
-QList<QVariant> Generator::GetConstantValues(){
-    QList<QVariant> result = QList<QVariant>();
-    for (uint16_t i = 0; i < constants_.size();i++){
-        result.append(constants_[i].value);
-    }
-
-    return result;
-}
-
-void Generator::ASSERT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result) {
+void Generator::generateAssertInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result) {
     if (st->expressions.size() <= 0) {
         return;
     }
@@ -1246,7 +1226,7 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
     }
     else{
         AST::VariablePtr var = bounds.first->variable;
-        indx = constantValue(valueType(var->baseType), var->dimension, var->initialValue,
+        indx = calculateConstantValue(parseValueType(var->baseType), var->dimension, var->initialValue,
                                  var->baseType.actor ? var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
                                  var->baseType.name
         );
@@ -1258,7 +1238,7 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
     }
     else{
         AST::VariablePtr var = bounds.second->variable;
-        indx = constantValue(valueType(var->baseType), var->dimension, var->initialValue,
+        indx = calculateConstantValue(parseValueType(var->baseType), var->dimension, var->initialValue,
                                  var->baseType.actor ? var->baseType.actor->localizedModuleName(QLocale::Russian) : "",
                                  var->baseType.name
         );
@@ -1269,7 +1249,7 @@ int Generator::findArrSize(QPair<QSharedPointer<AST::Expression>, QSharedPointer
     return  result;
 }
 
-void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
+void Generator::generateVarInitInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
 {
     for (int i=0; i<st->variables.size(); i++) {
         const AST::VariablePtr var = st->variables[i];
@@ -1309,7 +1289,7 @@ void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  s
                 result << instr;
                 instr.type = Arduino::CONST;
                 instr.varName = nullptr;
-                instr.arg = constantValue(varType, 0, var->initialValue, QString(), QString());
+                instr.arg = calculateConstantValue(varType, 0, var->initialValue, QString(), QString());
                 result << instr;
             }
             instr.type = Arduino::END_VAR;
@@ -1318,7 +1298,7 @@ void Generator::INIT(int modId, int algId, int level, const AST::StatementPtr  s
     }
 }
 
-void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
+void Generator::generateTerminalIOInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
 {
     quint16 argsCount;
 
@@ -1357,7 +1337,7 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
             Arduino::Instruction ref;
             if (varExpr->kind==AST::ExprConst) {
                 ref.scope = Arduino::CONSTT;
-                ref.arg = constantValue(valueType(varExpr->baseType), 0, varExpr->constant,
+                ref.arg = calculateConstantValue(parseValueType(varExpr->baseType), 0, varExpr->constant,
                                         varExpr->baseType.actor ? varExpr->baseType.actor->localizedModuleName(QLocale::Russian) : "",
                                         varExpr->baseType.name
                                         );
@@ -1395,7 +1375,7 @@ void Generator::CALL_SPECIAL(int modId, int algId, int level, const AST::Stateme
 }
 
 
-void Generator::IFTHENELSE(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> &result)
+void Generator::generateConditionInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> &result)
 {
     Arduino::Instruction ifInstr;
     ifInstr.type = Arduino::IF;
@@ -1416,7 +1396,7 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
         const QString msg = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->conditionals[0].conditionError);
         error.type = Arduino::ERRORR;
         error.scope = Arduino::CONSTT;
-        error.arg = constantValue(Arduino::VT_string, 0, msg, QString(), QString());
+        error.arg = calculateConstantValue(Arduino::VT_string, 0, msg, QString(), QString());
         result << error;
     }
     else {
@@ -1431,7 +1411,7 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
             const QString msg = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->conditionals[1].conditionError);
             error.type = Arduino::ERRORR;
             error.scope = Arduino::CONSTT;
-            error.arg = constantValue(Arduino::VT_string, 0, msg, QString(), QString());
+            error.arg = calculateConstantValue(Arduino::VT_string, 0, msg, QString(), QString());
             result << error;
         }
         else {
@@ -1448,19 +1428,19 @@ void Generator::IFTHENELSE(int modId, int algId, int level, const AST::Statement
         const QString msg = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->endBlockError);
         error.type = Arduino::ERRORR;
         error.scope = Arduino::CONSTT;
-        error.arg = constantValue(Arduino::VT_string, 0, msg, QString(), QString());
+        error.arg = calculateConstantValue(Arduino::VT_string, 0, msg, QString(), QString());
         result << error;
     }
 
 }
 
-void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::StatementPtr st, QList<Arduino::Instruction> & result)
+void Generator::generateChoiceInstruction(int modId, int algId, int level, const AST::StatementPtr st, QList<Arduino::Instruction> & result)
 {
     if (st->headerError.size()>0) {
         Arduino::Instruction garbage;
         garbage.type = Arduino::ERRORR;
         garbage.scope = Arduino::CONSTT;
-        garbage.arg = constantValue(Arduino::VT_string, 0,
+        garbage.arg = calculateConstantValue(Arduino::VT_string, 0,
                                     ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->headerError)
                                     , QString(), QString()
                                     );
@@ -1473,7 +1453,7 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
         Arduino::Instruction err;
         err.type = Arduino::ERRORR;
         err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
+        err.arg = calculateConstantValue(Arduino::VT_string, 0, error, QString(), QString());
         result << err;
         return;
     }
@@ -1497,7 +1477,7 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
             Arduino::Instruction err;
             err.type = Arduino::ERRORR;
             err.scope = Arduino::CONSTT;
-            err.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
+            err.arg = calculateConstantValue(Arduino::VT_string, 0, error, QString(), QString());
             result << err;
         }
         else {
@@ -1517,7 +1497,7 @@ void Generator::SWITCHCASEELSE(int modId, int algId, int level, const AST::State
     }
 }
 
-const AST::VariablePtr  Generator::returnValue(const AST::AlgorithmPtr  alg)
+const AST::VariablePtr  Generator::generateReturnValue(const AST::AlgorithmPtr  alg)
 {
     const QString name = alg->header.name;
     for (int i=0; i<alg->impl.locals.size(); i++) {
@@ -1527,307 +1507,4 @@ const AST::VariablePtr  Generator::returnValue(const AST::AlgorithmPtr  alg)
     }
     return nullptr;
 }
-
-void Generator::BREAK(int , int , int level,
-                      const AST::StatementPtr  st,
-                      QList<Arduino::Instruction> & result)
-{
-    Arduino::Instruction br;
-    br.type = Arduino::BREAK;
-
-    result << br;
-}
-
-Arduino::InstructionType getForLoopValuesRelation(int fromValue, int toValue){
-    if (fromValue > toValue){
-        return Arduino::GT;
-    } else if (fromValue >= toValue){
-        return Arduino::GEQ;
-    } else if (fromValue < toValue){
-        return Arduino::LS;
-    } else if (fromValue <= toValue){
-        return Arduino::LEQ;
-    }
-
-    return Arduino::NEQ;
-}
-
-Arduino::Instruction getForLoopVariable(AST::ExpressionPtr & ex) {
-        Arduino::Instruction variable;
-
-        if (ex->variable == nullptr) {
-            variable.registerr = ex->constant.toInt();
-            variable.type = Arduino::CONST;
-        } else {
-            variable.varName = ex->variable->name;
-            variable.registerr = ex->variable->initialValue.toInt();
-            variable.type = Arduino::VAR;
-        }
-
-        return variable;
-    }
-
-void addForLoopStep(AST::ExpressionPtr & ex, QList<Arduino::Instruction> &instructions, int fromValue, int toValue) {
-        Arduino::Instruction step;
-
-        if(ex == nullptr){
-            if (fromValue > toValue){
-                step.type = Arduino::DCR;
-            } else {
-                step.type = Arduino::INC;
-            }
-            instructions << step;
-
-            return;
-        }
-        if (ex->variable == nullptr){
-            step.registerr = ex->constant.toInt();
-        }
-        else{
-            step.registerr = ex->variable->initialValue.toInt();
-        }
-
-        if (step.registerr > 0){
-            if (abs(step.registerr) == 1){
-                step.type = Arduino::INC;
-            } else {
-                step.type = Arduino::SUM;
-            }
-        } else {
-            if (abs(step.registerr) == 1){
-                step.type = Arduino::DCR;
-            } else {
-                step.type = Arduino::SUB;
-            }
-        }
-
-        instructions << step;
-    }
-
-static int loopIteratorCounter = 0;
-
-void Generator::addTimesLoopWithVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result){
-    Arduino::Instruction timesVar;
-    Arduino::Instruction instrBuffer;
-
-    timesVar.type = Arduino::VAR;
-    timesVar.varName = st->loop.timesValue->variable->name;
-    result << timesVar;
-
-    instrBuffer.type = Arduino::END_VAR;
-    result << instrBuffer;
-
-    timesVar.varType = Arduino::VT_None;
-    result << timesVar;
-    if (st->loop.timesValue->variable->initialValue > 0){
-        instrBuffer.type = Arduino::GT;
-        result << instrBuffer;
-    } else {
-        instrBuffer.type = Arduino::LS;
-        result << instrBuffer;
-    }
-
-    instrBuffer.type = Arduino::CONST;
-    instrBuffer.arg = constantValue(Arduino::VT_int, 0, st->loop.timesValue->variable->initialValue, QString(), QString());
-    result << instrBuffer;
-
-    instrBuffer.type = Arduino::END_VAR;
-    result << instrBuffer;
-
-    result << timesVar;
-
-    if (st->loop.timesValue->variable->initialValue > 0){
-        instrBuffer.type = Arduino::INC;
-        result << instrBuffer;
-    } else {
-        instrBuffer.type = Arduino::DCR;
-        result << instrBuffer;
-    }
-
-    instrBuffer.type = Arduino::END_VAR;
-    result << instrBuffer;
-}
-
-void Generator::addTimesLoopWithoutVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result) {
-    Arduino::Instruction timesVar;
-    Arduino::Instruction instrBuffer;
-
-    timesVar.type = Arduino::VAR;
-    timesVar.varName = QString::fromStdString("loopIterator" + std::to_string(loopIteratorCounter));
-    timesVar.varType = Arduino::VT_int;
-    result << timesVar;
-
-    loopIteratorCounter++;
-
-    instrBuffer.type = Arduino::ASG;
-    result << instrBuffer;
-
-    instrBuffer.type = Arduino::CONST;
-    instrBuffer.arg = constantValue(Arduino::VT_int, 0, 0, QString(), QString());
-    result << instrBuffer;
-
-    instrBuffer.type = Arduino::END_VAR;
-    result << instrBuffer;
-
-    timesVar.varType = Arduino::VT_None;
-    result << timesVar;
-
-    instrBuffer.type = Arduino::LS;
-    result << instrBuffer;
-
-    instrBuffer.type = Arduino::CONST;
-    instrBuffer.arg = constantValue(Arduino::VT_int, 0, st->loop.timesValue->constant.toInt(), QString(),
-                                    QString());
-    result << instrBuffer;
-
-    instrBuffer.type = Arduino::END_VAR;
-    result << instrBuffer;
-
-    result << timesVar;
-
-    instrBuffer.type = Arduino::INC;
-    result << instrBuffer;
-
-    instrBuffer.type = Arduino::END_VAR;
-    result << instrBuffer;
-}
-
-void Generator::LOOP(int modId, int algId,
-                     int level,
-                     const AST::StatementPtr st,
-                     QList<Arduino::Instruction> &result) {
-    if (st->beginBlockError.size() > 0) {
-        const QString error = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->beginBlockError);
-        Arduino::Instruction err;
-        err.type = Arduino::ERRORR;
-        err.scope = Arduino::CONSTT;
-        err.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
-        result << err;
-        return;
-    }
-
-    if ((st->loop.type == AST::LoopWhile || st->loop.type == AST::LoopForever) && !st->loop.endCondition) {
-        Arduino::Instruction instr;
-        instr.type = Arduino::WhileLoop;
-        result << instr;
-
-        instr.type = Arduino::START_SUB_EXPR;
-        result << instr;
-
-        if (st->loop.whileCondition) {
-            QList <Arduino::Instruction> whileCondInstructions = calculate(modId, algId, level,
-                                                                           st->loop.whileCondition);
-            result << whileCondInstructions;
-        } else {
-            instr.type = Arduino::CONST;
-            instr.arg = constantValue(Arduino::VT_bool, 0, true, QString(), QString());
-            result << instr;
-        }
-    } else if (st->loop.type == AST::LoopTimes) {
-        if (st->loop.timesValue->constant.toInt() < 1){
-            return;
-        }
-
-        Arduino::Instruction instrBuffer;
-        Arduino::Instruction timesVar;
-
-        instrBuffer.type = Arduino::ForLoop;
-        result << instrBuffer;
-
-        instrBuffer.type = Arduino::START_SUB_EXPR;
-        result << instrBuffer;
-
-        if (st->loop.timesValue->variable) {
-            addTimesLoopWithVarHead(st, result);
-        } else {
-            addTimesLoopWithoutVarHead(st, result);
-        }
-
-    } else if (st->loop.type == AST::LoopFor) {
-        Arduino::Instruction instrBuffer;
-        Arduino::Instruction workCondition;
-        Arduino::Instruction operation;
-
-        instrBuffer.type = Arduino::ForLoop;
-        result << instrBuffer;
-
-        instrBuffer.type = Arduino::START_SUB_EXPR;
-        result << instrBuffer;
-
-        workCondition.type = Arduino::VAR;
-        workCondition.varName = st->loop.forVariable->name;
-        result << workCondition;
-
-        operation.type = Arduino::ASG;
-        result << operation;
-
-        Arduino::Instruction fromValue = getForLoopVariable(st->loop.fromValue);
-        result << fromValue;
-
-        workCondition.type = Arduino::END_VAR;
-        result << workCondition;
-
-        workCondition.type = Arduino::VAR;
-        result << workCondition;
-
-        Arduino::Instruction toValue = getForLoopVariable(st->loop.toValue);
-
-        operation.type = getForLoopValuesRelation(fromValue.registerr, toValue.registerr);
-        result << operation;
-
-        result << toValue;
-
-        workCondition.type = Arduino::END_VAR;
-        result << workCondition;
-
-        workCondition.type = Arduino::VAR;
-        result << workCondition;
-
-        addForLoopStep(st->loop.stepValue, result, result.at(result.size() - 2).registerr,
-                       result.at(result.size() - 1).registerr);
-    }
-
-    if (st->loop.endCondition){
-        Arduino::Instruction beginDo;
-        beginDo.type = Arduino::DO;
-        result << beginDo;
-    } else {
-        Arduino::Instruction endLoopHead;
-        endLoopHead.type = Arduino::END_ST_HEAD;
-        result << endLoopHead;
-    }
-
-    QList <Arduino::Instruction> instrs = instructions(modId, algId, level, st->loop.body);
-    result += instrs;
-
-    bool endsWithError = st->endBlockError.length() > 0;
-    if (endsWithError) {
-        const QString error = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->endBlockError);
-        Arduino::Instruction ee;
-        ee.type = Arduino::ERRORR;
-        ee.scope = Arduino::CONSTT;
-        ee.arg = constantValue(Arduino::VT_string, 0, error, QString(), QString());
-        result << ee;
-        return;
-    }
-
-    Arduino::Instruction endLoop;
-    endLoop.type = Arduino::END_ST;
-    result << endLoop;
-
-    if (st->loop.endCondition) {
-        Arduino::Instruction endCondition;
-        endCondition.type = Arduino::WhileLoop;
-        result << endCondition;
-        endCondition.type = Arduino::START_SUB_EXPR;
-        result << endCondition;
-
-        QList <Arduino::Instruction> endCondInstructions = calculate(modId, algId, level, st->loop.endCondition);
-        result << endCondInstructions;
-
-        endCondition.type = Arduino::END_SUB_EXPR;
-        result << endCondition;
-    }
-}
-
 } // namespace ArduinoCodeGenerator

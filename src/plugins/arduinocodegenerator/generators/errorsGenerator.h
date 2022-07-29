@@ -5,8 +5,10 @@
 #ifndef KUMIR2_ERRORGENERATOR_H
 #define KUMIR2_ERRORGENERATOR_H
 #include "../enums/enums.h"
+
 namespace ArduinoCodeGenerator{
     using namespace Shared;
+
     void Generator::generateErrorInstruction(int, int, int, const AST::StatementPtr st, QList <Arduino::Instruction> &result) {
         const QString error = ErrorMessages::message("KumirAnalizer", QLocale::Russian, st->error);
         Arduino::Instruction e;

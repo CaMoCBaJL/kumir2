@@ -7,8 +7,9 @@
 #include <stdint.h>
 #include <QDebug>
 #include "enums/enums.h"
-#include "entities/Data.h"
-#include "entities/TableElem.h"
+#include "entities/arduinoData.h"
+#include "entities/arduinoTableElem.h"
+#include "entities/arduinoHelpers.h"
 
 namespace Arduino {
 using Arduino::ElemType;

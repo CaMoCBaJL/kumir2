@@ -4,10 +4,10 @@
 
 #ifndef KUMIR2_ENUMS_H
 #define KUMIR2_ENUMS_H
-#include "ElemType.h"
-#include "InstructionType.h"
-#include "LineSpecification.h"
-#include "ValueKind.h"
-#include "ValueType.h"
-#include "VariableScope.h"
+#include "elemType.h"
+#include "instructionType.h"
+#include "lineSpecification.h"
+#include "valueKind.h"
+#include "valueType.h"
+#include "variableScope.h"
 #endif //KUMIR2_ENUMS_H

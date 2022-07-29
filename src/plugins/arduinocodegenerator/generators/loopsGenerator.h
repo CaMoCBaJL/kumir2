@@ -296,7 +296,7 @@ namespace ArduinoCodeGenerator{
                                      int level,
                                      const AST::StatementPtr st,
                                      QList<Arduino::Instruction> &result){
-        QList <Arduino::Instruction> instrs = instructions(modId, algId, level, st->loop.body);
+        QList <Arduino::Instruction> instrs = calculateInstructions(modId, algId, level, st->loop.body);
         result += instrs;
 
         bool endsWithError = st->endBlockError.length() > 0;

@@ -4,6 +4,7 @@
 
 #ifndef KUMIR2_TABLEELEM_H
 #define KUMIR2_TABLEELEM_H
+#include "arduinoInstruction.h"
 namespace Arduino {
 
     using Kumir::String;

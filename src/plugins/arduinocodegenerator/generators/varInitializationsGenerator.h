@@ -31,9 +31,6 @@ namespace ArduinoCodeGenerator{
                 instr.type = Arduino::END_VAR;
                 result << instr;
             }
-            else if (var->dimension > 0 && var->bounds.size()==0) {
-                // TODO : Implement me after compiler support
-            }
             else {
                 instr.type = Arduino::VAR;
                 instr.varName = var->name;

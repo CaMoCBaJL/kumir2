@@ -6,12 +6,12 @@
 #include <kumir2-libs/dataformats/ast.h>
 #include <kumir2-libs/dataformats/ast_variable.h>
 #include <kumir2-libs/dataformats/ast_algorhitm.h>
+#include "kumir2-libs/dataformats/ast_statement.h"
 #include <kumir2-libs/dataformats/lexem.h>
 #include <kumir2-libs/errormessages/errormessages.h>
 #include <kumir2/generatorinterface.h>
-#include "arduino_instruction.hpp"
 #include "arduino_tableelem.hpp"
-#include "entities/ConstValue.h"
+#include "entities/arduinoConstValue.h"
 
 namespace Arduino {
 struct Data;
@@ -36,7 +36,7 @@ public:
     void setDebugLevel(DebugLevel debugLevel);
     QList<QVariant> getConstantValues();
     private:
-#pragma region loopGeneration
+#pragma region loop generation methods
     void addTimesLoopWithoutVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result);
     void addTimesLoopWithVarHead (const AST::StatementPtr st, QList<Arduino::Instruction> & result);
     void generateWhileLoopHeader(int modId, int algId,
@@ -73,7 +73,6 @@ public:
     QList<Arduino::Instruction> calculateStatement(int modId, int algId, int level, const AST::ExpressionPtr st);
     QList<Arduino::Instruction> parseStatement(int modId, int algId, int level, const AST::ExpressionPtr st);
 #pragma endregion
-    Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
     quint16 calculateConstantValue(Arduino::ValueType type, quint8 dimension, const QVariant & value,
                           const QString & recordModule, const QString & recordClass
                           );
@@ -84,10 +83,10 @@ public:
     void addFunction(int id, int moduleId, Arduino::ElemType type, const AST::ModulePtr  mod, const AST::AlgorithmPtr  alg);
     void addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, const AST::ModulePtr  mod, const AST::AlgorithmPtr  alg);
 
-    QList<Arduino::Instruction> instructions(
+    QList<Arduino::Instruction> calculateInstructions(
         int modId, int algId, int level,
         const QList<AST::StatementPtr> & statements);
-#pragma region main generation methods
+#pragma region main methods-generators
     void generateErrorInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
     void generateAssignInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
     void generateAssertInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
@@ -100,13 +99,53 @@ public:
 #pragma endregion
     void findVariable(int modId, int algId, const AST::VariablePtr  var, Arduino::VariableScope & scope, quint16 & id) const;
     static const AST::VariablePtr generateReturnValue(const AST::AlgorithmPtr  alg);
-    void findFunction(const AST::AlgorithmPtr  alg, quint8 & module, quint16 & id) ;
-
-
+    void findFunction(const AST::AlgorithmPtr  alg, quint8 & module, quint16 & id);
+#pragma region auxiliary methods parsing methods
+    Arduino::Instruction parseConstOrVarExpr(AST::ExpressionPtr expr);
     static QList<Arduino::ValueType> parseValueType(const AST::Type & t);
     static Arduino::ValueKind parseValueKind(AST::VariableAccessType t);
     static Arduino::InstructionType parseOperationType(AST::ExpressionOperator op);
-
+#pragma endregion
+#pragma region if-else generation
+    void generateElse(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> &result);
+    void generateConditionBody(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> &result);
+    void generateConditionHead(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> &result);
+#pragma endregion
+#pragma region conditionals generation methods
+    void initCase(int modId, int algId, int level, const AST::StatementPtr st, QList<Arduino::Instruction> & result, int counter);
+    void checkForErrors(int modId, int algId, int level, const AST::StatementPtr st, QList<Arduino::Instruction> & result);
+    void generateCase(int modId, int algId, int level, const AST::StatementPtr st, QList<Arduino::Instruction> & result, AST::ConditionSpec conditional);
+#pragma endregion
+#pragma region function calls generation methods
+    void generateTerminalReadInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void generateTerminalWriteInstruction(int modId, int algId, int level, const AST::StatementPtr  st, QList<Arduino::Instruction> & result);
+    void addMainFunctionReturnValue(int moduleId, int algorhitmId, const AST::ModulePtr mod,
+                                const AST::AlgorithmPtr alg, QList <quint16> varsToOut);
+    void addMainFunctionArguments(int moduleId, int algorhitmId, const AST::ModulePtr mod,
+                              const AST::AlgorithmPtr alg, QList <Arduino::Instruction> & instrs);
+    void initMainFunctionArguments(int moduleId, int algorhitmId, const AST::ModulePtr mod,
+                               const AST::AlgorithmPtr alg, QList <Arduino::Instruction> & instrs);
+#pragma endregion
+#pragma region function generation methods
+    void generateFunctionReturnValue(QList <Arduino::Instruction> & body, QList <Arduino::Instruction> & ret,
+                                     QList <Arduino::Instruction> & argHandle, const AST::AlgorithmPtr alg,
+                                     QList <Arduino::Instruction> & pre);
+    void addFunctionReturnValue(QList <Arduino::Instruction> & ret, QList <Arduino::Instruction> & argHandle,
+                                QList <Arduino::Instruction> & body);
+    void addProcedureReturnValue(const AST::VariablePtr retval, QList <Arduino::Instruction> & ret,
+                                 QList <Arduino::Instruction> & argHandle);
+    void addFunctionArguments(const AST::ModulePtr mod,
+                              const AST::AlgorithmPtr alg, QList <Arduino::Instruction> & argHandle, int functionId);
+    void addArrayArgument(QList <Arduino::Instruction> & argHandle, const AST::VariablePtr var,
+                          quint8 moduleId, int functionId);
+    void addVariableArgument(QList <Arduino::Instruction> & argHandle, const AST::VariablePtr var,
+                             int counter, const AST::AlgorithmPtr alg);
+    void declareFunctionHead(const AST::ModulePtr mod,
+                             const AST::AlgorithmPtr alg, Arduino::TableElem & func, Arduino::ElemType type);
+    void checkForFunctionPartErrors(const AST::AlgorithmPtr alg,
+                                    QList <Arduino::Instruction> & instructions, const QList<AST::LexemPtr> lexems);
+    int findLastInstruction(QList<Arduino::Instruction> instructions, Arduino::InstructionType type);
+#pragma endregion
     AST::DataPtr ast_;
     Arduino::Data * byteCode_;
     QList< ConstValue > constants_;

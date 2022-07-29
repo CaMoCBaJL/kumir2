@@ -4,13 +4,13 @@
 
 #ifndef KUMIR2_GENERATORS_H
 #define KUMIR2_GENERATORS_H
-#include "AssertGenerator.h"
-#include "AssignGenerator.h"
-#include "ConditionGenerator.h"
-#include "ErrorGenerator.h"
-#include "FunctionsGenerator.h"
-#include "LoopGenerator.h"
-#include "SwitchGenerator.h"
-#include "VarInitializationGenerator.h"
-#include "BreakGenerator.h"
+#include "assertsGenerator.h"
+#include "assignsGenerator.h"
+#include "conditionsGenerator.h"
+#include "errorsGenerator.h"
+#include "functionsGenerator.h"
+#include "loopsGenerator.h"
+#include "switchesGenerator.h"
+#include "varInitializationsGenerator.h"
+#include "breaksGenerator.h"
 #endif //KUMIR2_GENERATORS_H

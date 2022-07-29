@@ -4,8 +4,9 @@
 
 #ifndef KUMIR2_BREAKGENERATOR_H
 #define KUMIR2_BREAKGENERATOR_H
-namespace ArduinoCodeGenerator{
 #include "../enums/enums.h"
+
+namespace ArduinoCodeGenerator{
     void Generator::generateBreakInstruction(int , int , int , const AST::StatementPtr  st, QList<Arduino::Instruction> & result)
     {
         Arduino::Instruction a;

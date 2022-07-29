@@ -7,15 +7,15 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "arduino_instruction.hpp"
-#include "entities/CVariable.h"
+#include "entities/arduinoVariable.h"
 #include <QDebug>
 #include "generator.h"
 #include <QtCore>
-#include "entities/TableElem.h"
+#include "entities/arduinoTableElem.h"
 #include "enums/enums.h"
-#include "entities/Instruction.h"
-#include "converters/ArduinoToStringConverter.h"
+#include "entities/arduinoInstruction.h"
+#include "converters/arduinoToStringConverter.h"
+#include "entities/arduinoHelpers.h"
 namespace Arduino {
 
 static QList<QVariant> _constantElemValues;

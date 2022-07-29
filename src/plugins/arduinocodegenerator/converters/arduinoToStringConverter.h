@@ -4,6 +4,7 @@
 
 #ifndef KUMIR2_ARDUINOTOSTRINGCONVERTER_H
 #define KUMIR2_ARDUINOTOSTRINGCONVERTER_H
+#include "../entities/arduinoHelpers.h"
 namespace Arduino{
     static std::string parseValueType(Arduino::ValueType type){
         switch (type){

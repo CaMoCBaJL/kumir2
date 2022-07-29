@@ -1,10 +1,9 @@
 //
-// Created by anton on 3/31/22.
+// Created by anton on 7/17/22.
 //
 
-#ifndef ARDUINO_ENUMS_HPP
-#define ARDUINO_ENUMS_HPP
-
+#ifndef KUMIR2_ELEMTYPE_H
+#define KUMIR2_ELEMTYPE_H
 namespace Arduino{
     enum ElemType {
         EL_NONE     = 0x00,     // stream delimeter
@@ -20,23 +19,5 @@ namespace Arduino{
         EL_EXTERN_INIT = 0x0a
     };
 
-    enum ValueType {
-        VT_void     = 0x00,
-        VT_int      = 0x01,
-        VT_float    = 0x02,
-        VT_char     = 0x03,
-        VT_bool     = 0x04,
-        VT_string   = 0x05,
-        VT_struct     = 0xFF,
-        VT_None = -1
-    };
-
-    enum ValueKind {
-        VK_Plain    = 0x00,
-        VK_In       = 0x01,
-        VK_InOut    = 0x02,
-        VK_Out      = 0x03
-    };
 }
-
-#endif //ARDUINO_ENUMS_H
+#endif //KUMIR2_ELEMTYPE_H

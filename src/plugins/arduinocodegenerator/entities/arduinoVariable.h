@@ -11,7 +11,7 @@
 
 #define DO_NOT_DECLARE_STATIC
 #include <kumir2-libs/stdlib/kumirstdlib.hpp>
-#include "arduino_enums.hpp"
+#include "../enums/enums.h"
 
 
 namespace Arduino {

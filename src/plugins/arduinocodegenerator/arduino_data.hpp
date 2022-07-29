@@ -5,20 +5,14 @@
 
 #include <deque>
 #include <stdint.h>
-#include "arduino_enums.hpp"
 #include <QDebug>
-
+#include "enums/enums.h"
+#include "entities/arduinoData.h"
+#include "entities/arduinoTableElem.h"
+#include "entities/arduinoHelpers.h"
 
 namespace Arduino {
 using Arduino::ElemType;
-
-struct Data {
-    std::deque <TableElem> d;
-    uint8_t versionMaj;
-    uint8_t versionMin;
-    uint8_t versionRel;
-    unsigned long lastModified;
-};
 
 inline void makeHelpersForTextRepresentation(const Data & data, AS_Helpers & helpers)
 {

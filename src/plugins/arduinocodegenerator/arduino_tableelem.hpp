@@ -7,132 +7,18 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "arduino_instruction.hpp"
-#include "arduino_enums.hpp"
-#include "CVariable.hpp"
+#include "entities/arduinoVariable.h"
 #include <QDebug>
 #include "generator.h"
 #include <QtCore>
-
+#include "entities/arduinoTableElem.h"
+#include "enums/enums.h"
+#include "entities/arduinoInstruction.h"
+#include "converters/arduinoToStringConverter.h"
+#include "entities/arduinoHelpers.h"
 namespace Arduino {
 
-using Kumir::String;
-using Arduino::CVariable;
-using Arduino::ElemType;
-using Arduino::ValueType;
-using Arduino::ValueKind;
-
-struct TableElem {
-    ElemType type; // Element type
-    std::list<ValueType> vtype; // Value type
-    uint8_t dimension; // 0 for regular, [1..3] for arrays
-    ValueKind refvalue; // 1 for in-argument,
-                     // 2 for in/out-argument,
-                     // 3 for out-argument
-                     // 0 for regular variable
-    uint8_t module;  // module id
-    uint16_t algId; // algorhitm id
-    uint16_t id; // element id
-
-    String name; // variable or function name
-    std::string moduleAsciiName;
-    String moduleLocalizedName; // external module name
-    String fileName;
-    String signature;
-    std::string recordModuleAsciiName;
-    String recordModuleLocalizedName;
-    std::string recordClassAsciiName;
-    String recordClassLocalizedName;
-    CVariable initialValue; // constant value
-    std::vector<Instruction> instructions; // for local defined function
-    inline TableElem() {
-        type = Arduino::EL_NONE;
-        vtype.push_back(Arduino::VT_void);
-        dimension = 0;
-        refvalue = Arduino::VK_Plain;
-        module = 0;
-        algId = id = 0;
-    }
-};
-
 static QList<QVariant> _constantElemValues;
-
-inline std::string elemTypeToArduinoString(ElemType t)
-{
-    if (t==Arduino::EL_LOCAL)
-        return "Arduino_local";
-    else if (t==Arduino::EL_GLOBAL)
-        return "Arduino_global";
-    else if (t==Arduino::EL_CONST)
-        return "Arduino_constant";
-    else if (t==Arduino::EL_FUNCTION)
-        return "func_name";
-    else if (t==Arduino::EL_EXTERN)
-        return "Arduino_extern";
-    else if (t==Arduino::EL_INIT)
-        return "void init_func";
-    else if (t==Arduino::EL_MAIN)
-        return "void main_func(){\n";
-    else if (t==Arduino::EL_BELOWMAIN)
-        return "Arduino_belowmain";
-    else if (t==Arduino::EL_TESTING)
-        return "void test_func";
-    else  {
-        return " elem type: " + std::to_string(t) + " ";
-    }
-}
-
-inline std::string vtypeToString(ValueType instructionType)
-    {
-        switch(instructionType){
-            case (Arduino::VT_int):
-                return "int";
-            case (Arduino::VT_float):
-                return "float";
-            case (Arduino::VT_char):
-                return "char";
-            case (Arduino::VT_string):
-                return "string";
-            case (Arduino::VT_bool):
-                return "boolean";
-            case (Arduino::VT_struct):
-                return "struct{\n";
-            default:
-                return "";
-        }
-    }
-
-inline std::string parseVType(const std::list<ValueType> & type, uint8_t dim)
-    {
-        std::string result;
-        ValueType t = type.front();
-        if (t == Arduino::VT_struct)
-        {
-            std::list<ValueType>::const_iterator it = type.begin();
-            it ++;
-            std::list<ValueType>::const_iterator itt;
-            for ( ; it!=type.end(); ++it) {
-                t = *it;
-                result += vtypeToString(t);
-                itt = it;
-                itt++;
-                if ( itt != type.end() ) {
-                    result += ",";
-                }
-            }
-            result += "}\n";
-        }
-        else
-        if (result.length()>0) {
-            for (uint8_t i=0; i<dim; i++) {
-                result += "[]";
-            }
-        }
-        else
-            return vtypeToString(t);
-
-        return result;
-    }
 
 inline void replaceAll(String &str, const String & from, const String & to)
 {

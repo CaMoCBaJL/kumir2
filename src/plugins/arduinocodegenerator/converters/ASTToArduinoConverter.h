@@ -33,7 +33,7 @@ namespace ArduinoCodeGenerator{
             case AST::OpDivision:
                 return Arduino::DIV;
             case AST::OpPower:
-                return Arduino::POW;
+                return Arduino::NOP;
             case AST::OpNot:
                 return Arduino::NEG;
             case AST::OpAnd:
@@ -67,7 +67,7 @@ namespace ArduinoCodeGenerator{
         else if (op == AST::OpDivision)
             return Arduino::DIV;
         else if (op == AST::OpPower)
-            return Arduino::POW;
+            return Arduino::NOP;
         else if (op == AST::OpNot)
             return Arduino::NEG;
         else if (op == AST::OpAnd)

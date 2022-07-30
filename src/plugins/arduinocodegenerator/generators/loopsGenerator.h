@@ -26,6 +26,7 @@ namespace ArduinoCodeGenerator{
 
         if (ex->variable == nullptr) {
             variable.registerr = ex->constant.toInt();
+            variable.arg = -1;
             variable.type = Arduino::CONST;
         } else {
             variable.varName = ex->variable->name;

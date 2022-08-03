@@ -146,7 +146,6 @@ namespace Arduino{
         else if (t==SUB) return parseOperationData(instruction, constants);
         else if (t==MUL) return parseOperationData(instruction, constants);
         else if (t==DIV) return parseOperationData(instruction, constants);
-        else if (t==POW) return parseOperationData(instruction, constants);
         else if (t==NEG) return parseOperationData(instruction, constants);
         else if (t==AND) return parseOperationData(instruction, constants);
         else if (t==OR) return parseOperationData(instruction, constants);

@@ -1018,7 +1018,7 @@ class Module:
         """
         if os.path.exists(file_name):
             f = open(file_name, 'r', encoding="utf-8")
-            data = json.load(f, encoding="utf-8")
+            data = json.load(f)
             f.close()
         else:
             data = json.loads("{}")

@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 BYTES_TO_READ_COUNT = 1024
 CHAR_THRESHOLD = 0.3
@@ -30,11 +31,14 @@ def get_file_data(filename):
     file.close()
     return result
 
-def process_sources(source_filename, path_to_compiler):
+def process_sources(source_filename, path_to_translator):
     if RESULTS_FOLDER_NAME.lower() not in os.listdir(os.getcwd()):
         os.mkdir(os.path.join(get.getcwd()))
-        
+    
     #call kumir2-arduino with params: --out="path_to_cwd/results/test_name.kumir.c" -s ./test_name.kum
+    popen = subprocess.Popen([path_to_translator, f'--out={path.join(os.getcwd(), source_filename}.c', '-s', source_filename], stdout=subprocess.PIPE)
+    popen.wait()
+    return popen.stdout.read()
 
 def compare_data(result_data, processed_data):
     pass
@@ -103,10 +107,12 @@ def process_args():
             result[2] = True
             
     return result        
-
-#sys.argv[1:] - all cmd arguments
-#TODO: where should be placed kumir2-robots.bin/kumir2-robots.exe by default
-#      or should it has no default place?    
+#TODO: create function to hightlight diff in tests, like:
+#   test_num: n
+#   source_file: test_file_name.kum
+#   Result: OK - go to the next.
+#   in other case it should highlight the differences in expectation and result
+#   mb, just call vimdiff and retranslate output.
 if __name__=="__main__":
     args_data = process_args()
     processed_dir_names = map(lambda str: str.lower(), os.listdir(os.getcwd()))
@@ -123,11 +129,7 @@ if __name__=="__main__":
         sys.exit(2)
     
     for i in range(len(source_files)):
-        source_data = get_file_data(source_files[i])
         expected_data = get_file_data(expectation_files[i])
-        result_data = process_sources(source_data)
-        
-    
-    
-    
-
+        result_data = process_sources(source_files[i])
+        if compare_data(result_data, expected_data):
+            

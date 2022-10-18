@@ -3,6 +3,18 @@ import sys
 import subprocess
 
 #constants
+class CONSOLE_BG_COLORS:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+CONTROL_CHARACTERS = ["\n", "\r", "\t", " "]
 BYTES_TO_READ_COUNT = 1024
 CHAR_THRESHOLD = 0.3
 TEXT_CHARACTERS = ''.join(
@@ -38,14 +50,25 @@ class TestResult:
 
     def __str__(self):
         str_representation = f'''
+        {CONSOLE_BG_COLORS.OKGREEN if self.is_completed else CONSOLE_BG_COLORS.FAIL}
         Test №{self.test_number}. Test {self.name}.
-        Test is {"completed" if self.is_completed else "not completed"}
+        Test is {"completed successfully!" if self.is_completed else "not completed("}
         Sources for the test: {self.source_file_name}
         Test expectations: {self.expectation_file_name}
-        Test results: {self.resultFileName}
+        Test results: {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}
         '''
-
         return str_representation
+#functions
+def remove_control_characters(data_array):
+    result = []
+    for i in data_array:
+        for cc in CONTROL_CHARACTERS:
+            i = i.replace(cc, "")
+
+        if i:
+            result.append(i)
+
+    return result
 
 def get_file_data(filename):
     file = open(filename, "r")
@@ -53,44 +76,40 @@ def get_file_data(filename):
     file.close()
     return result
 
-def log_processed_data(data, source_filename):
-    #the easiest way to simply create a file without truncating it in case it exists
-    test_result_filename = os.path.join(source_filename.split(os.sep)[:-1],
-                                        source_filename.split('.')[0],
-                                        "_result.kumir.c")
-    open(test_result_filename, 'a').close()
-    test_log = open(test_result_filename, 'a')
-    test_log.writelines(data)
-    test_log.close()
-
-    return  test_result_filename
-
 def process_sources(source_filename, path_to_translator):
-    if RESULTS_FOLDER_NAME.lower() not in os.listdir(os.getcwd()):
-        os.mkdir(os.path.join(get.getcwd()))
+    if RESULTS_FOLDER_NAME not in os.listdir(os.getcwd()):
+        os.mkdir(os.path.join(os.getcwd(), RESULTS_FOLDER_NAME))
+
+    path_to_results_folder = os.path.join(os.getcwd(), RESULTS_FOLDER_NAME)
+    result_filename = os.path.join(path_to_results_folder, source_filename.split(os.sep)[-1].split(".")[0]) + ".kumir.c"
 
     #call kumir2-arduino with params: --out="path_to_cwd/results/test_name.kumir.c" -s ./test_name.kum
     popen = subprocess.Popen([path_to_translator,
-                              f'--out={path.join(os.getcwd(), source_filename)}.c',
+                              f'--out={result_filename}',
                               '-s',
                               source_filename],
                              stdout=subprocess.PIPE)
     popen.wait()
     translation_data = popen.stdout.read()
-    print(f"translated data: {translation_data}")
 
-    return log_processed_data(translation_data)
+    return result_filename
 
-# wrong implementation. please fix it
-def compare_data(result_data, processed_data):
-    return result_data == processed_data
+def compare_data(expected_data, processed_data):
+    result_without_kumir_ref = remove_control_characters(processed_data[2:])
+    expected_data = remove_control_characters(expected_data)
+
+    for i in range(len(result_without_kumir_ref)):
+        if result_without_kumir_ref[i] != expected_data[i]:
+            return False
+
+    return True
 
 #log comparison results to file
 def log_test_results(logs_filename, log_data: TestResult, log_to_console):
-    completed_tests = log_data.count(sum(x.is_completed for x in log_data))
+    completed_tests = sum(not x.is_completed for x in log_data)
     log_data.sort(key=lambda x: x.is_completed)
 
-    log_data_strings = map(lambda x: str(x), log_data)
+    log_data_strings = list(map(lambda x: str(x), log_data))
     log_data_strings.insert(0, f'''
     There were: {len(log_data )} tests.
     Completed / Uncompleted: {completed_tests} / {len(log_data) - completed_tests}''')
@@ -166,6 +185,13 @@ def process_args():
             
     return result
 
+def get_files_with_absolute_paths(folder_name):
+    path_to_folder = os.path.join(os.getcwd(), folder_name)
+    files = list(map(lambda x: os.path.join(path_to_folder, x), os.listdir(path=path_to_folder)))
+    files.sort()
+
+    return  files
+
 #TODO: create function to hightlight diff in tests, like:
 #   test_num: n
 #   source_file: test_file_name.kum
@@ -180,26 +206,28 @@ if __name__=="__main__":
             and EXPECTATIONS_FOLDER_NAME.lower() not in processed_dir_names:
         print("Execution folder doesn't contain folders with source and processed data")       
         sys.exit(2)
-    
-    source_files = os.listdir(os.path.join(os.getcwd(), SOURCES_FOLDER_NAME))
-    expectation_files = os.listdir(os.path.join(os.getcwd(), EXPECTATIONS_FOLDER_NAME))
+
+    source_files = get_files_with_absolute_paths(SOURCES_FOLDER_NAME)
+    expectation_files = get_files_with_absolute_paths(EXPECTATIONS_FOLDER_NAME)
     
     if len(source_files) > len(expectation_files):
         print("Tests amount > expectations amount")
         sys.exit(2)
 
     test_results = []
-    
+
     for i in range(len(source_files)):
         expected_data = get_file_data(expectation_files[i])
         test_result = TestResult(i,
                                  source_files[i].split(".")[0],
                                  source_files[i],
                                  expectation_files[i],
-                                 process_sources(source_files[i]), False)
+                                 process_sources(source_files[i], args_data[0]), False)
+        result_data = get_file_data(test_result.resultFileName)
 
-        if compare_data(result_data, expected_data):
+        if compare_data(expected_data, result_data):
             test_result.is_completed = True
-            test_results.append(test_result)
 
-    log_test_results(args_data[1], test_results, )
+        test_results.append(test_result)
+
+    log_test_results(args_data[1], test_results, args_data[2])

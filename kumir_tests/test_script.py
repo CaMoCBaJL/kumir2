@@ -49,13 +49,15 @@ class TestResult:
         self.is_completed = is_completed
 
     def __str__(self):
-        str_representation = f'''
-        {CONSOLE_BG_COLORS.OKGREEN if self.is_completed else CONSOLE_BG_COLORS.FAIL}
+        str_representation = f'''{CONSOLE_BG_COLORS.OKGREEN if self.is_completed else CONSOLE_BG_COLORS.FAIL}
         Test №{self.test_number}. Test {self.name}.
         Test is {"completed successfully!" if self.is_completed else "not completed("}
         Sources for the test: {self.source_file_name}
         Test expectations: {self.expectation_file_name}
-        Test results: {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}
+        Test results: {self.resultFileName}. 
+        To get more detail info about comparison results, print:
+        vimdiff {self.source_file_name} {self.expectation_file_name} {self.resultFileName}
+        or vimdiff {self.expectation_file_name} {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}
         '''
         return str_representation
 #functions
@@ -192,12 +194,6 @@ def get_files_with_absolute_paths(folder_name):
 
     return  files
 
-#TODO: create function to hightlight diff in tests, like:
-#   test_num: n
-#   source_file: test_file_name.kum
-#   Result: OK - go to the next.
-#   in other case it should highlight the differences in expectation and result
-#   mb, just call vimdiff and retranslate output.
 if __name__=="__main__":
     args_data = process_args()
     processed_dir_names = map(lambda str: str.lower(), os.listdir(os.getcwd()))

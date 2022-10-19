@@ -200,6 +200,7 @@ namespace ArduinoCodeGenerator{
 
         workCondition.type = Arduino::VAR;
         workCondition.varName = st->loop.forVariable->name;
+        workCondition.varType = Arduino::VT_None;
         result << workCondition;
 
         parseOperationType.type = Arduino::ASG;

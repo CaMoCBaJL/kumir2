@@ -28,7 +28,7 @@ EXPECTATIONS_FOLDER_NAME = "Expectations"
 RESULTS_FOLDER_NAME = "Results"
 
 ARGS = {"help": ["-h", "--help"],
-        "compiler": ["-c", "--compiler"],
+        "translator": ["-t", "--translator"],
         "output": ["-o", "--output"],
         "duplicate": ["-d", "--duplicate"]}
 
@@ -176,9 +176,9 @@ def process_args():
         
     args = sys.argv[1:]
     for i in range(1, len(args)):
-        if args[i - 1] in ARGS["compiler"] or args[i - 1] in ARGS["output"]:
-            validate_file_name(args[i], False if args[i - 1] in ARGS["compiler"] else True)
-            if args[i - 1] in ARGS["compiler"]:
+        if args[i - 1] in ARGS["translator"] or args[i - 1] in ARGS["output"]:
+            validate_file_name(args[i], False if args[i - 1] in ARGS["translator"] else True)
+            if args[i - 1] in ARGS["translator"]:
                 result[0] = args[i]
             else: 
                 result[1] = args[i]

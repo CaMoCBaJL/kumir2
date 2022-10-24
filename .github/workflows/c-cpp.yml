@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "ArduinoFixes" ]
   pull_request:
-    branches: [ "ArduinoFixes" ]
+    branches: ["master", "ArduinoFixes" ]
 
 jobs:
   build-and-test:

@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "ArduinoFixes" ]
+  pull_request:
+    branches: [ "ArduinoFixes" ]
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: update system libs
+      run: sudo apt-get update && sudo apt-get dist-upgrade
+    - name: install all the necessary libs and apps
+      run: sudo apt-get install -y git python3 cmake qtbase5-dev g++ libqt5svg5-dev libqt5x11extras5-dev qtscript5-dev libboost-system-dev zlib1g zlib1g-dev
+    - name: clone repo and prepare for building kumir-to-arduino translator
+      run: mkdir /home/Sources && cd /home/Sources && git clone https://github.com/CaMoCBaJL/kumir2 && git checkout ArduinoFixes && cd /home/Sources/kumir2 && mkdir build && cd build
+    - name: build translator
+      run: cmake -DUSE_QT=5 -DCMAKE_BUILD_TYPE=Release .. && make -j 6
+    - name: launch tests
+      run: cd ../kumir_tests/ touch test_results.log && python3 test_script.py -d -o ./test_results.log -t ../build/bin/kumir2-arduino

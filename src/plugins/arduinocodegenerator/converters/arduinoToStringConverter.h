@@ -97,7 +97,7 @@ namespace Arduino{
                 result.append("--");
                 break;
             case INC:
-                result.append("pp");
+                result.append("p");
                 break;
         }
 

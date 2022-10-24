@@ -1,0 +1,18 @@
+#install all the necessary libs and apps
+sudo apt-get update
+sudo apt-get dist-upgrade
+sudo apt-get install -y git python3 cmake qtbase5-dev g++ libqt5svg5-dev libqt5x11extras5-dev qtscript5-dev libboost-system-dev zlib1g zlib1g-dev
+#clone repo and prepare for building kumir-to-arduino translator
+mkdir /home/Sources && cd /home/Sources
+git clone https://github.com/CaMoCBaJL/kumir2
+git checkout ArduinoFixes
+cd /home/Sources/kumir2
+mkdir build && cd build
+#build translator
+cmake -DUSE_QT=5 -DCMAKE_BUILD_TYPE=Release .. &&
+make -j 6
+#start tests
+cp bin/kumir2-arduino ../kumir_tests/
+cd ../kumir_tests/
+touch test_results.log
+python3 test_script.py -d -o ./test_results.log -t ../build/bin/kumir2-arduino

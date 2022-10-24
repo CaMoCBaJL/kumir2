@@ -2,7 +2,8 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "ArduinoFixes" ]
+    branches:
+      - ArduinoFixes
   pull_request:
     branches: ["master", "ArduinoFixes" ]
 

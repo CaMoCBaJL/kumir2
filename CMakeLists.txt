@@ -35,6 +35,10 @@ if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/custom_variables.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/custom_variables.cmake")
 endif()
 
+if(NOT DEFINED KUMIR2_ALL_TOOLS)
+    set(KUMIR2_ALL_TOOLS OFF)
+endif(NOT DEFINED KUMIR2_ALL_TOOLS)
+
 set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(KUMIR2_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 find_package(Kumir2 REQUIRED)
@@ -111,6 +115,7 @@ file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/distribution_build_config.cmake"
     "set(KUMIR2_ROOT ${CMAKE_INSTALL_PREFIX})\n"
     "set(KUMIR2_SDK_SCRIPTS_DIR ${KUMIR2_SDK_SCRIPTS_DIR})\n"
     "set(KUMIR2_SDK_SRC_DIR ${KUMIR2_SDK_SRC_DIR})\n"
+    "set(KUMIR2_ALL_TOOLS ${KUMIR2_ALL_TOOLS})\n"
     "set(GIT_HASH ${GIT_HASH})\n"
     "set(GIT_TAG ${GIT_TAG})\n"
     "set(GIT_BRANCH ${GIT_BRANCH})\n"

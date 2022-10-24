@@ -1,0 +1,88 @@
+{
+	"name": { "ascii": "Arduino", "ru_RU": "Ардуино" },
+	"dynamic": { "methods": true },
+	"methods": [
+		{
+			"name": {"ascii": "digitalRead", "ru_RU": "цифрВвод" },
+			"async": false,
+			"returnType": "bool",
+			"arguments": [
+				{ "name": "pin", "baseType": "int"}
+			]
+		},
+		{
+			"name": {"ascii": "digitalWrite", "ru_RU": "цифрВывод" },
+			"async": false,
+			"arguments": [
+				{ "name": "pin", "baseType": "int"},
+				{ "name": "value", "baseType": "bool"}
+			]
+		},
+		{
+			"name": {"ascii": "analogRead", "ru_RU": "аналогВвод" },
+			"async": false,
+			"returnType": "int",
+			"arguments": [
+				{ "name": "pin", "baseType": "int"}
+			]
+		},
+		{
+			"name": {"ascii": "analogWrite", "ru_RU": "аналогВывод" },
+			"async": false,
+			"arguments": [
+				{ "name": "pin", "baseType": "int"},
+				{ "name": "value", "baseType": "int"}
+			]
+		},
+		{
+			"name": {"ascii": "delay", "ru_RU": "задержкаС" },
+			"async": false,
+			"arguments": [
+				{ "name": "ms", "baseType": "int"}
+			]
+		},
+		{
+			"name": {"ascii": "milis", "ru_RU": "задержкаМС" },
+			"async": false,
+			"returnType": "int"
+		},
+		{
+			"name": {"ascii": "Serial.begin", "ru_RU": "открытьПорт" },
+			"async": false,
+			"arguments": [
+				{ "name": "rate", "baseType": "int"}
+			]
+		},
+		{
+			"name": {"ascii": "Serial.println", "ru_RU": "выводВПорт" },
+			"async": false,
+			"arguments": [
+				{ "name": "data", "baseType": "int"}
+			]
+		},
+		{
+			"name": {"ascii": "INPUT", "ru_RU": "режимВвод" },
+			"async": false,
+			"returnType": "int",
+            "arguments": []
+		},
+		{
+			"name": {"ascii": "OUTPUT", "ru_RU": "режимВывод" },
+			"async": false,
+			"returnType": "int",
+			"arguments": []
+		},
+		{
+			"name": {"ascii": "HIGH", "ru_RU": "высокийСигнал" },
+			"async": false,
+			"returnType": "int",
+			"arguments": []
+		},
+		{
+			"name": {"ascii": "LOW", "ru_RU": "низкийСигнал" },
+			"async": false,
+			"returnType": "int",
+			"arguments": []
+		}
+	]
+}

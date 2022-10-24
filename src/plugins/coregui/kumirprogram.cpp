@@ -214,6 +214,19 @@ Shared::GeneratorInterface * KumirProgram::kumirNativeGenerator()
     return GENERATOR;
 }
 
+Shared::GeneratorInterface * KumirProgram::kumirArduinoGenerator()
+{
+    using namespace ExtensionSystem;
+    using namespace Shared;
+
+    static GeneratorInterface * GENERATOR = nullptr;
+
+    if (!GENERATOR) {
+        GENERATOR = PluginManager::instance()->findPlugin<GeneratorInterface>("ArduinoCodeGenerator");
+    }
+
+    return GENERATOR;
+}
 
 
 void KumirProgram::createConnections()

@@ -1,0 +1,3 @@
+tar: master:. name=kumir2-@version@
+diff: master:. . name=kumir2-@version@-alt.patch
+spec: .gear/kumir2.spec

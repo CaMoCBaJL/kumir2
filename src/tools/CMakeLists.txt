@@ -1,4 +1,4 @@
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(CMAKE_BUILD_TYPE MATCHES Debug OR KUMIR2_ALL_TOOLS)
     add_opt_subdirectory(as)
 endif()
 if(NOT MSVC OR MSVC_VERSION LESS 1900)

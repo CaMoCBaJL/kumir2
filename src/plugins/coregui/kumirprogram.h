@@ -45,6 +45,7 @@ public:
     void setTerminal(Term * t, QDockWidget * w);
     static Shared::GeneratorInterface * kumirCodeGenerator();
     static Shared::GeneratorInterface * kumirNativeGenerator();
+    static Shared::GeneratorInterface * kumirArduinoGenerator();
 
     inline QString endStatusText() const { return endStatusText_; }
     inline RunEndStatus endStatus() const { return endStatus_; }

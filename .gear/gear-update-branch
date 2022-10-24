@@ -1,0 +1,24 @@
+#!/bin/bash -e
+
+dir=$(dirname "$0")
+geardir=$(readlink -f "$dir")
+
+branch=${1-master}
+hash=$(git --no-pager log -1 --pretty=format:%H "$branch")
+timestamp=$(git --no-pager log -1 --pretty=format:%ct "$branch")
+tag=$(git describe --abbrev=0 --tags --exact-match "$branch" 2>/dev/null || echo unknown)
+
+sed -i "s/.* $branch$/$hash $branch/" "$geardir/tags/list"
+cat >"$geardir/../version_info.cmake" <<__EOF
+set(GIT_HASH $hash)
+set(GIT_TIMESTAMP $timestamp)
+set(GIT_TAG $tag)
+set(GIT_BRANCH $branch)
+__EOF
+
+git add "$geardir/../version_info.cmake"
+
+spec=$(ls -1 $geardir/*.spec)
+
+sed -i "s/^%define branch .*/%define branch $branch/" "$spec"
+sed -i "s/^%define git_hash .*/%define git_hash $hash/" "$spec"

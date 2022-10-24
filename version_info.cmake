@@ -1,0 +1,4 @@
+set(GIT_HASH 0d1c303eab080d67492ad0f9b14776036b59b9ef)
+set(GIT_TIMESTAMP 1565557284)
+set(GIT_TAG unknown)
+set(GIT_BRANCH master)

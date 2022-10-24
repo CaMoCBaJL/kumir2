@@ -13,6 +13,7 @@ scripts/*.pyo
 .project
 .settings
 .idea
+/build
 /share/kumir2/python3language/__pycache__/run.cpython-33.pyc
 /share/kumir2/python3language/__pycache__/analizer.cpython-33.pyc
 /scripts/cpplint.py
@@ -34,3 +35,5 @@ __pycache__
 /userdocs/*.aux
 /userdocs/*.out
 *.log
+
+cmake-build-debug/

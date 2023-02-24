@@ -63,9 +63,23 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
 
 }
 
+/* public */ QWidget* ArduinoModule::mainWidget() const
+{
+    // Returns module main view widget, or nullptr if there is no any views
+    // NOTE: the method is const and might be called at any time,
+    //       so DO NOT create widget here, just return!
+    // TODO implement me
+    return nullptr;
+}
 
-
-
+/* public */ QWidget* ArduinoModule::pultWidget() const
+{
+    // Returns module control view widget, or nullptr if there is no control view
+    // NOTE: the method is const and might be called at any time,
+    //       so DO NOT create widget here, just return!
+    // TODO implement me
+    return nullptr;
+}
 
 /* public slot */ void ArduinoModule::reloadSettings(ExtensionSystem::SettingsPtr settings, const QStringList & keys)
 {
@@ -82,7 +96,13 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
 }
 
-
+/* public slot */ void ArduinoModule::setAnimationEnabled(bool enabled)
+{
+    // Sets GUI animation flag on run
+    // NOTE this method just setups a flag and might be called anytime, even module not needed
+    // TODO implement me
+    Q_UNUSED(enabled);  // Remove this line on implementation
+}
 
 /* public slot */ void ArduinoModule::terminateEvaluation()
 {
@@ -127,14 +147,6 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     
 }
 
-/* public slot */ void ArduinoModule::runPinMode(const int pinMode)
-{
-    /* алг задатьПорт(цел pinMode) */
-    // TODO implement me
-    Q_UNUSED(pinMode)  // Remove this line on implementation;
-    
-}
-
 /* public slot */ void ArduinoModule::runDelay(const int ms)
 {
     /* алг задержкаС(цел ms) */
@@ -147,54 +159,6 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
 {
     /* алг цел задержкаМС */
     // TODO implement me
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runMin(const int x, const int y)
-{
-    /* алг цел мин(цел x, цел y) */
-    // TODO implement me
-    Q_UNUSED(x)  // Remove this line on implementation;
-    Q_UNUSED(y)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runMax(const int x, const int y)
-{
-    /* алг цел макс(цел x, цел y) */
-    // TODO implement me
-    Q_UNUSED(x)  // Remove this line on implementation;
-    Q_UNUSED(y)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runRandomSeed(const int seed)
-{
-    /* алг цел установитьСлуч(цел seed) */
-    // TODO implement me
-    Q_UNUSED(seed)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runRandom(const int max)
-{
-    /* алг цел случ(цел max) */
-    // TODO implement me
-    Q_UNUSED(max)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runRandom(const int min, const int max)
-{
-    /* алг цел случ(цел min, цел max) */
-    // TODO implement me
-    Q_UNUSED(min)  // Remove this line on implementation;
-    Q_UNUSED(max)  // Remove this line on implementation;
     return 0;
     
 }
@@ -212,26 +176,39 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     /* алг выводВПорт(цел data) */
     // TODO implement me
     Q_UNUSED(data)  // Remove this line on implementation;
+    
 }
 
 /* public slot */ int ArduinoModule::runINPUT()
 {
-    return 1;
+    /* алг цел режимВвод */
+    // TODO implement me
+    return 0;
+    
 }
 
 /* public slot */ int ArduinoModule::runOUTPUT()
 {
+    /* алг цел режимВывод */
+    // TODO implement me
     return 0;
+    
 }
 
 /* public slot */ int ArduinoModule::runHIGH()
 {
-    return 1;
+    /* алг цел высокийСигнал */
+    // TODO implement me
+    return 0;
+    
 }
 
 /* public slot */ int ArduinoModule::runLOW()
 {
-    return 0; 
+    /* алг цел низкийСигнал */
+    // TODO implement me
+    return 0;
+    
 }
 
 

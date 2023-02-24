@@ -84,5 +84,50 @@
 			"returnType": "int",
 			"arguments": []
 		}
-	]
+	],
+	"gui": {
+		"optional": true,
+		"windows": [
+			{"role": "pult", "icon": "robot-pult"}
+		],
+		"menus": [
+			{
+				"title": { "ascii": "Arduino", "ru_RU": "Ардуино" },
+				"items": [
+					{
+						"title": { 
+							"ascii": "Choose robot version",
+							"ru_RU": "Робот"
+						},
+						"icon": ""
+					},
+					{
+						"title": { 
+							"ascii": "Choose board",
+							"ru_RU": "Плата"
+						},
+						"icon": ""
+					},
+					{
+						"title": { 
+							"ascii": "Flash type",
+							"ru_RU": "Тип прошивки"
+						},
+						"icon": ""
+					}
+				]
+			}
+		]
+	},
+	"settings": {
+		"RobotConfigSources": {
+			"order": 1,
+			"type": "double",
+			"default": "0",
+			"title": {
+				"ascii": "List of robot config sources",
+			 	"ru_RU": "Список ресурсов с файлами конфигурации роботов"
+			}
+		}
+	}
 }

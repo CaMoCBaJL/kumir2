@@ -17,7 +17,6 @@ You should change it corresponding to functionality.
 
 // Qt includes
 #include <QtCore>
-#include <QTime>
 #if QT_VERSION >= 0x050000
 #   include <QtWidgets>
 #else
@@ -34,24 +33,21 @@ class ArduinoModule
 public /* methods */:
     ArduinoModule(ExtensionSystem::KPlugin * parent);
     static QList<ExtensionSystem::CommandLineParameter> acceptableCommandLineParameters();
+    QWidget* mainWidget() const;
+    QWidget* pultWidget() const;
 public Q_SLOTS:
     void changeGlobalState(ExtensionSystem::GlobalState old, ExtensionSystem::GlobalState current);
     void loadActorData(QIODevice * source);
     void reloadSettings(ExtensionSystem::SettingsPtr settings, const QStringList & keys);
     void reset();
+    void setAnimationEnabled(bool enabled);
     void terminateEvaluation();
     bool runDigitalRead(const int pin);
     void runDigitalWrite(const int pin, const bool value);
     int runAnalogRead(const int pin);
     void runAnalogWrite(const int pin, const int value);
-    void runPinMode(const int pinMode);
     void runDelay(const int ms);
     int runMilis();
-    int runMin(const int x, const int y);
-    int runMax(const int x, const int y);
-    int runRandomSeed(const int seed);
-    int runRandom(const int max);
-    int runRandom(const int min, const int max);
     void runSerialbegin(const int rate);
     void runSerialprintln(const int data);
     int runINPUT();
@@ -62,8 +58,7 @@ public Q_SLOTS:
 
 
     /* ========= CLASS PRIVATE ========= */
-private:
-    QTime *milisTimer;
+
 
 
 

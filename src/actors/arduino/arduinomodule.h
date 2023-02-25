@@ -35,6 +35,19 @@ public /* methods */:
     static QList<ExtensionSystem::CommandLineParameter> acceptableCommandLineParameters();
     QWidget* mainWidget() const;
     QWidget* pultWidget() const;
+    /* constants */
+    const QStringList flashTypeMenuItemLabels = {"Цикл", "1 раз"};
+    const QString addRobotTypeMenuItem = "Добавить";
+    const QString flashTypeListMenu = "Выбор места прошивки";
+    const QString robotTypeListMenu = "Выбор робота";
+    const QString boardListMenu = "Выбор платы";
+
+//--------------------SETTINGS---------------------------------
+    const QString arduinoSettingsSectionLabel = "Arduino";
+    const QString flashTypeSettingLabel = arduinoSettingsSectionLabel + "/" + "FlashType";
+    const QString robotTypeSettingLabel = arduinoSettingsSectionLabel + "/" + "RobotType";
+    const QString robotListSettingLabel = arduinoSettingsSectionLabel + "/" + "RobotList";
+//--------------------SETTINGS---------------------------------
 public Q_SLOTS:
     void changeGlobalState(ExtensionSystem::GlobalState old, ExtensionSystem::GlobalState current);
     void loadActorData(QIODevice * source);
@@ -54,16 +67,28 @@ public Q_SLOTS:
     int runOUTPUT();
     int runHIGH();
     int runLOW();
-
-
-
+private:
     /* ========= CLASS PRIVATE ========= */
+    void setupSettings();
+
+    void changeFlashType(bool value);
+    QVariant getFlashType();
+
+    QStringList getRobotConfigurationList();
+    void chooseRobotType(QString robotConfig);
+    void addRobotType();
+
+    QStringList getBoardList();
+    void chooseBoard(QAction *menuItem);
+
+//-----------------MENU CREATION METHODS------------------------
+    void createFlashTypeListMenu(QMenu* parent);
+    void createRobotTypeListMenu(QMenu* parent);
+    void createBoardListMenu(QMenu* parent);
+//-----------------MENU CREATION METHODS------------------------
 
 
-
-
-
-
+    void createGui();
 };
         
 

@@ -92,30 +92,7 @@
 		],
 		"menus": [
 			{
-				"title": { "ascii": "Arduino", "ru_RU": "Ардуино" },
-				"items": [
-					{
-						"title": { 
-							"ascii": "Choose robot version",
-							"ru_RU": "Робот"
-						},
-						"icon": ""
-					},
-					{
-						"title": { 
-							"ascii": "Choose board",
-							"ru_RU": "Плата"
-						},
-						"icon": ""
-					},
-					{
-						"title": { 
-							"ascii": "Flash type",
-							"ru_RU": "Тип прошивки"
-						},
-						"icon": ""
-					}
-				]
+				"title": { "ascii": "Arduino", "ru_RU": "Ардуино" }
 			}
 		]
 	},

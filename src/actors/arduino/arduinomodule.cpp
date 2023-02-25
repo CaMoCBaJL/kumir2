@@ -22,11 +22,125 @@ You should change it corresponding to functionality.
 
 namespace ActorArduino {
 
+    void ArduinoModule::setupSettings(){
+    mySettings()->setValue(flashTypeSettingLabel, QVariant(false));
+    mySettings()->setValue(robotTypeSettingLabel, QVariant(QString("")));
+}
+
+QVariant ArduinoModule::getFlashType(){
+    return mySettings()->value(flashTypeSettingLabel);
+}
+
+void ArduinoModule::changeFlashType(bool value){
+    auto flashType = getFlashType();
+    if (flashType != value) {
+        mySettings()->setValue(flashTypeSettingLabel, QVariant(value));
+    }
+}
+
+void ArduinoModule::createFlashTypeListMenu(QMenu* parent){
+    QActionGroup* flashTypeMenuActions = new QActionGroup(parent);
+
+    auto cicleAction = parent->addAction(flashTypeMenuItemLabels[0]);
+    cicleAction->setCheckable(true);
+    flashTypeMenuActions->addAction(cicleAction);
+    connect(cicleAction, &QAction::triggered, this, [=](){ changeFlashType(true);});
+
+    auto setupAction = parent->addAction(flashTypeMenuItemLabels[1]);
+    setupAction->setCheckable(true);
+    flashTypeMenuActions->addAction(setupAction);
+    connect(setupAction, &QAction::triggered, this, [=](){ changeFlashType(false);});
+
+    auto flashType = getFlashType();
+
+    if (flashType.isNull() || !flashType.toBool()){
+        setupAction->setChecked(true);
+    }
+    else {
+        cicleAction->setChecked(true);
+    }
+}
+
+//TODO: add RobotConfig class: {title: string, pathToFile: string[]}
+//and change use of QStringList to RobotConfig
+QStringList ArduinoModule::getRobotConfigurationList(){
+    return mySettings()->value(robotListSettingLabel).toStringList();
+}
+
+void ArduinoModule::chooseRobotType(QString robotConfig){
+    mySettings()->setValue(robotTypeSettingLabel, robotConfig);
+}
+
+void ArduinoModule::addRobotType(){
+    //empty method, add custom logic here
+}
+
+void ArduinoModule::createRobotTypeListMenu(QMenu* parent){
+    QStringList robotConfigList = getRobotConfigurationList();
+
+    if (robotConfigList.size() > 0) {
+        QActionGroup* robotTypeMenuActions = new QActionGroup(parent);
+        auto robotType = mySettings()->value(robotTypeSettingLabel);
+
+        for(int i = 0; i < robotConfigList.size(); i++) {
+            auto configAction = parent->addAction(robotConfigList.at(i));
+            configAction->setCheckable(true);
+            connect(configAction, &QAction::triggered, this, [=](){chooseRobotType(robotConfigList.at(i));});
+
+            robotTypeMenuActions->addAction(configAction);
+
+            if (robotConfigList.at(i) == robotType) {
+                configAction->setChecked(true);
+            }
+
+            parent->addAction(configAction);
+        }
+
+        delete robotTypeMenuActions;
+    }
+
+    auto addRobotConfigAction = parent->addAction(addRobotTypeMenuItem);
+    connect(addRobotConfigAction, &QAction::triggered, this, [=](){addRobotType();});
+}
+
+QStringList ArduinoModule::getBoardList(){
+    //mock method, add custom logic here
+    return QStringList();
+}
+
+void ArduinoModule::chooseBoard(QAction *menuItem){
+    menuItem->setChecked(true);
+}
+
+void ArduinoModule::createBoardListMenu(QMenu* parent){
+    QStringList boardList = getBoardList();
+
+    if (boardList.size() > 0) {
+        QActionGroup* boardListMenuActions = new QActionGroup(parent);
+
+        for(int i = 0; i < boardList.size(); i++) {
+            auto configAction = parent->addAction(boardList.at(i));
+            configAction->setCheckable(true);
+            connect(configAction, &QAction::triggered, this, [=](){  ;});
+
+            boardListMenuActions->addAction(configAction);
+        }
+
+        delete boardListMenuActions;
+    }
+}
+
 ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     : ArduinoModuleBase(parent)
 {
-    // Module constructor, called once on plugin load
-    // TODO implement me
+    setupSettings();
+    createGui();
+}
+
+void ArduinoModule::createGui() {
+    createFlashTypeListMenu(m_menuArduino->addMenu(flashTypeListMenu));
+    createBoardListMenu(m_menuArduino->addMenu(boardListMenu));
+    createRobotTypeListMenu(m_menuArduino->addMenu(robotTypeListMenu));
 }
 
 /* public static */ QList<ExtensionSystem::CommandLineParameter> ArduinoModule::acceptableCommandLineParameters()

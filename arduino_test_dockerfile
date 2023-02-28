@@ -12,12 +12,14 @@ RUN mkdir /home/Sources
 WORKDIR /home/Sources/
 RUN git clone https://github.com/CaMoCBaJL/kumir2
 WORKDIR kumir2/
+RUN git pull
 RUN git checkout ArduinoFixes
+RUN git merge origin/translator_tests
 RUN mkdir build
 WORKDIR build/
 #build translator
 RUN cmake -DUSE_QT=5 -DCMAKE_BUILD_TYPE=Release ..
-RUN make
+RUN make -j 18
 #start tests
 WORKDIR ../kumir_tests/
 RUN touch test_results.log

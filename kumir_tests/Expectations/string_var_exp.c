@@ -1,8 +1,8 @@
 void main()
 {
-	string а;
+	std::string а;
 	а = "тест_а";
 	
-	string б = "тест_б";
+	std::string б = "тест_б";
 	return;
 }

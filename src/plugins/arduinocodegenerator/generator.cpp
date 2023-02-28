@@ -352,6 +352,12 @@ namespace ArduinoCodeGenerator {
                     generateAssertInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StVarInitialize:
+                    if (i + 1 < statements.size()) {
+                        auto next_statement = statements.at(i + 1);
+                        if (next_statement->type == AST::StLoop && next_statement->loop.type == AST::LoopFor) {
+                            continue;
+                        }
+                    }
                     generateVarInitInstruction(modId, algId, level, st, result);
                     break;
                 case AST::StInput:

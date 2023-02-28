@@ -17,7 +17,6 @@ You should change it corresponding to functionality.
 
 // Qt includes
 #include <QtCore>
-#include <QTime>
 #if QT_VERSION >= 0x050000
 #   include <QtWidgets>
 #else
@@ -34,41 +33,62 @@ class ArduinoModule
 public /* methods */:
     ArduinoModule(ExtensionSystem::KPlugin * parent);
     static QList<ExtensionSystem::CommandLineParameter> acceptableCommandLineParameters();
+    QWidget* mainWidget() const;
+    QWidget* pultWidget() const;
+    /* constants */
+    const QStringList flashTypeMenuItemLabels = {"Цикл", "1 раз"};
+    const QString addRobotTypeMenuItem = "Добавить";
+    const QString flashTypeListMenu = "Выбор места прошивки";
+    const QString robotTypeListMenu = "Выбор робота";
+    const QString boardListMenu = "Выбор платы";
+
+//--------------------SETTINGS---------------------------------
+    const QString arduinoSettingsSectionLabel = "Arduino";
+    const QString flashTypeSettingLabel = arduinoSettingsSectionLabel + "/" + "FlashType";
+    const QString robotTypeSettingLabel = arduinoSettingsSectionLabel + "/" + "RobotType";
+    const QString robotListSettingLabel = arduinoSettingsSectionLabel + "/" + "RobotList";
+//--------------------SETTINGS---------------------------------
 public Q_SLOTS:
     void changeGlobalState(ExtensionSystem::GlobalState old, ExtensionSystem::GlobalState current);
     void loadActorData(QIODevice * source);
     void reloadSettings(ExtensionSystem::SettingsPtr settings, const QStringList & keys);
     void reset();
+    void setAnimationEnabled(bool enabled);
     void terminateEvaluation();
     bool runDigitalRead(const int pin);
     void runDigitalWrite(const int pin, const bool value);
     int runAnalogRead(const int pin);
     void runAnalogWrite(const int pin, const int value);
-    void runPinMode(const int pinMode);
     void runDelay(const int ms);
     int runMilis();
-    int runMin(const int x, const int y);
-    int runMax(const int x, const int y);
-    int runRandomSeed(const int seed);
-    int runRandom(const int max);
-    int runRandom(const int min, const int max);
     void runSerialbegin(const int rate);
     void runSerialprintln(const int data);
     int runINPUT();
     int runOUTPUT();
     int runHIGH();
     int runLOW();
-
-
-
-    /* ========= CLASS PRIVATE ========= */
 private:
-    QTime *milisTimer;
+    /* ========= CLASS PRIVATE ========= */
+    void setupSettings();
+
+    void changeFlashType(bool value);
+    QVariant getFlashType();
+
+    QStringList getRobotConfigurationList();
+    void chooseRobotType(QString robotConfig);
+    void addRobotType();
+
+    QStringList getBoardList();
+    void chooseBoard(QAction *menuItem);
+
+//-----------------MENU CREATION METHODS------------------------
+    void createFlashTypeListMenu(QMenu* parent);
+    void createRobotTypeListMenu(QMenu* parent);
+    void createBoardListMenu(QMenu* parent);
+//-----------------MENU CREATION METHODS------------------------
 
 
-
-
-
+    void createGui();
 };
         
 

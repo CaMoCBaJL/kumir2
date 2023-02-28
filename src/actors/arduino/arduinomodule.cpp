@@ -22,11 +22,125 @@ You should change it corresponding to functionality.
 
 namespace ActorArduino {
 
+    void ArduinoModule::setupSettings(){
+    mySettings()->setValue(flashTypeSettingLabel, QVariant(false));
+    mySettings()->setValue(robotTypeSettingLabel, QVariant(QString("")));
+}
+
+QVariant ArduinoModule::getFlashType(){
+    return mySettings()->value(flashTypeSettingLabel);
+}
+
+void ArduinoModule::changeFlashType(bool value){
+    auto flashType = getFlashType();
+    if (flashType != value) {
+        mySettings()->setValue(flashTypeSettingLabel, QVariant(value));
+    }
+}
+
+void ArduinoModule::createFlashTypeListMenu(QMenu* parent){
+    QActionGroup* flashTypeMenuActions = new QActionGroup(parent);
+
+    auto cicleAction = parent->addAction(flashTypeMenuItemLabels[0]);
+    cicleAction->setCheckable(true);
+    flashTypeMenuActions->addAction(cicleAction);
+    connect(cicleAction, &QAction::triggered, this, [=](){ changeFlashType(true);});
+
+    auto setupAction = parent->addAction(flashTypeMenuItemLabels[1]);
+    setupAction->setCheckable(true);
+    flashTypeMenuActions->addAction(setupAction);
+    connect(setupAction, &QAction::triggered, this, [=](){ changeFlashType(false);});
+
+    auto flashType = getFlashType();
+
+    if (flashType.isNull() || !flashType.toBool()){
+        setupAction->setChecked(true);
+    }
+    else {
+        cicleAction->setChecked(true);
+    }
+}
+
+//TODO: add RobotConfig class: {title: string, pathToFile: string[]}
+//and change use of QStringList to RobotConfig
+QStringList ArduinoModule::getRobotConfigurationList(){
+    return mySettings()->value(robotListSettingLabel).toStringList();
+}
+
+void ArduinoModule::chooseRobotType(QString robotConfig){
+    mySettings()->setValue(robotTypeSettingLabel, robotConfig);
+}
+
+void ArduinoModule::addRobotType(){
+    //empty method, add custom logic here
+}
+
+void ArduinoModule::createRobotTypeListMenu(QMenu* parent){
+    QStringList robotConfigList = getRobotConfigurationList();
+
+    if (robotConfigList.size() > 0) {
+        QActionGroup* robotTypeMenuActions = new QActionGroup(parent);
+        auto robotType = mySettings()->value(robotTypeSettingLabel);
+
+        for(int i = 0; i < robotConfigList.size(); i++) {
+            auto configAction = parent->addAction(robotConfigList.at(i));
+            configAction->setCheckable(true);
+            connect(configAction, &QAction::triggered, this, [=](){chooseRobotType(robotConfigList.at(i));});
+
+            robotTypeMenuActions->addAction(configAction);
+
+            if (robotConfigList.at(i) == robotType) {
+                configAction->setChecked(true);
+            }
+
+            parent->addAction(configAction);
+        }
+
+        delete robotTypeMenuActions;
+    }
+
+    auto addRobotConfigAction = parent->addAction(addRobotTypeMenuItem);
+    connect(addRobotConfigAction, &QAction::triggered, this, [=](){addRobotType();});
+}
+
+QStringList ArduinoModule::getBoardList(){
+    //mock method, add custom logic here
+    return QStringList();
+}
+
+void ArduinoModule::chooseBoard(QAction *menuItem){
+    menuItem->setChecked(true);
+}
+
+void ArduinoModule::createBoardListMenu(QMenu* parent){
+    QStringList boardList = getBoardList();
+
+    if (boardList.size() > 0) {
+        QActionGroup* boardListMenuActions = new QActionGroup(parent);
+
+        for(int i = 0; i < boardList.size(); i++) {
+            auto configAction = parent->addAction(boardList.at(i));
+            configAction->setCheckable(true);
+            connect(configAction, &QAction::triggered, this, [=](){  ;});
+
+            boardListMenuActions->addAction(configAction);
+        }
+
+        delete boardListMenuActions;
+    }
+}
+
 ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     : ArduinoModuleBase(parent)
 {
-    // Module constructor, called once on plugin load
-    // TODO implement me
+    setupSettings();
+    createGui();
+}
+
+void ArduinoModule::createGui() {
+    createFlashTypeListMenu(m_menuArduino->addMenu(flashTypeListMenu));
+    createBoardListMenu(m_menuArduino->addMenu(boardListMenu));
+    createRobotTypeListMenu(m_menuArduino->addMenu(robotTypeListMenu));
 }
 
 /* public static */ QList<ExtensionSystem::CommandLineParameter> ArduinoModule::acceptableCommandLineParameters()
@@ -63,9 +177,23 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
 
 }
 
+/* public */ QWidget* ArduinoModule::mainWidget() const
+{
+    // Returns module main view widget, or nullptr if there is no any views
+    // NOTE: the method is const and might be called at any time,
+    //       so DO NOT create widget here, just return!
+    // TODO implement me
+    return nullptr;
+}
 
-
-
+/* public */ QWidget* ArduinoModule::pultWidget() const
+{
+    // Returns module control view widget, or nullptr if there is no control view
+    // NOTE: the method is const and might be called at any time,
+    //       so DO NOT create widget here, just return!
+    // TODO implement me
+    return nullptr;
+}
 
 /* public slot */ void ArduinoModule::reloadSettings(ExtensionSystem::SettingsPtr settings, const QStringList & keys)
 {
@@ -82,7 +210,13 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     // TODO implement me
 }
 
-
+/* public slot */ void ArduinoModule::setAnimationEnabled(bool enabled)
+{
+    // Sets GUI animation flag on run
+    // NOTE this method just setups a flag and might be called anytime, even module not needed
+    // TODO implement me
+    Q_UNUSED(enabled);  // Remove this line on implementation
+}
 
 /* public slot */ void ArduinoModule::terminateEvaluation()
 {
@@ -127,14 +261,6 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     
 }
 
-/* public slot */ void ArduinoModule::runPinMode(const int pinMode)
-{
-    /* алг задатьПорт(цел pinMode) */
-    // TODO implement me
-    Q_UNUSED(pinMode)  // Remove this line on implementation;
-    
-}
-
 /* public slot */ void ArduinoModule::runDelay(const int ms)
 {
     /* алг задержкаС(цел ms) */
@@ -147,54 +273,6 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
 {
     /* алг цел задержкаМС */
     // TODO implement me
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runMin(const int x, const int y)
-{
-    /* алг цел мин(цел x, цел y) */
-    // TODO implement me
-    Q_UNUSED(x)  // Remove this line on implementation;
-    Q_UNUSED(y)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runMax(const int x, const int y)
-{
-    /* алг цел макс(цел x, цел y) */
-    // TODO implement me
-    Q_UNUSED(x)  // Remove this line on implementation;
-    Q_UNUSED(y)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runRandomSeed(const int seed)
-{
-    /* алг цел установитьСлуч(цел seed) */
-    // TODO implement me
-    Q_UNUSED(seed)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runRandom(const int max)
-{
-    /* алг цел случ(цел max) */
-    // TODO implement me
-    Q_UNUSED(max)  // Remove this line on implementation;
-    return 0;
-    
-}
-
-/* public slot */ int ArduinoModule::runRandom(const int min, const int max)
-{
-    /* алг цел случ(цел min, цел max) */
-    // TODO implement me
-    Q_UNUSED(min)  // Remove this line on implementation;
-    Q_UNUSED(max)  // Remove this line on implementation;
     return 0;
     
 }
@@ -212,26 +290,39 @@ ArduinoModule::ArduinoModule(ExtensionSystem::KPlugin * parent)
     /* алг выводВПорт(цел data) */
     // TODO implement me
     Q_UNUSED(data)  // Remove this line on implementation;
+    
 }
 
 /* public slot */ int ArduinoModule::runINPUT()
 {
-    return 1;
+    /* алг цел режимВвод */
+    // TODO implement me
+    return 0;
+    
 }
 
 /* public slot */ int ArduinoModule::runOUTPUT()
 {
+    /* алг цел режимВывод */
+    // TODO implement me
     return 0;
+    
 }
 
 /* public slot */ int ArduinoModule::runHIGH()
 {
-    return 1;
+    /* алг цел высокийСигнал */
+    // TODO implement me
+    return 0;
+    
 }
 
 /* public slot */ int ArduinoModule::runLOW()
 {
-    return 0; 
+    /* алг цел низкийСигнал */
+    // TODO implement me
+    return 0;
+    
 }
 
 

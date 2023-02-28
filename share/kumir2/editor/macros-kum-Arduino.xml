@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<macros>
+    <macro title="использовать Ардуино" key="1" last="true">
+	<command name="InsertImport" text="Ардуино" />
+    </macro>
+</macros>

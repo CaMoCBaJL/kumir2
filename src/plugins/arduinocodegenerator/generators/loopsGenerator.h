@@ -31,6 +31,7 @@ namespace ArduinoCodeGenerator{
         } else {
             variable.varName = ex->variable->name;
             variable.registerr = ex->variable->initialValue.toInt();
+            variable.varType = parseVarType(ex->variable);
             variable.type = Arduino::VAR;
         }
 
@@ -192,6 +193,15 @@ namespace ArduinoCodeGenerator{
         Arduino::Instruction workCondition;
         Arduino::Instruction parseOperationType;
 
+        if (!st->loop.forVariable->name.isNull()) {
+            qCritical() << "before remove";
+            result.removeLast();
+            result.removeLast();
+            result.removeLast();
+            result.removeLast();
+            qCritical() << "after remove";
+        }
+
         instrBuffer.type = Arduino::ForLoop;
         result << instrBuffer;
 
@@ -200,6 +210,7 @@ namespace ArduinoCodeGenerator{
 
         workCondition.type = Arduino::VAR;
         workCondition.varName = st->loop.forVariable->name;
+        workCondition.varType = parseVarType(st->loop.forVariable);
         result << workCondition;
 
         parseOperationType.type = Arduino::ASG;

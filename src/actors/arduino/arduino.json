@@ -84,5 +84,27 @@
 			"returnType": "int",
 			"arguments": []
 		}
-	]
+	],
+	"gui": {
+		"optional": true,
+		"windows": [
+			{"role": "pult", "icon": "robot-pult"}
+		],
+		"menus": [
+			{
+				"title": { "ascii": "Arduino", "ru_RU": "Ардуино" }
+			}
+		]
+	},
+	"settings": {
+		"RobotConfigSources": {
+			"order": 1,
+			"type": "double",
+			"default": "0",
+			"title": {
+				"ascii": "List of robot config sources",
+			 	"ru_RU": "Список ресурсов с файлами конфигурации роботов"
+			}
+		}
+	}
 }

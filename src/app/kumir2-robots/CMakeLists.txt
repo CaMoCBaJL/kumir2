@@ -13,6 +13,6 @@ kumir2_add_launcher(
     X_NAME          "Kumir Robots Edition"
     X_NAME_ru       "Кумир для роботов"
     X_CATEGORIES    "Education,X-KDE-Edu-Misc"
-    CONFIGURATION   "CourseManager,Editor,ActorArduino,ActorRobot,ActorPainter,KumirAnalizer\(preload=Files\),*CodeGenerator,KumirCodeRun(nobreakpoints),!CoreGUI\(notabs,nostartpage,nosessions\)"
+    CONFIGURATION   "CourseManager,Editor,ActorArduino,ArduinoCodeGenerator\(preload=Files\),KumirAnalizer\(preload=Files\),*CodeGenerator,KumirCodeRun(nobreakpoints),!CoreGUI\(nosessions\)"
 )
 

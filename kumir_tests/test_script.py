@@ -14,6 +14,15 @@ class CONSOLE_BG_COLORS:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class TEST_RESULT_STATE:
+    COMPLETED = 1
+    MISSING_EXPECTATION = 2
+    COMPILER_ERROR_HAPPEND = 3
+    FAILED = -1
+    NONE = 0
+
+COMPILER_ERROR_LABEL = "ERROR!"
+
 CONTROL_CHARACTERS = ["\n", "\r", "\t", " "]
 BYTES_TO_READ_COUNT = 1024
 CHAR_THRESHOLD = 0.3
@@ -30,7 +39,12 @@ RESULTS_FOLDER_NAME = "Results"
 ARGS = {"help": ["-h", "--help"],
         "translator": ["-t", "--translator"],
         "output": ["-o", "--output"],
-        "duplicate": ["-d", "--duplicate"]}
+        "duplicate": ["-d", "--duplicate"],
+        "skip-successfull": ["-ss", "--skip-successfull"],
+        "skip-failed": ["-sf", "--skip-failed"],
+        "skip-without-expectation": ["-swe", "--skip-without-expectation"],
+        "skip-with-compiler-error": ["-sce", "--skip-with-compiler-error"]
+        }
 
 ERRORS = {
     "wrong input": "Wrong args input - you should type path to file after -c or -o flags!",
@@ -40,16 +54,21 @@ ERRORS = {
 
 #data structure to store test results
 class TestResult:
-    def __init__(self, number: int, name: str, source: str, expectation: str, result: str, is_completed: bool):
+    __text_color = CONSOLE_BG_COLORS.OKGREEN
+    __header_text = ""
+    SKIPPED_TEST_TYPES = []
+
+    def __init__(self, number: int, name: str, source: str, expectation: str, result: str, state: TEST_RESULT_STATE):
         self.test_number = number
         self.name = name
         self.source_file_name = source
         self.expectation_file_name = expectation
         self.resultFileName = result
-        self.is_completed = is_completed
+        self.state = state
 
     def __str__(self):
-        str_representation = f'''{CONSOLE_BG_COLORS.OKGREEN if self.is_completed else CONSOLE_BG_COLORS.FAIL}
+        self.__setup_output()
+        str_representation = f'''{self.calculate_color()}
         Test №{self.test_number}. Test {self.name}.
         Test is {"completed successfully!" if self.is_completed else "not completed("}
         Sources for the test: {self.source_file_name}
@@ -60,6 +79,21 @@ class TestResult:
         or vimdiff {self.expectation_file_name} {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}
         '''
         return str_representation
+
+    def __setup_output(self):
+        if self.state == TEST_RESULT_STATE.COMPLETED:
+            __text_color = CONSOLE_BG_COLORS.OKGREEN
+            __header_text = "Congratulations! Test completed successfully!"
+        elif self.state == TEST_RESULT_STATE.MISSING_EXPECTATION:
+            __text_color = CONSOLE_BG_COLORS.OKCYAN
+            __header_text = "Oh! Test didn't complete: no expectation("
+        elif self.state == TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND:
+            __text_color = CONSOLE_BG_COLORS.WARNING
+            __header_text = "Oh! Test didn't complete: compiler error("
+        else:
+            __text_color = CONSOLE_BG_COLORS.FAILED
+            __header_text = "Sorry, but test failed..."
+
 #functions
 def remove_control_characters(data_array):
     result = []
@@ -77,6 +111,9 @@ def get_file_data(filename):
     result = file.readlines()
     file.close()
     return result
+
+def has_errors(text):
+    return COMPILER_ERROR_HAPPEND in text
 
 def process_sources(source_filename, path_to_translator):
     if RESULTS_FOLDER_NAME not in os.listdir(os.getcwd()):
@@ -100,20 +137,23 @@ def compare_data(expected_data, processed_data):
     result_without_kumir_ref = remove_control_characters(processed_data[2:])
     expected_data = remove_control_characters(expected_data)
 
+    if (has_errors(result_without_kumir_ref)):
+        return TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND
+
     for i in range(len(result_without_kumir_ref)):
         if result_without_kumir_ref[i] != expected_data[i]:
-            return False
+            return TEST_RESULT_STATE.FAILED
 
-    return True
+    return TEST_RESULT_STATE.COMPLETED
 
 #log comparison results to file
-def log_test_results(logs_filename, log_data: TestResult, log_to_console):
-    completed_tests = sum(not x.is_completed for x in log_data)
-    log_data.sort(key=lambda x: x.is_completed)
+def log_test_results(logs_filename, log_data: TestResult[], log_to_console):
+    completed_tests = sum(not x.state == TEST_RESULT_STATE.COMPLETED for x in log_data)
+    log_data.sort(key=lambda x: x.state, reverse=True)
 
     log_data_strings = list(map(lambda x: str(x), log_data))
     log_data_strings.insert(0, f'''
-    There were: {len(log_data )} tests.
+    There were: {len(log_data)} tests.
     Completed / Uncompleted: {completed_tests} / {len(log_data) - completed_tests}''')
 
     if not os.path.exists(logs_filename):
@@ -166,6 +206,14 @@ def show_help():
     [-o] [--output] ["the path to log file"] - show app where to store test logs.
     
     [-d] [--duplicate] - duplicate output to console.
+
+    [-ss] [--skip-successfull] - skip succesfully completed tests.
+
+    [-sf] [--skip-failed] - skip failed tests.
+
+    [-swe] [--skip-without-expectation] - skip tests for which the file with expectations was not found.
+
+    [-sce] [--skip-with-compiler-error] - skip tests ended with compiler error.
     """)
 
 def process_args():
@@ -173,6 +221,18 @@ def process_args():
     if ARGS["help"][0] in sys.argv or ARGS["help"][1] in sys.argv:
         show_help()
         sys.exit(2)
+
+    if ARGS["skip-successfull"][0] in sys.argv or ARGS["skip-successfull"][1] in sys.argv: 
+        TestResult.SKIPPED_TEST_TYPES.append(TEST_RESULT_STATE.COMPLETED)
+    
+    if ARGS["skip-without-expectation"][0] in sys.argv or ARGS["skip-without-expectation"][1] in sys.argv: 
+        TestResult.SKIPPED_TEST_TYPES.append(TEST_RESULT_STATE.MISSING_EXPECTATION)
+
+    if ARGS["skip-with-compiler-error"][0] in sys.argv or ARGS["skip-with-compiler-error"][1] in sys.argv: 
+        TestResult.SKIPPED_TEST_TYPES.append(TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND)
+
+    if ARGS["skip-failed"][0] in sys.argv or ARGS["skip-failed"][1] in sys.argv: 
+        TestResult.SKIPPED_TEST_TYPES.append(TEST_RESULT_STATE.FAILED)
         
     args = sys.argv[1:]
     for i in range(1, len(args)):
@@ -205,25 +265,28 @@ if __name__=="__main__":
 
     source_files = get_files_with_absolute_paths(SOURCES_FOLDER_NAME)
     expectation_files = get_files_with_absolute_paths(EXPECTATIONS_FOLDER_NAME)
-    
-    if len(source_files) > len(expectation_files):
-        print("Tests amount > expectations amount")
-        sys.exit(2)
 
     test_results = []
 
     for i in range(len(source_files)):
-        expected_data = get_file_data(expectation_files[i])
-        test_result = TestResult(i,
-                                 source_files[i].split(".")[0],
-                                 source_files[i],
-                                 expectation_files[i],
-                                 process_sources(source_files[i], args_data[0]), False)
-        result_data = get_file_data(test_result.resultFileName)
+        if os.path.isfile(expectation_files[i]):
+            expected_data = get_file_data(expectation_files[i])
+            test_result = TestResult(i,
+                                     source_files[i].split(".")[0],
+                                     source_files[i],
+                                     expectation_files[i],
+                                     process_sources(source_files[i], args_data[0]), TEST_RESULT_STATE.NONE)
+            result_data = get_file_data(test_result.resultFileName)
 
-        if compare_data(expected_data, result_data):
-            test_result.is_completed = True
+            test_result.state = compare_data(expected_data, result_data)
+        else:
+            test_result = TestResult(i,
+                                     source_files[i].split(".")[0],
+                                     source_files[i],
+                                     expectation_files[i],
+                                     "", TEST_RESULT_STATE.MISSING_EXPECTATION)
 
-        test_results.append(test_result)
+        if test_result.state not in TestResult.SKIPPED_TEST_TYPES:                                   
+            test_results.append(test_result)
 
     log_test_results(args_data[1], test_results, args_data[2])

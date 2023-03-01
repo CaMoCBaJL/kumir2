@@ -23,6 +23,8 @@ class TEST_RESULT_STATE:
 
 COMPILER_ERROR_LABEL = "ERROR!"
 
+EXPECTATION_FILE_EXTENTION = ".c"
+
 CONTROL_CHARACTERS = ["\n", "\r", "\t", " "]
 BYTES_TO_READ_COUNT = 1024
 CHAR_THRESHOLD = 0.3
@@ -43,7 +45,8 @@ ARGS = {"help": ["-h", "--help"],
         "skip-successfull": ["-ss", "--skip-successfull"],
         "skip-failed": ["-sf", "--skip-failed"],
         "skip-without-expectation": ["-swe", "--skip-without-expectation"],
-        "skip-with-compiler-error": ["-sce", "--skip-with-compiler-error"]
+        "skip-with-compiler-error": ["-sce", "--skip-with-compiler-error"],
+        "brief": ["-b", "--brief"]
         }
 
 ERRORS = {
@@ -56,43 +59,45 @@ ERRORS = {
 class TestResult:
     __text_color = CONSOLE_BG_COLORS.OKGREEN
     __header_text = ""
-    SKIPPED_TEST_TYPES = []
+    SKIPPED_TEST_TYPES = [TEST_RESULT_STATE.NONE]
 
-    def __init__(self, number: int, name: str, source: str, expectation: str, result: str, state: TEST_RESULT_STATE):
+    def __init__(self, number: int, name: str, source: str, expectation: str, result: str):
         self.test_number = number
         self.name = name
         self.source_file_name = source
         self.expectation_file_name = expectation
         self.resultFileName = result
-        self.state = state
+        self.state = TEST_RESULT_STATE.NONE
 
     def __str__(self):
         self.__setup_output()
-        str_representation = f'''{self.calculate_color()}
-        Test №{self.test_number}. Test {self.name}.
-        Test is {"completed successfully!" if self.is_completed else "not completed("}
-        Sources for the test: {self.source_file_name}
+        additional_test_data = f'''
         Test expectations: {self.expectation_file_name}
         Test results: {self.resultFileName}. 
         To get more detail info about comparison results, print:
         vimdiff {self.source_file_name} {self.expectation_file_name} {self.resultFileName}
         or vimdiff {self.expectation_file_name} {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}
         '''
-        return str_representation
+        return f'''{self.__text_color}
+        Test №{self.test_number}. Test {self.name}.
+        {self.__header_text}
+        Sources for the test: {self.source_file_name}
+        {additional_test_data if self.state is TEST_RESULT_STATE.COMPLETED or self.state is TEST_RESULT_STATE.FAILED else ""}
+        '''
 
     def __setup_output(self):
         if self.state == TEST_RESULT_STATE.COMPLETED:
-            __text_color = CONSOLE_BG_COLORS.OKGREEN
-            __header_text = "Congratulations! Test completed successfully!"
+            self.__text_color = CONSOLE_BG_COLORS.OKGREEN
+            self.__header_text = "Congratulations! Test completed successfully!"
         elif self.state == TEST_RESULT_STATE.MISSING_EXPECTATION:
-            __text_color = CONSOLE_BG_COLORS.OKCYAN
-            __header_text = "Oh! Test didn't complete: no expectation("
+            self.__text_color = CONSOLE_BG_COLORS.OKCYAN
+            self.__header_text = "Oh! Test didn't complete: no expectation"
         elif self.state == TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND:
-            __text_color = CONSOLE_BG_COLORS.WARNING
-            __header_text = "Oh! Test didn't complete: compiler error("
-        else:
-            __text_color = CONSOLE_BG_COLORS.FAILED
-            __header_text = "Sorry, but test failed..."
+            self.__text_color = CONSOLE_BG_COLORS.WARNING
+            self.__header_text = "Oh! Test didn't complete: compiler error"
+        elif self.state == TEST_RESULT_STATE.FAILED:
+            self.__text_color = CONSOLE_BG_COLORS.FAIL
+            self.__header_text = "Sorry, but test failed..."
 
 #functions
 def remove_control_characters(data_array):
@@ -113,7 +118,7 @@ def get_file_data(filename):
     return result
 
 def has_errors(text):
-    return COMPILER_ERROR_HAPPEND in text
+    return COMPILER_ERROR_LABEL in text
 
 def process_sources(source_filename, path_to_translator):
     if RESULTS_FOLDER_NAME not in os.listdir(os.getcwd()):
@@ -129,11 +134,11 @@ def process_sources(source_filename, path_to_translator):
                               source_filename],
                              stdout=subprocess.PIPE)
     popen.wait()
-    translation_data = popen.stdout.read()
+    popen.stdout.read()
 
     return result_filename
 
-def compare_data(expected_data, processed_data):
+def compare_data(expected_data, processed_data) -> TEST_RESULT_STATE:
     result_without_kumir_ref = remove_control_characters(processed_data[2:])
     expected_data = remove_control_characters(expected_data)
 
@@ -147,14 +152,16 @@ def compare_data(expected_data, processed_data):
     return TEST_RESULT_STATE.COMPLETED
 
 #log comparison results to file
-def log_test_results(logs_filename, log_data: TestResult[], log_to_console):
-    completed_tests = sum(not x.state == TEST_RESULT_STATE.COMPLETED for x in log_data)
+def log_test_results(logs_filename, log_data: TestResult, log_to_console):
     log_data.sort(key=lambda x: x.state, reverse=True)
 
-    log_data_strings = list(map(lambda x: str(x), log_data))
+    log_data_strings = list(map(lambda x: str(x), filter(lambda testResult: testResult.state not in TestResult.SKIPPED_TEST_TYPES, log_data)))
     log_data_strings.insert(0, f'''
-    There were: {len(log_data)} tests.
-    Completed / Uncompleted: {completed_tests} / {len(log_data) - completed_tests}''')
+    There were found: {len(log_data)} tests.
+    {CONSOLE_BG_COLORS.OKGREEN} Completed: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.COMPLETED, log_data)))} {CONSOLE_BG_COLORS.ENDC}
+    {CONSOLE_BG_COLORS.FAIL} Failed: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.FAILED, log_data)))} {CONSOLE_BG_COLORS.ENDC}
+    {CONSOLE_BG_COLORS.WARNING} With compiler error happend: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND, log_data)))} {CONSOLE_BG_COLORS.ENDC}
+    {CONSOLE_BG_COLORS.OKCYAN} Missed expectation file: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.MISSING_EXPECTATION, log_data)))} {CONSOLE_BG_COLORS.ENDC}''')
 
     if not os.path.exists(logs_filename):
         open(logs_filename, "a").close()
@@ -207,13 +214,15 @@ def show_help():
     
     [-d] [--duplicate] - duplicate output to console.
 
-    [-ss] [--skip-successfull] - skip succesfully completed tests.
+    [-ss] [--skip-successfull] - skip open log info about succesfully completed tests.
 
-    [-sf] [--skip-failed] - skip failed tests.
+    [-sf] [--skip-failed] - skip open log info about failed tests.
 
-    [-swe] [--skip-without-expectation] - skip tests for which the file with expectations was not found.
+    [-swe] [--skip-without-expectation] - skip open log info about tests for which the file with expectations was not found.
 
-    [-sce] [--skip-with-compiler-error] - skip tests ended with compiler error.
+    [-sce] [--skip-with-compiler-error] - skip open log info about tests ended with compiler error.
+
+    [-b] [--brief] - skip open log info about all tests.
     """)
 
 def process_args():
@@ -233,7 +242,15 @@ def process_args():
 
     if ARGS["skip-failed"][0] in sys.argv or ARGS["skip-failed"][1] in sys.argv: 
         TestResult.SKIPPED_TEST_TYPES.append(TEST_RESULT_STATE.FAILED)
-        
+
+    if ARGS["brief"][0] in sys.argv or ARGS["brief"][1] in sys.argv: 
+        TestResult.SKIPPED_TEST_TYPES = [
+            TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND, 
+            TEST_RESULT_STATE.COMPLETED, 
+            TEST_RESULT_STATE.FAILED,
+            TEST_RESULT_STATE.MISSING_EXPECTATION
+            ]
+
     args = sys.argv[1:]
     for i in range(1, len(args)):
         if args[i - 1] in ARGS["translator"] or args[i - 1] in ARGS["output"]:
@@ -252,8 +269,23 @@ def get_files_with_absolute_paths(folder_name):
     files = list(map(lambda x: os.path.join(path_to_folder, x), os.listdir(path=path_to_folder)))
     files.sort()
 
-    return  files
+    return files
 
+def find_expectation(source):
+    path_to_file, _ = os.path.splitext(source)
+    path_segments = path_to_file.split(os.sep)
+    path_segments[-2] = EXPECTATIONS_FOLDER_NAME
+    return os.sep.join(path_segments) + EXPECTATION_FILE_EXTENTION
+
+def expectation_for_source_exists(source) -> bool:
+    return os.path.isfile(find_expectation(source))
+
+#TODO: Revork test folder structure. It should be:
+#Tests 
+#   Test_Name
+#       Source.kum, Expectation.c
+#Such structure will allow to more easily search for script execution errors 
+#and to match source/expectation test files
 if __name__=="__main__":
     args_data = process_args()
     processed_dir_names = map(lambda str: str.lower(), os.listdir(os.getcwd()))
@@ -269,24 +301,26 @@ if __name__=="__main__":
     test_results = []
 
     for i in range(len(source_files)):
-        if os.path.isfile(expectation_files[i]):
-            expected_data = get_file_data(expectation_files[i])
+        if expectation_for_source_exists(source_files[i]):
+            expectation_file_name = find_expectation(source_files[i])
+            expected_data = get_file_data(expectation_file_name)
             test_result = TestResult(i,
                                      source_files[i].split(".")[0],
                                      source_files[i],
-                                     expectation_files[i],
-                                     process_sources(source_files[i], args_data[0]), TEST_RESULT_STATE.NONE)
+                                     expectation_file_name,
+                                     process_sources(source_files[i], args_data[0]))
             result_data = get_file_data(test_result.resultFileName)
 
             test_result.state = compare_data(expected_data, result_data)
+        
         else:
             test_result = TestResult(i,
                                      source_files[i].split(".")[0],
                                      source_files[i],
-                                     expectation_files[i],
-                                     "", TEST_RESULT_STATE.MISSING_EXPECTATION)
+                                     "", "")
 
-        if test_result.state not in TestResult.SKIPPED_TEST_TYPES:                                   
-            test_results.append(test_result)
+            test_result.state = TEST_RESULT_STATE.MISSING_EXPECTATION
+                                      
+        test_results.append(test_result)
 
     log_test_results(args_data[1], test_results, args_data[2])

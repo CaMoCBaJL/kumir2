@@ -23,7 +23,8 @@ class TEST_RESULT_STATE:
 
 COMPILER_ERROR_LABEL = "ERROR!"
 
-EXPECTATION_FILE_EXTENTION = ".c"
+EXPECTATION_FILE_EXTENTION = ".exp"
+SOURCE_FILE_EXTENTION = ".kum"
 
 CONTROL_CHARACTERS = ["\n", "\r", "\t", " "]
 BYTES_TO_READ_COUNT = 1024
@@ -34,35 +35,35 @@ TEXT_CHARACTERS = ''.join(
 )
 BINARY_CHAR_EXAMPLE = '\x00'
 
-SOURCES_FOLDER_NAME = "Sources"
-EXPECTATIONS_FOLDER_NAME = "Expectations"
-RESULTS_FOLDER_NAME = "Results"
+TESTS_FOLDER_NAME = "Tests"
 
 ARGS = {"help": ["-h", "--help"],
-        "translator": ["-t", "--translator"],
+        "translator": ["-tr", "--translator"],
         "output": ["-o", "--output"],
         "duplicate": ["-d", "--duplicate"],
         "skip-successfull": ["-ss", "--skip-successfull"],
         "skip-failed": ["-sf", "--skip-failed"],
         "skip-without-expectation": ["-swe", "--skip-without-expectation"],
         "skip-with-compiler-error": ["-sce", "--skip-with-compiler-error"],
-        "brief": ["-b", "--brief"]
+        "brief": ["-b", "--brief"],
+        "path-to-tests": ["-t", "path-to-tests"]
         }
 
 ERRORS = {
     "wrong input": "Wrong args input - you should type path to file after -c or -o flags!",
     "file not exist": "File doesn't exist!",
-    "wrong file extention": "File extention for translator is not correct! It should be a bin-file."
+    "wrong file extention": "File extention for translator is not correct! It should be a bin-file.",
+    "no path to tests": "Wrong args input - you should type path to tests folder after -t flag!"
 }
 
 #data structure to store test results
 class TestResult:
+
     __text_color = CONSOLE_BG_COLORS.OKGREEN
     __header_text = ""
     SKIPPED_TEST_TYPES = [TEST_RESULT_STATE.NONE]
 
-    def __init__(self, number: int, name: str, source: str, expectation: str, result: str):
-        self.test_number = number
+    def __init__(self, name: str, source: str, expectation: str, result: str):
         self.name = name
         self.source_file_name = source
         self.expectation_file_name = expectation
@@ -79,7 +80,7 @@ class TestResult:
         or vimdiff {self.expectation_file_name} {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}
         '''
         return f'''{self.__text_color}
-        Test №{self.test_number}. Test {self.name}.
+        Test {self.name}.
         {self.__header_text}
         Sources for the test: {self.source_file_name}
         {additional_test_data if self.state is TEST_RESULT_STATE.COMPLETED or self.state is TEST_RESULT_STATE.FAILED else ""}
@@ -98,6 +99,22 @@ class TestResult:
         elif self.state == TEST_RESULT_STATE.FAILED:
             self.__text_color = CONSOLE_BG_COLORS.FAIL
             self.__header_text = "Sorry, but test failed..."
+
+class TestSection:
+    test_results = []
+
+    def __init__(self, section_name) -> None:
+        self.__name = section_name
+    
+    def __str__(self) -> str:
+        columns, _ = os.get_terminal_size()
+        return f"""
+        {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
+        Test section {self.__name} starts here:
+        {os.linesep.join(list(map(lambda test_result: str(test_result), self.test_results)))}
+        End of {self.__name} section tests
+        {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
+        """
 
 #functions
 def remove_control_characters(data_array):
@@ -121,11 +138,8 @@ def has_errors(text):
     return COMPILER_ERROR_LABEL in text
 
 def process_sources(source_filename, path_to_translator):
-    if RESULTS_FOLDER_NAME not in os.listdir(os.getcwd()):
-        os.mkdir(os.path.join(os.getcwd(), RESULTS_FOLDER_NAME))
-
-    path_to_results_folder = os.path.join(os.getcwd(), RESULTS_FOLDER_NAME)
-    result_filename = os.path.join(path_to_results_folder, source_filename.split(os.sep)[-1].split(".")[0]) + ".kumir.c"
+    path, _ = os.path.splitext(source_filename)
+    result_filename = path + ".kumir.c"
 
     #call kumir2-arduino with params: --out="path_to_cwd/results/test_name.kumir.c" -s ./test_name.kum
     popen = subprocess.Popen([path_to_translator,
@@ -151,17 +165,40 @@ def compare_data(expected_data, processed_data) -> TEST_RESULT_STATE:
 
     return TEST_RESULT_STATE.COMPLETED
 
-#log comparison results to file
-def log_test_results(logs_filename, log_data: TestResult, log_to_console):
-    log_data.sort(key=lambda x: x.state, reverse=True)
+def get_test_result_type_counters(test_sections):
+    result = {
+        TEST_RESULT_STATE.COMPLETED: 0,
+        TEST_RESULT_STATE.FAILED: 0,
+        TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND: 0,
+        TEST_RESULT_STATE.MISSING_EXPECTATION: 0,
+    }
 
-    log_data_strings = list(map(lambda x: str(x), filter(lambda testResult: testResult.state not in TestResult.SKIPPED_TEST_TYPES, log_data)))
+    for test_section in test_sections:
+        # test_section.test_results = test_section.test_results.sort(key=lambda x: x.state, reverse=True)
+        for test_result in test_section.test_results:
+            result[test_result.state] += 1
+
+    return result
+
+#log comparison results to file
+def log_test_results(logs_filename, log_data: TestSection, log_to_console):
+    log_data = \
+    list(
+        filter(lambda test_section: 
+            len(list(filter(lambda testResult: testResult.state not in TestResult.SKIPPED_TEST_TYPES, test_section.test_results))) > 0,
+            log_data
+        )
+    )
+
+    completed_tests_count, failed_tests_count, compiler_error_happend_tests_count, missing_expectations_tests_count = get_test_result_type_counters(log_data)
+
+    log_data_strings = list(map(lambda x: str(x), log_data))
     log_data_strings.insert(0, f'''
     There were found: {len(log_data)} tests.
-    {CONSOLE_BG_COLORS.OKGREEN} Completed: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.COMPLETED, log_data)))} {CONSOLE_BG_COLORS.ENDC}
-    {CONSOLE_BG_COLORS.FAIL} Failed: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.FAILED, log_data)))} {CONSOLE_BG_COLORS.ENDC}
-    {CONSOLE_BG_COLORS.WARNING} With compiler error happend: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND, log_data)))} {CONSOLE_BG_COLORS.ENDC}
-    {CONSOLE_BG_COLORS.OKCYAN} Missed expectation file: {len(list(filter(lambda x: x.state == TEST_RESULT_STATE.MISSING_EXPECTATION, log_data)))} {CONSOLE_BG_COLORS.ENDC}''')
+    {CONSOLE_BG_COLORS.OKGREEN} Completed: {completed_tests_count} {CONSOLE_BG_COLORS.ENDC}
+    {CONSOLE_BG_COLORS.FAIL} Failed: {failed_tests_count} {CONSOLE_BG_COLORS.ENDC}
+    {CONSOLE_BG_COLORS.WARNING} With compiler error happend: {compiler_error_happend_tests_count} {CONSOLE_BG_COLORS.ENDC}
+    {CONSOLE_BG_COLORS.OKCYAN} Missed expectation file: {missing_expectations_tests_count} {CONSOLE_BG_COLORS.ENDC}''')
 
     if not os.path.exists(logs_filename):
         open(logs_filename, "a").close()
@@ -226,7 +263,7 @@ def show_help():
     """)
 
 def process_args():
-    result = ["", "", False]
+    result = ["", "", False, ""]
     if ARGS["help"][0] in sys.argv or ARGS["help"][1] in sys.argv:
         show_help()
         sys.exit(2)
@@ -248,17 +285,21 @@ def process_args():
             TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND, 
             TEST_RESULT_STATE.COMPLETED, 
             TEST_RESULT_STATE.FAILED,
-            TEST_RESULT_STATE.MISSING_EXPECTATION
+            TEST_RESULT_STATE
             ]
 
     args = sys.argv[1:]
     for i in range(1, len(args)):
-        if args[i - 1] in ARGS["translator"] or args[i - 1] in ARGS["output"]:
-            validate_file_name(args[i], False if args[i - 1] in ARGS["translator"] else True)
+        if args[i - 1] in ARGS["translator"] or args[i - 1] in ARGS["output"] or args[i - 1] in ARGS["path-to-tests"]:
+            if (os.path.isfile(args[i])):
+                validate_file_name(args[i], False if args[i - 1] in ARGS["translator"] else True)
+
             if args[i - 1] in ARGS["translator"]:
-                result[0] = args[i]
-            else: 
-                result[1] = args[i]
+                result[0] = os.path.abspath(args[i])
+            elif args[i - 1] in ARGS["output"]: 
+                result[1] = os.path.abspath(args[i])
+            elif args[i - 1] in ARGS["path-to-tests"]:
+                result[3] = os.path.abspath(args[i])
         elif args[i-1] in ARGS["duplicate"]:              
             result[2] = True
             
@@ -271,56 +312,67 @@ def get_files_with_absolute_paths(folder_name):
 
     return files
 
-def find_expectation(source):
-    path_to_file, _ = os.path.splitext(source)
-    path_segments = path_to_file.split(os.sep)
-    path_segments[-2] = EXPECTATIONS_FOLDER_NAME
-    return os.sep.join(path_segments) + EXPECTATION_FILE_EXTENTION
+def get_source_and_expectation(dir_files):
+    sources = []
+    expectations = []
+    for file in dir_files:
+        if (os.path.isfile(file)):
+            ext = os.path.splitext(file)[1]
+            if (ext == EXPECTATION_FILE_EXTENTION):
+                expectations.append(file)
+            elif (ext == SOURCE_FILE_EXTENTION):
+                sources.append(file)
+    
+    return [sources, expectations]
 
-def expectation_for_source_exists(source) -> bool:
-    return os.path.isfile(find_expectation(source))
+def get_folder_contents_full_paths(path_to_folder):
+    return list(
+        map(
+            lambda x: os.path.join(os.sep, path_to_folder, x),
+            os.listdir(path_to_folder)
+            )
+        )
 
-#TODO: Revork test folder structure. It should be:
-#Tests 
-#   Test_Name
-#       Source.kum, Expectation.c
-#Such structure will allow to more easily search for script execution errors 
-#and to match source/expectation test files
+def calculate_test_sections(path_to_tests_folder):
+    result = []
+    test_folder_paths = get_folder_contents_full_paths(path_to_tests_folder)
+    for test_folder_path in test_folder_paths:
+        if os.path.isfile(test_folder_path):
+            continue
+
+        result.append(TestSection(test_folder_path.split(os.sep)[-1]))
+        test_paths = get_folder_contents_full_paths(test_folder_path)
+        for test_dir_path in test_paths:
+            source_files, expectation_files = get_source_and_expectation(get_folder_contents_full_paths(test_dir_path))
+            if os.path.isfile(test_dir_path) or len(expectation_files) > 1 or len(source_files) > 1:
+                continue
+            
+            result[-1].test_results.append(TestResult(
+                test_dir_path.split(os.sep)[-1],
+                source_files[0],
+                "", ""
+                )
+            )
+
+            if len(expectation_files) == 1:
+                result[-1].test_results[-1].expectation_file_name  = expectation_files[0]
+                result[-1].test_results[-1].resultFileName = process_sources(source_files[0], args_data[0])
+
+                result_data = get_file_data(result[-1].test_results[-1].resultFileName)
+                expected_data = get_file_data(result[-1].test_results[-1].expectation_file_name)
+
+                result[-1].test_results[-1].state = compare_data(expected_data, result_data)
+            else: 
+                result[-1].test_results[-1].state = TEST_RESULT_STATE.MISSING_EXPECTATION
+
+    return result
+
 if __name__=="__main__":
     args_data = process_args()
-    processed_dir_names = map(lambda str: str.lower(), os.listdir(os.getcwd()))
-    
-    if SOURCES_FOLDER_NAME.lower() not in processed_dir_names \
-            and EXPECTATIONS_FOLDER_NAME.lower() not in processed_dir_names:
-        print("Execution folder doesn't contain folders with source and processed data")       
-        sys.exit(2)
 
-    source_files = get_files_with_absolute_paths(SOURCES_FOLDER_NAME)
-    expectation_files = get_files_with_absolute_paths(EXPECTATIONS_FOLDER_NAME)
+    if not args_data[3]:
+        print("Didn't find any test to execute. Shutting down.")       
+        sys.exit()
 
-    test_results = []
-
-    for i in range(len(source_files)):
-        if expectation_for_source_exists(source_files[i]):
-            expectation_file_name = find_expectation(source_files[i])
-            expected_data = get_file_data(expectation_file_name)
-            test_result = TestResult(i,
-                                     source_files[i].split(".")[0],
-                                     source_files[i],
-                                     expectation_file_name,
-                                     process_sources(source_files[i], args_data[0]))
-            result_data = get_file_data(test_result.resultFileName)
-
-            test_result.state = compare_data(expected_data, result_data)
-        
-        else:
-            test_result = TestResult(i,
-                                     source_files[i].split(".")[0],
-                                     source_files[i],
-                                     "", "")
-
-            test_result.state = TEST_RESULT_STATE.MISSING_EXPECTATION
-                                      
-        test_results.append(test_result)
-
+    test_results = calculate_test_sections(args_data[3])
     log_test_results(args_data[1], test_results, args_data[2])

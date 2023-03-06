@@ -1,0 +1,74 @@
+void main() {
+int б;
+int а = 14;
+
+for (int loopIterator0 = 0; loopIterator0 < 1; loopIterator0++) {
+}
+
+for (int loopIterator1 = 0; loopIterator1 < 120; loopIterator1++) {
+}
+
+for (int loopIterator2 = 0; loopIterator2 < а; loopIterator2++) {
+}
+
+for (int б = 1; б < 9; б++) {
+}
+
+for (int б = а; б < 9; б++) {
+}
+
+for (int б = 1; б < 9; б++) {
+}
+
+for (int б = 1; б < 9; б+=а) {
+}
+
+for (int б = 14; б > а; б--) {
+}
+
+for (int б = 100; б > а; б--) {
+}
+
+for (int б = 100; б > 1; б--) {
+}
+
+for (int loopIterator3 = 0; loopIterator3 < 1; loopIterator3++) {
+б++;
+}
+
+for (int loopIterator4 = 0; loopIterator4 < 120; loopIterator4++) {
+б++;
+}
+
+for (int loopIterator5 = 0; loopIterator5 < а; loopIterator5++) {
+б++;
+}
+
+for (int б = 1; б < 9; б++) {
+б++;
+}
+
+for (int б = а; б < 9; б++) {
+б++;
+}
+
+for (int б = 1; б < 9; б++) {
+б++;
+}
+
+for (int б = 1; б < 9; б+=а) {
+б++;
+}
+
+for (int б = 14; б > а; б--) {
+б++;
+}
+
+for (int б = 100; б > а; б--) {
+б++;
+}
+
+for (int б = 100; б > 1; б--) {
+б++;
+}
+}

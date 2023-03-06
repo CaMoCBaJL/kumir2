@@ -1,0 +1,18 @@
+void main() {
+	int б;
+	while (true){
+	}
+	
+	while (1 > 2) {
+	б = 1;
+	}
+	
+	while (true) {
+	break;
+	}
+	
+	while (true) {
+	б = 1;
+	break;
+	}
+}

@@ -1,0 +1,76 @@
+void main() {
+int б;
+int а = 14;
+
+for (int loopIterator0 = 0; loopIterator0 < 1; loopIterator0++) {
+while (true) {
+}
+}
+
+for (int loopIterator1 = 0; loopIterator1 < 1; loopIterator1++) {
+while (а == 14) {
+}
+}
+
+for (int loopIterator2 = 0; loopIterator2 < 1; loopIterator2++) {
+do {
+}
+while (а == 14);
+}
+
+for (int loopIterator3 = 0; loopIterator3 < 1; loopIterator3++) {
+for (int loopIterator4 = 0; loopIterator4 < 2; loopIterator4++) {
+}
+}
+
+for (int loopIterator5 = 0; loopIterator5 < 1; loopIterator5++) {
+while (true) {
+б++;
+}
+}
+
+for (int loopIterator6 = 0; loopIterator6 < 1; loopIterator6++) {
+while (а == 14) {
+б++;
+}
+}
+
+for (int loopIterator7 = 0; loopIterator7 < 1; loopIterator7++) {
+do {
+б++;
+}
+while (а == 14);
+}
+
+for (int loopIterator8 = 0; loopIterator8 < 1; loopIterator8++) {
+for (int loopIterator9 = 0; loopIterator9 < 2; loopIterator9++) {
+б++;
+}
+}
+
+for (int loopIterator10 = 0; loopIterator10 < 1; loopIterator10++) {
+б++;
+while (true) {
+}
+}
+
+for (int loopIterator11 = 0; loopIterator11 < 1; loopIterator11++) {
+б++;
+while (а == 14) {
+}
+}
+
+for (int loopIterator12 = 0; loopIterator12 < 1; loopIterator12++) {
+б++;
+do {
+}
+while (а == 14);
+}
+
+for (int loopIterator13 = 0; loopIterator13 < 1; loopIterator13++) {
+б++;
+for (int loopIterator14 = 0; loopIterator14 < 2; loopIterator14++) {
+}
+}
+
+}

@@ -101,18 +101,18 @@ class TestResult:
             self.__header_text = "Sorry, but test failed..."
 
 class TestSection:
-    test_results = []
 
     def __init__(self, section_name) -> None:
-        self.__name = section_name
+        self.name = section_name
+        self.test_results = []
     
     def __str__(self) -> str:
         columns, _ = os.get_terminal_size()
         return f"""
         {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
-        Test section {self.__name} starts here:
+        Test section {self.name} starts here:
         {os.linesep.join(list(map(lambda test_result: str(test_result), self.test_results)))}
-        End of {self.__name} section tests
+        End of {self.name} section tests
         {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
         """
 
@@ -166,7 +166,7 @@ def compare_data(expected_data, processed_data) -> TEST_RESULT_STATE:
     return TEST_RESULT_STATE.COMPLETED
 
 def get_test_result_type_counters(test_sections):
-    result = {
+    counters = {
         TEST_RESULT_STATE.COMPLETED: 0,
         TEST_RESULT_STATE.FAILED: 0,
         TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND: 0,
@@ -174,23 +174,22 @@ def get_test_result_type_counters(test_sections):
     }
 
     for test_section in test_sections:
-        # test_section.test_results = test_section.test_results.sort(key=lambda x: x.state, reverse=True)
         for test_result in test_section.test_results:
-            result[test_result.state] += 1
+            counters[test_result.state] += 1
 
-    return result
+
+    return counters
 
 #log comparison results to file
-def log_test_results(logs_filename, log_data: TestSection, log_to_console):
-    log_data = \
-    list(
-        filter(lambda test_section: 
-            len(list(filter(lambda testResult: testResult.state not in TestResult.SKIPPED_TEST_TYPES, test_section.test_results))) > 0,
-            log_data
-        )
-    )
+def log_test_results(logs_filename, data_to_log: TestSection, log_to_console):
+    result_type_counters = get_test_result_type_counters(data_to_log)
+    completed_tests_count, failed_tests_count, compiler_error_happend_tests_count, missing_expectations_tests_count = \
+    [result_type_counters[k] for k in result_type_counters]
 
-    completed_tests_count, failed_tests_count, compiler_error_happend_tests_count, missing_expectations_tests_count = get_test_result_type_counters(log_data)
+    log_data = []
+    for test_section in data_to_log:
+        test_section.test_results = list(filter(lambda test_result: test_result.state not in TestResult.SKIPPED_TEST_TYPES, test_section.test_results))
+        log_data.append(test_section)
 
     log_data_strings = list(map(lambda x: str(x), log_data))
     log_data_strings.insert(0, f'''
@@ -285,7 +284,7 @@ def process_args():
             TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND, 
             TEST_RESULT_STATE.COMPLETED, 
             TEST_RESULT_STATE.FAILED,
-            TEST_RESULT_STATE
+            TEST_RESULT_STATE.MISSING_EXPECTATION
             ]
 
     args = sys.argv[1:]
@@ -375,4 +374,5 @@ if __name__=="__main__":
         sys.exit()
 
     test_results = calculate_test_sections(args_data[3])
+
     log_test_results(args_data[1], test_results, args_data[2])

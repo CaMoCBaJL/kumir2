@@ -37,3 +37,5 @@ __pycache__
 *.log
 
 cmake-build-debug/
+
+.vscode/settings.json

@@ -1,0 +1,25 @@
+void main() {
+int ф = тест(12) - 22;
+}
+
+int тест(int а)
+{
+int аа;
+return а - 1;
+}
+
+int тест1(int б, int а)
+{
+int в = б - а;
+return в;
+}
+
+int тест2(int б, int а, int б1, int а1, int &р)
+{
+return б - а + б1 - а1;
+}
+
+char тест3(int б, boolean б2, char а1, string б1, int[] а31, char[] б135, boolean[] а1221)
+{
+return б135[0];
+}

@@ -1,0 +1,59 @@
+void main() {
+int ф;
+ф := тест(12) - 22;
+}
+
+int тест(int а)
+{
+int аа;
+return а - 1;
+}
+
+int тест1(int б, int а)
+{
+int в = б - а;
+return в;
+}
+
+int тест2(арг int б, а, б1, а1, int &р)
+{
+р = б - а + б1 - а1;
+}
+
+int тест3(int б, boolean б2, char а1, std::string б1, int[] а31, char[] б135, boolean[] а1221)
+{
+int б11 = б - 1;
+}
+
+тест33(float а, float[] б22, std::string[] а123)
+{
+int в = 1;
+float г = б22[-2, 3];
+}
+
+int тест4(int б, int а, int &р){
+if (а >= 2 && б < 3) {
+р = б - а;
+}
+else {
+return ;
+}
+}
+
+int тест5(int б, int а, int б1, float а2){
+if(а >= 2 && б < 3 || б1 - б > 13 && а2 > 40){
+тест(б);
+}
+else {
+return;
+}
+}
+
+int тест6(int &б, float а){
+if(а >= 2 && б < 3){
+б = тест5(4, 1, 2, 2);
+}
+else {
+return;
+}
+}

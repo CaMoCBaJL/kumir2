@@ -73,8 +73,8 @@ class TestResult:
     def __str__(self):
         self.__setup_output()
         additional_test_data = f'''
-        Test expectations: {self.expectation_file_name}
-        Test results: {self.resultFileName}. 
+        Test group expectations: {self.expectation_file_name}
+        Test group results: {self.resultFileName}. 
         To get more detail info about comparison results, print:
         vimdiff {self.source_file_name} {self.expectation_file_name} {self.resultFileName}
         or vimdiff {self.expectation_file_name} {self.resultFileName}{CONSOLE_BG_COLORS.ENDC}

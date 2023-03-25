@@ -21,7 +21,7 @@ jobs:
       run: |
         pwd
         cd /home/runner/work/kumir2/kumir2
-        pwd
+        ls
     
     - name: test
-      run: docker build arduino_test_dockerfile 
+      run: docker build < arduino_test_dockerfile 

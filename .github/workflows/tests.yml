@@ -13,7 +13,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: merge test
-      run: git merge translator_tests
     - name: test
       run: docker build < arduino_test_dockerfile 

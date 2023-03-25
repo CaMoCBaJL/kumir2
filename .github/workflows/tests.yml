@@ -7,7 +7,7 @@ on:
     branches: [ "ArduinoFixes" ]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -16,5 +16,6 @@ jobs:
     - uses: actions/checkout@v3
       with: 
         ref: translator_tests
+        
     - name: test
-      run: docker build < arduino_test_dockerfile 
+    - run: docker build < arduino_test_dockerfile 

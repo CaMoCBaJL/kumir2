@@ -13,9 +13,9 @@ jobs:
 
     steps:
     - name: checkout tests branch
-    - uses: actions/checkout@v3
+      uses: actions/checkout@v3
       with: 
         ref: translator_tests
         
     - name: test
-    - run: docker build < arduino_test_dockerfile 
+      run: docker build < arduino_test_dockerfile 

@@ -16,6 +16,12 @@ jobs:
       uses: actions/checkout@v3
       with: 
         ref: translator_tests
-        
+    
+    - name: change context
+      run: |
+        pwd
+        cd /home/runner/work/kumir2/kumir2
+        pwd
+    
     - name: test
       run: docker build arduino_test_dockerfile 

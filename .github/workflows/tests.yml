@@ -17,11 +17,5 @@ jobs:
       with: 
         ref: translator_tests
     
-    - name: change context
-      run: |
-        pwd
-        cd /home/runner/work/kumir2/kumir2
-        ls
-    
     - name: test
-      run: docker build < arduino_test_dockerfile 
+      run: docker build -t ubuntu-test:latest - < arduino_test_dockerfile

@@ -230,6 +230,7 @@ namespace ArduinoCodeGenerator {
         func.module = mod->builtInID;
         func.algId = func.id;
         std::string algName = alg->header.name.toStdString();
+
         func.name = std::wstring(algName.begin(), algName.end());
         func.moduleLocalizedName = mod->header.name.toStdWString();
     }
@@ -293,9 +294,16 @@ namespace ArduinoCodeGenerator {
         ret.push_front(delim);
 
         Arduino::Instruction loadRetval;
-        loadRetval.type = Arduino::VAR;
-        loadRetval.varType = Arduino::VT_None;
-        loadRetval.varName = retval->name;
+        if (retval->name == QString()) {
+            loadRetval.type = Arduino::VAR;
+            loadRetval.varType = Arduino::VT_None;
+            loadRetval.varName = retval->name;
+        }
+        else {
+            loadRetval.registerr = retval->initialValue.toInt();
+            loadRetval.arg = -1;
+            loadRetval.type = Arduino::CONST;
+        }
         ret << loadRetval;
 
         loadRetval.varName = QString::null;

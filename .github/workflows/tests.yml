@@ -18,4 +18,4 @@ jobs:
         ref: translator_tests
     
     - name: test
-      run: docker build -t ubuntu-test:latest - < arduino_test_dockerfile
+      run: docker build -t ubuntu-test:latest - < arduino_test_dockerfile --build-arg path_to_tests_folder=./Tests

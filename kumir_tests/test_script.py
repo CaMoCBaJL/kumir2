@@ -244,7 +244,9 @@ def show_help():
     Flags:
     [-h] [--help] - show help.
     
-    [-t] [--translator] ["the path to pre-builded kumir2 to arduino translator instance"] - show app what translator instance to use.
+    [-tr] [--translator] ["the path to pre-builded kumir2 to arduino translator instance"] - show app what translator instance to use.
+    
+    [-t] [--path-to-tests] ["the path to tests folder"] = show app  the folder with test files.
     
     [-o] [--output] ["the path to log file"] - show app where to store test logs.
     

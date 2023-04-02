@@ -129,6 +129,8 @@ def remove_control_characters(data_array):
     return result
 
 def get_file_data(filename):
+    if not os.path.exists(filename):
+        return ''
     file = open(filename, "r")
     result = file.readlines()
     file.close()
@@ -355,16 +357,19 @@ def calculate_test_sections(path_to_tests_folder):
                 )
             )
 
-            if len(expectation_files) == 1:
-                result[-1].test_results[-1].expectation_file_name  = expectation_files[0]
-                result[-1].test_results[-1].resultFileName = process_sources(source_files[0], args_data[0])
+            if os.path.exists(result[-1].test_results[-1].resultFileName):
+                if len(expectation_files) == 1:
+                    result[-1].test_results[-1].expectation_file_name  = expectation_files[0]
+                    result[-1].test_results[-1].resultFileName = process_sources(source_files[0], args_data[0])
 
-                result_data = get_file_data(result[-1].test_results[-1].resultFileName)
-                expected_data = get_file_data(result[-1].test_results[-1].expectation_file_name)
+                    result_data = get_file_data(result[-1].test_results[-1].resultFileName)
+                    expected_data = get_file_data(result[-1].test_results[-1].expectation_file_name)
 
-                result[-1].test_results[-1].state = compare_data(expected_data, result_data)
-            else: 
-                result[-1].test_results[-1].state = TEST_RESULT_STATE.MISSING_EXPECTATION
+                    result[-1].test_results[-1].state = compare_data(expected_data, result_data)
+                else: 
+                    result[-1].test_results[-1].state = TEST_RESULT_STATE.MISSING_EXPECTATION
+            else:
+                result[-1].test_results[-1].state = TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND
 
     return result
 

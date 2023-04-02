@@ -345,7 +345,7 @@ def calculate_test_sections(path_to_tests_folder):
         test_paths = get_folder_contents_full_paths(test_folder_path)
         for test_dir_path in test_paths:
             source_files, expectation_files = get_source_and_expectation(get_folder_contents_full_paths(test_dir_path))
-            if os.path.isfile(test_dir_path) or len(expectation_files) > 1 or len(source_files) > 1:
+            if os.path.isfile(test_dir_path) or len(expectation_files) > 1 or len(source_files) < 1:
                 continue
             
             result[-1].test_results.append(TestResult(

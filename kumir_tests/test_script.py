@@ -108,13 +108,16 @@ class TestSection:
     
     def __str__(self) -> str:
         columns, _ = os.get_terminal_size()
-        return f"""
-        {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
-        Test section {self.name} starts here:
-        {os.linesep.join(list(map(lambda test_result: str(test_result), self.test_results)))}
-        End of {self.name} section tests
-        {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
-        """
+        if (len(self.test_results) > 0):
+            return f"""
+            {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
+            Test section {self.name} starts here:
+            {os.linesep.join(list(map(lambda test_result: str(test_result), self.test_results)))}
+            End of {self.name} section tests
+            {CONSOLE_BG_COLORS.WARNING + "-" *columns + CONSOLE_BG_COLORS.ENDC}
+            """
+        
+        return ''
 
 #functions
 def remove_control_characters(data_array):
@@ -357,19 +360,14 @@ def calculate_test_sections(path_to_tests_folder):
                 )
             )
 
-            if os.path.exists(result[-1].test_results[-1].resultFileName):
-                if len(expectation_files) == 1:
-                    result[-1].test_results[-1].expectation_file_name  = expectation_files[0]
-                    result[-1].test_results[-1].resultFileName = process_sources(source_files[0], args_data[0])
-
-                    result_data = get_file_data(result[-1].test_results[-1].resultFileName)
-                    expected_data = get_file_data(result[-1].test_results[-1].expectation_file_name)
-
-                    result[-1].test_results[-1].state = compare_data(expected_data, result_data)
-                else: 
-                    result[-1].test_results[-1].state = TEST_RESULT_STATE.MISSING_EXPECTATION
-            else:
-                result[-1].test_results[-1].state = TEST_RESULT_STATE.COMPILER_ERROR_HAPPEND
+            if len(expectation_files) == 1:
+                result[-1].test_results[-1].expectation_file_name  = expectation_files[0]
+                result[-1].test_results[-1].resultFileName = process_sources(source_files[0], args_data[0])
+                result_data = get_file_data(result[-1].test_results[-1].resultFileName)
+                expected_data = get_file_data(result[-1].test_results[-1].expectation_file_name)
+                result[-1].test_results[-1].state = compare_data(expected_data, result_data)
+            else: 
+                result[-1].test_results[-1].state = TEST_RESULT_STATE.MISSING_EXPECTATION
 
     return result
 

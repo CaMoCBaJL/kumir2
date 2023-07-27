@@ -11,6 +11,8 @@
 #include <QMouseEvent>
 #include <QHoverEvent>
 #include <QDebug>
+#include <QGuiApplication>
+#include <QScreen>
 
 namespace Widgets {
 
@@ -653,9 +655,9 @@ void SecondaryWindowGenericImplementation::handleResizeRequest(const QSize &newS
                 titleBox_->height();
         resize(sz);
 
-        const QRect screen = QApplication::desktop()->screenGeometry(screenNumber);
-        int dx = qMax(0, rect().right() - screen.right());
-        int dy = qMax(0, rect().bottom() - screen.bottom());
+        const QRect screenGeometry = QGuiApplication::screens().takeAt(screenNumber)->geometry();
+        int dx = qMax(0, rect().right() - screenGeometry.right());
+        int dy = qMax(0, rect().bottom() - screenGeometry.bottom());
         if (dx > 0 || dy > 0) {
             move(x() + dx, y() + dy);
         }

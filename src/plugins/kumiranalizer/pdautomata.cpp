@@ -437,7 +437,11 @@ void PDAutomata::loadRules(const QString &rulesRoot)
 //    qDebug() << "fff";
     foreach ( QString key, matrix_.keys() ) {
         Rules rulesList = matrix_[key];
-        qSort(rulesList);
+        std::sort(rulesList.begin(),
+                  rulesList.end(),
+                  [](const RuleRightPart& a, const RuleRightPart& b)->bool{return a < b;}
+        );
+
         matrix_[key] = rulesList;
     }
 //    qDebug() << "End load rules";
@@ -662,7 +666,9 @@ static std::list<QString> readRulesFile(const QString & fileName)
     }
     QTextStream ts(&f);
     ts.setCodec("UTF-8");
-    result = ts.readAll().split("\n").toStdList();
+    QStringList rules = ts.readAll().split("\n");
+    result = std::list<QString>(rules.begin(), rules.end());
+
     f.close();
     result.remove_if(isEmptyRulesLine);
     mergeRuleLines(result);
@@ -787,13 +793,13 @@ void prepareRules(const QStringList &files, QString &out)
         int d1 = str.lastIndexOf(':');
         if (d!=d1)
         {
-            qDebug()<<QString::fromUtf8("Два двоеточия в строке: ")<<str<<endl;
+            qDebug()<<QString::fromUtf8("Два двоеточия в строке: ")<< str << "\n";
             return;
         }
         int e = str.lastIndexOf('[');
         if (e==-1)
         {
-            qDebug()<<QString::fromUtf8("Не задан приоритет строки: ")<<str<<endl;
+            qDebug()<<QString::fromUtf8("Не задан приоритет строки: ")<< str << "\n";
             return;
         }
         if (d!=-1)
@@ -809,7 +815,7 @@ void prepareRules(const QStringList &files, QString &out)
         QString p(str.mid(e).trimmed());
         if (!p.startsWith("[") && !p.endsWith("]"))
         {
-            qDebug()<<QString::fromUtf8("Ошибка задания приоритета в строке: ")<<str<<endl;
+            qDebug()<<QString::fromUtf8("Ошибка задания приоритета в строке: ") << str << "\n";
             return;
         }
         priorities << p.mid(1,p.length()-2).toDouble();
@@ -818,10 +824,10 @@ void prepareRules(const QStringList &files, QString &out)
     QList<QStringList> pravila;
     foreach(QString s, pravila1)
     {
-        pravila << s.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+        pravila << s.split(QRegExp("\\s+"), Qt::SkipEmptyParts);
         if (!isNeterminal(pravila.last()[0]) || pravila.last()[1]!="->" || pravila.last().count()<3)
         {
-            qDebug()<<QString::fromUtf8("Ошибка в левой части: ")<<pravila.last().join(" ")<<endl;
+            qDebug()<<QString::fromUtf8("Ошибка в левой части: ") << pravila.last().join(" ") << "\n";
             return;
         }
     }
@@ -1134,7 +1140,7 @@ void prepareRules_By_N_M_Suboch(const QStringList &files, QString &out, const QL
                     else
                     {
                         sIn1 << "Syntax error in {}:\n";
-                        sIn1 << str << endl;
+                        sIn1 << str << "\n";
                         return;
                     }
                 }
@@ -1180,13 +1186,13 @@ void prepareRules_By_N_M_Suboch(const QStringList &files, QString &out, const QL
         int d1 = str.lastIndexOf(':');
         if (d!=d1)
         {
-            qDebug()<<QString::fromUtf8("Два двоеточия в строке: ")<<str<<endl;
+            qDebug()<<QString::fromUtf8("Два двоеточия в строке: ") << str << "\n";
             return;
         }
         int e = str.lastIndexOf('[');
         if (e==-1)
         {
-            qDebug()<<QString::fromUtf8("Не задан приоритет строки: ")<<str<<endl;
+            qDebug()<<QString::fromUtf8("Не задан приоритет строки: ") << str << "\n";
             return;
         }
         if (d!=-1)
@@ -1202,7 +1208,7 @@ void prepareRules_By_N_M_Suboch(const QStringList &files, QString &out, const QL
         QString p(str.mid(e).trimmed());
         if (!p.startsWith("[") && !p.endsWith("]"))
         {
-            qDebug()<<QString::fromUtf8("Ошибка задания приоритета в строке: ")<<str<<endl;
+            qDebug()<<QString::fromUtf8("Ошибка задания приоритета в строке: ") << str << "\n";
             return;
         }
         priorities << p.mid(1,p.length()-2).toInt();
@@ -1211,10 +1217,10 @@ void prepareRules_By_N_M_Suboch(const QStringList &files, QString &out, const QL
     QList<QStringList> pravila;
     foreach(QString s, pravila1)
     {
-        pravila << s.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+        pravila << s.split(QRegExp("\\s+"), Qt::SkipEmptyParts);
         if (!isNeterminal(pravila.last()[0]) || pravila.last()[1]!="->" || pravila.last().count()<3)
         {
-            qDebug()<<QString::fromUtf8("Ошибка в левой части: ")<<pravila.last().join(" ")<<endl;
+            qDebug()<<QString::fromUtf8("Ошибка в левой части: ")<<pravila.last().join(" ") << "\n";
             return;
         }
     }

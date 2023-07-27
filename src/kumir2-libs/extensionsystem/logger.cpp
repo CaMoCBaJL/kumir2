@@ -109,12 +109,12 @@ bool Logger::isDebugOnLinux()
 void Logger::writeLog(const char *type, const QString &message)
 {
     QByteArray buffer;
-    buffer += QDateTime::currentDateTime().toString("hh:mm:ss");
-    buffer += "\t";
-    buffer += QByteArray(type);
-    buffer += "\t";
-    buffer += message.toUtf8();
-    buffer += "\r\n";
+    buffer.append(QDateTime::currentDateTime().toString("hh:mm:ss").toLocal8Bit());
+    buffer.append("\t");
+    buffer.append(QByteArray(type));
+    buffer.append("\t");
+    buffer.append(message.toUtf8());
+    buffer.append("\r\n");
     if (loggerFile_) {
         loggerFile_->write(buffer);
         loggerFile_->flush();

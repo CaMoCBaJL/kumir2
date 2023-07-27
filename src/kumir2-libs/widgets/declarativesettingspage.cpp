@@ -22,7 +22,11 @@ DeclarativeSettingsPage::DeclarativeSettingsPage(
         entry.key = key;
         entriesArray.push_back(entry);
     }
-    qSort(entriesArray);
+    std::sort(
+              entriesArray.begin(),
+              entriesArray.end(),
+              [](const Entry& a, const Entry& b)->bool{return a < b;}
+    );
     Q_FOREACH(const Entry & entry, entriesArray) {
         const QString & key = entry.key;
         if (entry.type==Integer) {

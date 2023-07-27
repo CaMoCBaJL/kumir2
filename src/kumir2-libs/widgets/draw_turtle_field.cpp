@@ -17,8 +17,8 @@ DrawNavigator::DrawNavigator( QWidget * parent ){
     QBrush curBackground=QBrush(QColor("lightblue"));
     
     myScene->setBackgroundBrush (curBackground);
-    netLab=myScene->addText(trUtf8("Сетка:"));
-    zoomLab=myScene->addText(trUtf8("Масштаб:"));
+    netLab=myScene->addText(QString::fromStdString("Сетка:"));
+    zoomLab=myScene->addText(QString::fromStdString("Масштаб:"));
     
     //  mainLineX=myScene->addLine(5,netLab->pos().y()+10,5,25);
     // mainLineX->setVisible(false);
@@ -30,7 +30,7 @@ DrawNavigator::DrawNavigator( QWidget * parent ){
     isAutonet=new QCheckBox(this);
     isAnLabel=new QLabel(this);
     isAutonet->setChecked(true);
-    isAnLabel->setText(trUtf8(" авто"));
+    isAnLabel->setText(QString::fromStdString(" авто"));
     netStepXS->move(15,netLab->pos ().y()+25);
     isAutonet->move(15,netStepXS->pos ().y()+25);
     isAnLabel->move(isAutonet->pos ().x()+15, isAutonet->pos ().y());
@@ -66,7 +66,7 @@ DrawNavigator::DrawNavigator( QWidget * parent ){
     
     
     zoomFullDraw=new QToolButton(this);
-    zoomFullDraw->setText(trUtf8("Весь чертеж"));
+    zoomFullDraw->setText(QString::fromStdString("Весь чертеж"));
     zoomFullDraw->move(zoomUp->pos().x(),zoomDown->pos().y()+zoomDown->height() );
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

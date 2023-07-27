@@ -352,7 +352,7 @@ void Analizer::setSourceText(const QString & text)
         }
     }
     _statements.clear();
-    _sourceText = text.split("\n", QString::KeepEmptyParts);
+    _sourceText = text.split("\n", Qt::KeepEmptyParts);
 
     QList<TextStatementPtr> preprocessorStatements;
     _lexer->splitIntoStatements(_sourceText, 0, preprocessorStatements, QStringList());

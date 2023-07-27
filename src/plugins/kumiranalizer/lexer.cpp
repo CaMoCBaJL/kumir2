@@ -95,7 +95,7 @@ void Lexer::InitNormalizator(const QString &fileName)
     if (kwdFile.open(QIODevice::ReadOnly|QIODevice::Text)) {
         QTextStream ts(&kwdFile);
         ts.setCodec("UTF-8");
-        const QStringList lines = ts.readAll().split("\n",QString::SkipEmptyParts);
+        const QStringList lines = ts.readAll().split("\n", Qt::SkipEmptyParts);
         kwdFile.close();
         foreach (const QString &line, lines) {
             if (line.startsWith("#"))
@@ -1441,7 +1441,7 @@ QString Lexer::testName(const QString &name)
         return _("Name contains quotation symbol");
     }
 
-    QRegExp rxKwd = QRegExp(trUtf8("\\bзнач\\b|\\bтаб\\b"));
+    QRegExp rxKwd = QRegExp(QString::fromStdString("\\bзнач\\b|\\bтаб\\b"));
 
     int ps; // позиция первого найденного неправильного символа
     int pks; // позиция первого найденного ксимвола

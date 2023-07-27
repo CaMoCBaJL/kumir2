@@ -118,7 +118,7 @@ static Bytecode::TableElem makeConstant(const ConstValue & val)
 {
     Bytecode::TableElem e;
     e.type = Bytecode::EL_CONST;
-    e.vtype = val.baseType.toStdList();
+    e.vtype = std::list<Bytecode::ValueType>(val.baseType.begin(), val.baseType.end());
     e.dimension = val.dimension;
     e.recordModuleLocalizedName = val.recordModuleName.toStdWString();
     e.recordClassLocalizedName  = val.recordClassLocalizedName.toStdWString();
@@ -360,7 +360,7 @@ void Generator::generateExternTable()
             const QList<AST::ModuleWPtr> & used = module->header.usedBy;
             for (int j=0; j<used.size(); j++) {
                 AST::ModuleWPtr reference = used[j];
-                const AST::ModuleHeader & header = reference.data()->header;
+                const AST::ModuleHeader & header = reference.toStrongRef()->header;
                 if (header.type == AST::ModTypeUser ||
                         header.type == AST::ModTypeUserMain ||
                         header.type == AST::ModTypeTeacher ||
@@ -495,7 +495,8 @@ void Generator::addKumirModule(int id, const AST::ModulePtr mod)
         glob.id = quint16(i);
         glob.name = var->name.toStdWString();
         glob.dimension = quint8(var->dimension);
-        glob.vtype = valueType(var->baseType).toStdList();
+        QList<Bytecode::ValueType> baseTypes = valueType(var->baseType);
+        glob.vtype =std::list<Bytecode::ValueType>(baseTypes.begin(), baseTypes.end());
         glob.refvalue = valueKind(var->accessType);
         glob.recordModuleAsciiName = var->baseType.actor ?
                     std::string(var->baseType.actor->asciiModuleName().constData()) : std::string();
@@ -510,7 +511,8 @@ void Generator::addKumirModule(int id, const AST::ModulePtr mod)
     initElem.type = Bytecode::EL_INIT;
     initElem.module = quint8(id);
     initElem.moduleLocalizedName = mod->header.name.toStdWString();
-    initElem.instructions = instructions(id, -1, 0, mod->impl.initializerBody).toVector().toStdVector();
+    QVector<Bytecode::Instruction> instructionsVector = instructions(id, -1, 0, mod->impl.initializerBody).toVector();
+    initElem.instructions = std::vector<Bytecode::Instruction>(instructionsVector.begin(), instructionsVector.end());
     if (!initElem.instructions.empty())
         initElem.instructions << returnFromInit;
     if (!initElem.instructions.empty())
@@ -570,7 +572,9 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
         loc.id = 0;
         loc.name = tr("Function return value").toStdWString();
         loc.dimension = 0;
-        loc.vtype = valueType(retval->baseType).toStdList();
+
+        QList<Bytecode::ValueType> baseTypes = valueType(retval->baseType);
+        loc.vtype =std::list<Bytecode::ValueType>(baseTypes.begin(), baseTypes.end());
         loc.refvalue = Bytecode::VK_Plain;
         byteCode_->d.push_back(loc);
         varsToOut << constantValue(Bytecode::VT_int, 0, 0, QString(), QString());
@@ -587,7 +591,10 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
         loc.id = locOffset+i;
         loc.name = var->name.toStdWString();
         loc.dimension = var->dimension;
-        loc.vtype = valueType(var->baseType).toStdList();
+
+        QList<Bytecode::ValueType> baseTypes = valueType(var->baseType);
+        loc.vtype =std::list<Bytecode::ValueType>(baseTypes.begin(), baseTypes.end());
+
         loc.recordModuleAsciiName = var->baseType.actor ?
                     std::string(var->baseType.actor->asciiModuleName().constData()) : std::string();
         loc.recordModuleLocalizedName = var->baseType.actor ?
@@ -732,7 +739,9 @@ void Generator::addInputArgumentsMainAlgorhitm(int moduleId, int algorhitmId, co
     func.module = moduleId;
     func.moduleLocalizedName = mod->header.name.toStdWString();
     func.name = QString::fromLatin1("@below_main").toStdWString();
-    func.instructions = instrs.toVector().toStdVector();
+
+    QVector<Bytecode::Instruction> instructionsVector = instrs.toVector();
+    func.instructions = std::vector<Bytecode::Instruction>(instructionsVector.begin(), instructionsVector.end());
     byteCode_->d.push_back(func);
 
 }
@@ -821,7 +830,10 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
         loc.id = i;
         loc.name = var->name.toStdWString();
         loc.dimension = var->dimension;
-        loc.vtype = valueType(var->baseType).toStdList();
+
+        QList<Bytecode::ValueType> baseTypes = valueType(var->baseType);
+        loc.vtype =std::list<Bytecode::ValueType>(baseTypes.begin(), baseTypes.end());
+
         loc.refvalue = valueKind(var->accessType);
         loc.recordModuleAsciiName = var->baseType.actor ?
                     std::string(var->baseType.actor->asciiModuleName().constData()) : std::string();
@@ -985,7 +997,8 @@ void Generator::addFunction(int id, int moduleId, Bytecode::ElemType type, const
     ret << retturn;
 
     QList<Bytecode::Instruction> instrs = argHandle + pre + body + post + ret;
-    func.instructions = instrs.toVector().toStdVector();
+    QVector<Bytecode::Instruction> instructionsVector = instrs.toVector();
+    func.instructions = std::vector<Bytecode::Instruction>(instructionsVector.begin(), instructionsVector.end());
     byteCode_->d.push_back(func);
 }
 

@@ -458,7 +458,7 @@ int main(int argc, char **argv)
         if (customAppAndVendorInformation) {
             v += "]";
         }
-        int tw = QFontMetrics(f).width(v);
+        int tw = QFontMetrics(f).horizontalAdvance(v);
         int th = QFontMetrics(f).height() * 5;
         int x = img.width() - tw - 8;
         int y = 8;

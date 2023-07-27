@@ -299,7 +299,7 @@ QString PluginManagerImpl::parsePluginsRequest(const QByteArray &templ, QList<Pl
     plugins << cur;
     int starts = 0;
     // Qt bug !!! Use STL instead and then convert back to QList
-    std::list<PluginSpec> stdPlugins = plugins.toStdList();
+    std::list<PluginSpec> stdPlugins = std::list<PluginSpec>(plugins.begin(), plugins.end());
     std::list<PluginSpec>::iterator it=stdPlugins.begin();
     while (it!=stdPlugins.end()) {
         PluginSpec p = (*it);
@@ -328,7 +328,7 @@ QString PluginManagerImpl::parsePluginsRequest(const QByteArray &templ, QList<Pl
             ++it;
         }
     }
-    plugins = QList<PluginSpec>::fromStdList(stdPlugins);
+    plugins = QList<PluginSpec>(stdPlugins.begin(), stdPlugins.end());
     for (int i=0; i<plugins.size(); i++) {
         if (plugins[i].main) {
             starts ++;

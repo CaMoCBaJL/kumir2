@@ -11,7 +11,7 @@ KumFileHandler::KumFileHandler(QObject *parent) :
 QString KumFileHandler::toString(const Data &data) const
 {
     QString result;
-    const QStringList lines = data.visibleText.split("\n", QString::KeepEmptyParts);
+    const QStringList lines = data.visibleText.split("\n", Qt::KeepEmptyParts);
     for (int i=0; i<lines.count(); i++) {
         result += lines[i];
         if (data.protectedLineNumbers.contains(i)) {
@@ -20,7 +20,7 @@ QString KumFileHandler::toString(const Data &data) const
         if (i<lines.count()-1)
             result += "\n";
     }
-    const QStringList hiddenLines = !data.hiddenText.isEmpty()? data.hiddenText.split("\n", QString::KeepEmptyParts) : QStringList();
+    const QStringList hiddenLines = !data.hiddenText.isEmpty()? data.hiddenText.split("\n", Qt::KeepEmptyParts) : QStringList();
     if (!result.isEmpty())
         result += "\n";
     for (int i=0; i<hiddenLines.count(); i++) {
@@ -38,7 +38,7 @@ QString KumFileHandler::toString(const Data &data) const
 
 SourceFileInterface::Data KumFileHandler::fromString(const QString &s) const
 {
-    const QStringList lines = s.split("\n", QString::KeepEmptyParts);
+    const QStringList lines = s.split("\n", Qt::KeepEmptyParts);
     Data data;
     data.hasHiddenText = false;
     int lineNo = -1;

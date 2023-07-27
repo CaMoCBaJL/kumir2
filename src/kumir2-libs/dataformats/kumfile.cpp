@@ -34,7 +34,8 @@ Shared::Analizer::SourceFileInterface::Data KumFile::insertTeacherMark(Shared::A
     if(pos>1)
     {
      data.visibleText.insert(pos, "\n|#%%\n");
-    QStringList strings=data.visibleText.split("\n", QString::KeepEmptyParts);
+
+    QStringList strings=data.visibleText.split("\n", Qt::KeepEmptyParts);
         for(int i=0;i<strings.count();i++)
         {
          if(strings.at(i).startsWith("|#%%"))

@@ -908,7 +908,7 @@ SyntaxAnalizer::suggestValueAutoComplete(
                       [&algs](AST::ModulePtr p)
         {
             std::list<AST::AlgorithmPtr> modulePublicAlgorithms =
-                    p->header.algorhitms.toStdList();
+                    std::list<AST::AlgorithmPtr>(p->header.algorhitms.begin(), p->header.algorhitms.end());
             std::copy(modulePublicAlgorithms.begin(), modulePublicAlgorithms.end(),
                       std::back_inserter(algs));
         });
@@ -1219,7 +1219,7 @@ void SyntaxAnalizer::buildTables(bool isInternalBuild)
 
     // Find and load unresolved imports
     for (int i=0; i<unresolvedImports_.size(); i++) {
-        const QString name = unresolvedImports_.toList()[i];
+        const QString name = unresolvedImports_.values()[i];
         QString error;
         if (name.endsWith(".kod")) {
             QString canonicalName = name;
@@ -1288,7 +1288,7 @@ void SyntaxAnalizer::buildTables(bool isInternalBuild)
 
     // Set errors for imports that could not be resolved
     for (int i=0; i<unresolvedImports_.size(); i++) {
-        const QString name = unresolvedImports_.toList()[i];
+        const QString name = unresolvedImports_.values()[i];
 
         for (int j=0; j<statements_.size(); j++) {
             if (statements_[j].type==Shared::LxPriImport && !statements_[j].hasError()) {
@@ -1838,7 +1838,7 @@ QStringList SyntaxAnalizer::checkForConflictingNames(const ModulePtr &moduleToCh
             }
         }
     }
-    return result.toList();
+    return result.values();
 }
 
 AST::ModulePtr SyntaxAnalizer::loadKodFile(const QString &name, QString &error)
@@ -1950,13 +1950,13 @@ void SyntaxAnalizer::parseVarDecl(int str)
     AST::StatementWPtr p = st.statement.toWeakRef();
     while (p) {
         QString error;
-        if (p.data()->type == AST::StLoop) {
+        if (p.toStrongRef()->type == AST::StLoop) {
             error = _("Can't declare variable in loop");
         }
-        else if (p.data()->type == AST::StIfThenElse) {
+        else if (p.toStrongRef()->type == AST::StIfThenElse) {
             error = _("Can't declare variable in condidion");
         }
-        else if (p.data()->type == AST::StSwitchCaseElse) {
+        else if (p.toStrongRef()->type == AST::StSwitchCaseElse) {
             error = _("Can't declare variable in switch");
         }
         if (error.length() > 0) {
@@ -1965,7 +1965,7 @@ void SyntaxAnalizer::parseVarDecl(int str)
                         Lexem::AsIs);
             return;
         }
-        p = p.data()->parent;
+        p = p.toStrongRef()->parent;
     }
 
     AST::AlgorithmPtr  alg = st.alg;
@@ -3937,7 +3937,9 @@ QList<AST::VariablePtr> SyntaxAnalizer::parseVariables(int statementIndex, Varia
                     return result;
                 }                
                 int maxDim = 0;
-                QVariant constValue = parseConstant(initValue.toStdList(),
+                std::list<LexemPtr> initValueList = std::list<LexemPtr>(initValue.begin(), initValue.end());
+
+                QVariant constValue = parseConstant(initValueList,
                                                     var->baseType.kind,
                                                     maxDim);
                 if (constValue==QVariant::Invalid) {
@@ -5157,8 +5159,8 @@ AST::ExpressionPtr  SyntaxAnalizer::parseExpression(
                 }
             }
 
-
-            AST::ExpressionPtr  operand = parseSimpleName(block.toStdList(),
+            std::list<LexemPtr> blockList = std::list<LexemPtr>(block.begin(), block.end());
+            AST::ExpressionPtr  operand = parseSimpleName(blockList,
                                                           mod,
                                                           alg);
             if (!operand) {
@@ -6074,7 +6076,7 @@ AST::ExpressionPtr  SyntaxAnalizer::parseSimpleName(const std::list<LexemPtr> &l
         result->kind = AST::ExprFunctionCall;
         result->baseType = AST::TypeInteger;
         result->dimension = 0;
-        result->lexems = QList<LexemPtr>::fromStdList(lexems);
+        result->lexems = QList<LexemPtr>(lexems.begin(), lexems.end());
         const AST::ModulePtr  dummy;        
         AST::ModulePtr dummy2;
         QVariantList dummyTemplateParameters;

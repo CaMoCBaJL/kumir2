@@ -248,7 +248,7 @@ linkLight::linkLight ( QWidget* parent):QWidget(parent)
     posX=1;
     posY=1;
     onLine=true;
-    text=trUtf8("СВЯЗЬ");
+    text=QString::fromStdString("СВЯЗЬ");
 };
 
 void linkLight::paintEvent ( QPaintEvent * event )

@@ -456,7 +456,7 @@ bool GetMainArgumentFunctor::inputScalarArgument(
                 return false;
             fileName = QString::fromStdWString(fileNameValue.toString());
             if (!QFile::exists(fileName)) {
-                emit requestOutput(trUtf8("Файл %1 не существует. Введите имя еще раз.\n").arg(fileName));
+                emit requestOutput(QString::fromStdString("Файл %1 не существует. Введите имя еще раз.\n").arg(fileName));
             }
             else {
                 break;
@@ -491,7 +491,7 @@ bool GetMainArgumentFunctor::inputScalarArgument(
             if (AppendModes.contains(fileMode.trimmed().toLower()))
                 openMode = Kumir::FileType::Append;
             if (Kumir::FileType::NotOpen == openMode) {
-                emit requestOutput(trUtf8("Неверный режим доступа. Введите еще раз.\n"));
+                emit requestOutput(QString::fromStdString("Неверный режим доступа. Введите еще раз.\n"));
             }
             else {
                 QFileInfo fi(fileName);
@@ -501,7 +501,7 @@ bool GetMainArgumentFunctor::inputScalarArgument(
                 else if (Kumir::FileType::Read == openMode)
                     enoughtPermissions = fi.isReadable();
                 if (!enoughtPermissions) {
-                    emit requestOutput(trUtf8("Недостаточно прав для доступа к файлу. Попробуйте другой режим.\n"));
+                    emit requestOutput(QString::fromStdString("Недостаточно прав для доступа к файлу. Попробуйте другой режим.\n"));
                 }
                 else {
                     Kumir::FileType file = Kumir::Files::open(fileName.toStdWString(), openMode, false, 0);
@@ -515,7 +515,7 @@ bool GetMainArgumentFunctor::inputScalarArgument(
     }
 
 
-    message = trUtf8("Введите %1%2%3: ").arg(name).arg(indeces).arg(messageSuffix);
+    message = QString::fromStdString("Введите %1%2%3: ").arg(name).arg(indeces).arg(messageSuffix);
 
 
     // Show message

@@ -67,6 +67,7 @@ ModelPtr DocBookFactory::parseDocument(
     roles_ = roles;
     url_ = url;
     QXmlInputSource source(stream);
+
     if (reader_->parse(source)) {
         if (error)
             error->clear();
@@ -640,27 +641,28 @@ bool DocBookFactory::endElement(const QString &namespaceURI,
     return true;
 }
 
-bool DocBookFactory::error(const QXmlParseException &exception)
+bool DocBookFactory::error(const QString &errorText)
 {
     qDebug() << "Error parsing " << url_;
     qDebug() << "At " << exception.lineNumber() << ":" << exception.columnNumber();
-    qDebug() << exception.message();
+    qDebug() << errorText;
     return false;
 }
 
-bool DocBookFactory::fatalError(const QXmlParseException &exception)
+bool DocBookFactory::fatalError(const QString &errorText)
 {
     qDebug() << "Fatal error parsing " << url_;
     qDebug() << "At " << exception.lineNumber() << ":" << exception.columnNumber();
-    qDebug() << exception.message();
+    qDebug() << errorText;
     return false;
 }
 
-bool DocBookFactory::warning(const QXmlParseException &exception)
+bool DocBookFactory::warning(const QString &errorText)
 {
     qDebug() << "Warning parsing " << url_;
     qDebug() << "At " << exception.lineNumber() << ":" << exception.columnNumber();
-    qDebug() << exception.message();
+    qDebug() << errorText;
+
     return true;
 }
 

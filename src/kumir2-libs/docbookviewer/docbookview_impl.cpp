@@ -91,7 +91,7 @@ void DocBookViewImpl::updateToggleSideBarButton()
 
     const QString html = QString("<a href=\"%1\">%2</a>").arg(action).arg(text);
 
-    const int width = toggleSideBar_->fontMetrics().width(text) + 16;
+    const int width = toggleSideBar_->fontMetrics().horizontalAdvance(text) + 16;
 
     toggleSideBar_->setText(html);
     toggleSideBar_->setFixedWidth(width);

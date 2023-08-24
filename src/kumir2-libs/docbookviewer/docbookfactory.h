@@ -61,9 +61,9 @@ private /*methods*/:
                     const QString &localName,
                     const QString &qName);
 
-    bool error(const QXmlParseException &exception);
-    bool fatalError(const QXmlParseException &exception);
-    bool warning(const QXmlParseException &exception);
+    bool error(const QString &errorText);
+    bool fatalError(const QString &errorText);
+    bool warning(const QString &errorText);
 
     void filterByOs(ModelPtr root) const;
     void filterByRoles(const QMap<ModelType,QString> & roles,

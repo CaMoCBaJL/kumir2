@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.0)
 find_package(Kumir2 REQUIRED)
 kumir2_use_qt(Core Gui Xml)
 
-if(${USE_QT} GREATER 4 AND UNIX AND NOT APPLE)
+if(${USE_QT} EQUAL 5 AND UNIX AND NOT APPLE)
     find_package(Qt5 5.3.0 COMPONENTS X11Extras REQUIRED)
     include_directories(${Qt5X11Extras_INCLUDE_DIRS})
     list(APPEND QT_LIBRARIES ${Qt5X11Extras_LIBRARIES})

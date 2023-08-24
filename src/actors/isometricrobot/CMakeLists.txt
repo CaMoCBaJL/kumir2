@@ -2,7 +2,7 @@ project(ActorIsometricRobot)
 cmake_minimum_required(VERSION 3.0)
 
 find_package(Kumir2 REQUIRED)
-kumir2_use_qt(Core Gui Svg Script Xml)
+kumir2_use_qt(Core Gui Svg Xml)
 
 set(SOURCES
     isometricrobotmodule.cpp

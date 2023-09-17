@@ -385,7 +385,7 @@ QString ContentView::renderKeySym(ModelPtr data) const
     foreach (ModelPtr  child, data->children()) {
         keysym += child->text();
     }
-    const QStringList keys = keysym.split("+", QString::SkipEmptyParts);
+    const QStringList keys = keysym.split("+", Qt::SkipEmptyParts);
     QStringList parts;
     foreach (const QString & key, keys) {
         QString part = "<kbd>";
@@ -1326,7 +1326,7 @@ QString ContentView::renderSection(ModelPtr data) const
 
 QString ContentView::modelToLink(ModelPtr data) const
 {
-    const quintptr ptr = quintptr(data.toWeakRef().data());
+    const quintptr ptr = quintptr(data.toWeakRef().toStrongRef());
     QByteArray buffer;
     QDataStream ds(&buffer, QIODevice::WriteOnly);
     ds << ptr;
@@ -1515,7 +1515,7 @@ QString ContentView::renderSet(ModelPtr data) const
     const QString & title = data->title();
     result += "<h1 class='title' align='center'>" + title + "</h1>\n";
     foreach (ModelPtr child, data->children()) {
-        const quintptr dataPtr = quintptr(child.toWeakRef().data());
+        const quintptr dataPtr = quintptr(child.toWeakRef().toStrongRef());
         QByteArray buffer;
         QDataStream ds(&buffer, QIODevice::WriteOnly);
         ds << dataPtr;
@@ -1534,7 +1534,7 @@ QString ContentView::renderSet(ModelPtr data) const
 
 QString ContentView::renderTOCElement(ModelPtr data, quint8 level, bool enumerate) const
 {
-    const quintptr dataPtr = quintptr(data.toWeakRef().data());
+    const quintptr dataPtr = quintptr(data.toWeakRef().toStrongRef());
     QByteArray buffer;
     QDataStream ds(&buffer, QIODevice::WriteOnly);
     ds << dataPtr;

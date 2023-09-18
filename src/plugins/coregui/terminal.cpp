@@ -335,7 +335,7 @@ void Term::input(const QString & format)
     }
     OneSession * lastSession = sessions_.last();
 
-    inputFormats_ = format.split(";", QString::SkipEmptyParts);
+    inputFormats_ = format.split(";", Qt::SkipEmptyParts);
     inputValues_.clear();
 
     lastSession->input(format);

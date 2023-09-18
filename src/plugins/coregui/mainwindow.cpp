@@ -1718,7 +1718,9 @@ void MainWindow::loadSettings(const QStringList & keys)
                 ps = r.topLeft();
             }
             else {
-                const QSize screenSize = QApplication::desktop()->availableGeometry().size();
+                int screenNumber = QApplication::desktop()->screenNumber(this);
+                const QRect screenGeometry = QGuiApplication::screens().takeAt(screenNumber)->geometry();
+                const QSize screenSize = QSize(screenGeometry.width(), screenGeometry.height());
                 int x = screenSize.width() - r.width();
                 int y = screenSize.height() - r.height();
                 x /= 2;
@@ -1760,7 +1762,9 @@ void MainWindow::loadSettings(const QStringList & keys)
 
 void MainWindow::setFirstTimeWindowLayout()
 {
-    const QRect workspaceSize = QApplication::desktop()->availableGeometry();
+    int screenNumber = QApplication::desktop()->screenNumber(this);
+    const QRect screenGeometry = QGuiApplication::screens().takeAt(screenNumber)->geometry();
+    const QSize workspaceSize = QSize(screenGeometry.width(), screenGeometry.height());
     bool maximizeWindow =
             workspaceSize.width() <= 1280 || workspaceSize.height() <= 700;
     if (maximizeWindow) {

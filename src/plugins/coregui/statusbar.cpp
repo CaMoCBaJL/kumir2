@@ -91,7 +91,7 @@ void StatusBar::setMessage(const QString &message, MessageRole role)
 {
     bool upd = message_ != message || messageRole_ != role;
     message_ = message;
-    messageWidth_ = statusBarFontMetrics().width(message);
+    messageWidth_ = statusBarFontMetrics().horizontalAdvance(message);
     messageRole_ = role;
     if (upd) update();
 }
@@ -159,7 +159,7 @@ QSize StatusBar::keyboardLayoutItemSize() const
     const int textHeight = fontHeight();
     if (0 == maxTextWidth) {
         foreach (const QString &text, items) {
-            maxTextWidth = qMax(maxTextWidth, statusBarFontMetrics().width(text));
+            maxTextWidth = qMax(maxTextWidth, statusBarFontMetrics().horizontalAdvance(text));
         }
     }
     const int width = 2*(12 + 1) + maxTextWidth;
@@ -170,7 +170,7 @@ QSize StatusBar::keyboardLayoutItemSize() const
 QSize StatusBar::cursorPositionItemSize() const
 {
     const QString text = tr("Row: ww, Col.: ww");
-    const int textW = statusBarFontMetrics().width(text);
+    const int textW = statusBarFontMetrics().horizontalAdvance(text);
     return QSize(textW + 2 * ItemPadding,
                  qMax(14, fontHeight()));
 }
@@ -183,7 +183,7 @@ QSize StatusBar::modeItemSize() const
     const int textHeight = fontHeight();
     if (0 == maxTextWidth) {
         foreach (const QString &text, items) {
-            maxTextWidth = qMax(maxTextWidth, statusBarFontMetrics().width(text));
+            maxTextWidth = qMax(maxTextWidth, statusBarFontMetrics().horizontalAdvance(text));
         }
     }
     const int height = qMax(14, textHeight);
@@ -200,11 +200,11 @@ QSize StatusBar::counterItemSize() const
 
     int maxTextWidthEdit = 0;
     if (0 == maxTextWidthEdit) {
-        maxTextWidthEdit = qMax(maxTextWidthEdit, statusBarFontMetrics().width(errorsText));
-        maxTextWidthEdit = qMax(maxTextWidthEdit, statusBarFontMetrics().width(noErrorsText));
+        maxTextWidthEdit = qMax(maxTextWidthEdit, statusBarFontMetrics().horizontalAdvance(errorsText));
+        maxTextWidthEdit = qMax(maxTextWidthEdit, statusBarFontMetrics().horizontalAdvance(noErrorsText));
     }
 
-    const int textWidthOther = statusBarFontMetrics().width(stepsDoneText);
+    const int textWidthOther = statusBarFontMetrics().horizontalAdvance(stepsDoneText);
 
     const int textWidth = state_ == PluginInterface::GS_Unlocked
             ? maxTextWidthEdit : textWidthOther;
@@ -455,21 +455,21 @@ void StatusBar::paintMessageItem(QPainter &p, int x)
     if (textRect.right() > this->width() - ItemPadding) {
         textRect.setRight(this->width() - ItemPadding);
     }
-    int width = statusBarFontMetrics().width(message_);
+    int width = statusBarFontMetrics().horizontalAdvance(message_);
 
     QString text = message_;
 
     if (width > textRect.width()) {
         static const QString threeDots = QString("...");
-        const int dotsWidth = statusBarFontMetrics().width(threeDots);
+        const int dotsWidth = statusBarFontMetrics().horizontalAdvance(threeDots);
         if (dotsWidth >= textRect.width()) {
             text = "";
         }
         else {
-            width = statusBarFontMetrics().width(text) + dotsWidth;
+            width = statusBarFontMetrics().horizontalAdvance(text) + dotsWidth;
             while (text.length() > 0 &&  width > textRect.width()) {
                 text.remove(text.length()-1, 1);
-                width = statusBarFontMetrics().width(text) + dotsWidth;
+                width = statusBarFontMetrics().horizontalAdvance(text) + dotsWidth;
             }
             if (!text.isEmpty()) {
                 text += threeDots;

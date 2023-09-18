@@ -87,7 +87,7 @@ namespace ArduinoCodeGenerator{
 
         timesVar.varType = Arduino::VT_None;
         result << timesVar;
-        if (st->loop.timesValue->variable->initialValue > 0){
+        if (st->loop.timesValue->variable->initialValue.toInt() > 0){
             instrBuffer.type = Arduino::GT;
             result << instrBuffer;
         } else {
@@ -104,7 +104,7 @@ namespace ArduinoCodeGenerator{
 
         result << timesVar;
 
-        if (st->loop.timesValue->variable->initialValue > 0){
+        if (st->loop.timesValue->variable->initialValue.toInt() > 0){
             instrBuffer.type = Arduino::INC;
             result << instrBuffer;
         } else {

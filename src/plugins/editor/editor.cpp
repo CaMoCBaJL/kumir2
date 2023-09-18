@@ -395,7 +395,11 @@ void EditorInstance::updateInsertMenu()
         int groupNo = m->showInLastBlock ? 1 : 0;
         groups[groupNo].append(m);
     }
-    qSort(groups[1]);
+    std::sort(
+            groups[1].begin(),
+            groups[1].end(),
+            [](const QSharedPointer<Macro>& a, const QSharedPointer<Macro>& b)->bool{return a < b;}
+    );
     for (int z=0; z<2; ++z) {
         QList<QSharedPointer<Macro> > group = groups[z];
         if (1==z && groups[1].size() > 0) {

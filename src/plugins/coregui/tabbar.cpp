@@ -18,7 +18,7 @@ TabBar::TabBar(QWidget *parent) :
         QFont f(font());
         f.setPixelSize(10);
         f.setBold(true);
-        int w = QFontMetrics(f).width(text);
+        int w = QFontMetrics(f).horizontalAdvance(text);
         QImage numberImageActive(16,16,QImage::Format_ARGB32);
         numberImageActive.fill(0);
         QPainter p(&numberImageActive);

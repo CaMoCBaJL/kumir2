@@ -52,7 +52,7 @@ QSize OneSession::charSize() const
 {
 
     QFontMetrics fm(font());
-    return QSize(fm.width('m'), fm.height());
+    return QSize(fm.horizontalAdvance('m'), fm.height());
 }
 
 int OneSession::widthInChars(int realWidth) const
@@ -108,8 +108,8 @@ QSize OneSession::minimumSizeHint() const
             mainFM.height();
     int minWidthInChars = fixedWidth_ == -1? 10 : fixedWidth_;
     int minW = charSize().width() * minWidthInChars;
-    int headerWidth = qMin(400, headingFM.width(visibleHeader_));
-    int footerWidth = qMin(400, headingFM.width(visibleFooter_));
+    int headerWidth = qMin(400, headingFM.horizontalAdvance(visibleHeader_));
+    int footerWidth = qMin(400, headingFM.horizontalAdvance(visibleFooter_));
     int maxHeadingWidth = qMax(headerWidth, footerWidth);
     return QSize(qMax(minW, maxHeadingWidth), minH);
 }
@@ -196,7 +196,7 @@ void OneSession::relayout(uint realWidth, size_t fromLine, bool headerAndFooter)
         }
         headerRect_ = QRect(BodyPadding,
                             0,
-                            QFontMetrics(utilityFont()).width(visibleHeader_),
+                            QFontMetrics(utilityFont()).horizontalAdvance(visibleHeader_),
                             QFontMetrics(utilityFont()).height() + HeaderPadding);
 
         // 3. Footer
@@ -215,7 +215,7 @@ void OneSession::relayout(uint realWidth, size_t fromLine, bool headerAndFooter)
                         0)
                 : QRect(BodyPadding,
                         mainTextRegion_.bottom() + HeaderPadding + BodyPadding,
-                        QFontMetrics(utilityFont()).width(visibleFooter_),
+                        QFontMetrics(utilityFont()).horizontalAdvance(visibleFooter_),
                         QFontMetrics(utilityFont()).height());
     }
 }
@@ -289,7 +289,7 @@ uint OneSession::drawUtilityText(
     for (size_t i=0; i<text.length(); i++) {
         const QChar ch = text.at(i);
         const CharSpec cs = prop[i];
-        const uint cw = fm.width(ch);
+        const uint cw = fm.horizontalAdvance(ch);
         if (cs & SelectionMask) {
             p.setPen(Qt::NoPen);
             p.setBrush(selectionBackroundBrush);
@@ -675,9 +675,9 @@ void OneSession::triggerTextSelection(const QPoint &fromPos, const QPoint &toPos
        int fromChar = 0;
        int toChar = visibleHeader_.length();
        if (fromY > headerRect_.top())
-           fromChar = (fromX - headerRect_.left()) / ufm.width('m');
+           fromChar = (fromX - headerRect_.left()) / ufm.horizontalAdvance('m');
        if (toY <= headerRect_.bottom())
-           toChar = (toX - headerRect_.left()) / ufm.width('m');
+           toChar = (toX - headerRect_.left()) / ufm.horizontalAdvance('m');
        fromChar = qMax(0, fromChar);
        toChar = qMin(visibleHeader_.length(), toChar);
        for (int i=fromChar; i<toChar; i++) {
@@ -690,9 +690,9 @@ void OneSession::triggerTextSelection(const QPoint &fromPos, const QPoint &toPos
        int fromChar = 0;
        int toChar = visibleFooter_.length();
        if (fromY > footerRect_.top())
-           fromChar = (fromX - footerRect_.left()) / ufm.width('m');
+           fromChar = (fromX - footerRect_.left()) / ufm.horizontalAdvance('m');
        if (toY <= footerRect_.bottom())
-           toChar = (toX - footerRect_.left()) / ufm.width('m');
+           toChar = (toX - footerRect_.left()) / ufm.horizontalAdvance('m');
        fromChar = qMax(0, fromChar);
        toChar = qMin(visibleFooter_.length(), toChar);
        for (int i=fromChar; i<toChar; i++) {
@@ -707,16 +707,16 @@ void OneSession::triggerTextSelection(const QPoint &fromPos, const QPoint &toPos
         const QRect thisLineRect = QRect(
                     mainTextRegion_.left(),
                     mainTextRegion_.top() + l * mfm.height(),
-                    mfm.width(thisLineText),
+                    mfm.horizontalAdvance(thisLineText),
                     mfm.height()
                     );
         if (fromY <= thisLineRect.bottom() && toY >= thisLineRect.top()) {
             size_t fromChar = line.from;
             size_t toChar = line.to;
             if (fromY > thisLineRect.top())
-                fromChar = line.from + (fromX - thisLineRect.left()) / mfm.width('m');
+                fromChar = line.from + (fromX - thisLineRect.left()) / mfm.horizontalAdvance('m');
             if (toY <= thisLineRect.bottom())
-                toChar = line.from + (toX - thisLineRect.left()) / mfm.width('m');
+                toChar = line.from + (toX - thisLineRect.left()) / mfm.horizontalAdvance('m');
             if (toY > thisLineRect.bottom() || toX > thisLineRect.right())
                 *line.endSelected = true;
             fromChar = qMax(line.from, fromChar);
@@ -826,7 +826,7 @@ void OneSession::input(const QString &format)
     }
     else {
         msg += tr("INPUT ");
-        QStringList fmts = format.split(";", QString::SkipEmptyParts);
+        QStringList fmts = format.split(";", Qt::SkipEmptyParts);
         for (int i=0; i<fmts.size(); i++) {
             if (i>0) {
                 msg += ", ";
@@ -842,7 +842,7 @@ void OneSession::input(const QString &format)
             else if (fmts[i][0]=='b')
                 msg += tr("boolean");
             else if (fmts[i].contains("::")) {
-                QStringList typeName = fmts[i].split("::", QString::KeepEmptyParts);
+                QStringList typeName = fmts[i].split("::", Qt::KeepEmptyParts);
                 msg += typeName[2];
             }
 
@@ -915,7 +915,7 @@ void OneSession::tryFinishInput()
     int conversionErrorLength = 0;
     bool ignoreGarbageError = false;
     QString conversionErrorType = "";
-    const QStringList & formats = inputFormat_.split(";", QString::SkipEmptyParts);
+    const QStringList & formats = inputFormat_.split(";", Qt::SkipEmptyParts);
     for (int i=0; i<formats.size(); i++) {
         char type = formats[i][0].unicode();
         const QString format = formats[i];
@@ -948,7 +948,7 @@ void OneSession::tryFinishInput()
             ignoreGarbageError = true;
         }
         else if (format.contains("::")) {
-            const QStringList typeName = format.split("::", QString::KeepEmptyParts);
+            const QStringList typeName = format.split("::", Qt::KeepEmptyParts);
             const QByteArray moduleAsciiName = typeName[0].toLatin1();
             const QByteArray classAsciiName = typeName[1].toLatin1();
             const QString & className  = typeName[2];

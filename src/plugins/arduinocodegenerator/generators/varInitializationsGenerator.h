@@ -37,7 +37,7 @@ namespace ArduinoCodeGenerator{
                 Arduino::ValueType varType = parseVarType(var);
                 instr.varType = varType;
                 result << instr;
-                if (var->initialValue.type() != QMetaType::UnknownType) {
+                if (var->initialValue.type() != QVariant::Type::Invalid) {
                     instr.type = Arduino::ASG;
                     result << instr;
                     instr.type = Arduino::CONST;

@@ -182,7 +182,7 @@ int tasks=course->loadCourse(fileName);
 course->setTeacher(isTeacher);
 if(tasks==-1)
 {
-QMessageBox::information( 0, "", trUtf8("Ошибка открытия файла: ") + fileName, 0,0,0);
+QMessageBox::information( 0, "", QString("Ошибка открытия файла: ") + fileName, 0,0,0);
 return;
 };
 ui->treeView->setModel(course);
@@ -200,20 +200,20 @@ void MainWindowTask::loadMarks(const QString fileName)
     
     if  (!f.open(QIODevice::ReadOnly))
     {
-        QMessageBox::information( 0, "", trUtf8("Ошибка открытия файла: ") + fileName, 0,0,0);
+        QMessageBox::information( 0, "", QString("Ошибка открытия файла: ") + fileName, 0,0,0);
         return;
 
     };
     QFileInfo fi(f);
     if(!fi.isWritable())
     {
-       QMessageBox::information( 0, "", trUtf8("Файл загружен только для чтения, изменение не будут сохранены: ") + fileName, 0,0,0);
+       QMessageBox::information( 0, "", QString("Файл загружен только для чтения, изменение не будут сохранены: ") + fileName, 0,0,0);
         isReadOnly=true;
     }else
      isReadOnly=false;   
     if(f.atEnd())
     {
-    QMessageBox::information( 0, "", trUtf8("Ошибка открытия файла ,файл пуст: ") + fileName, 0,0,0);
+    QMessageBox::information( 0, "", QString("Ошибка открытия файла ,файл пуст: ") + fileName, 0,0,0);
     return;
     };
     cursWorkFile.setFileName(f.fileName());
@@ -225,7 +225,7 @@ void MainWindowTask::loadMarks(const QString fileName)
     QDomElement root=workXml.documentElement ();
     if(root.tagName()!="COURSE")
     {
-        QMessageBox::information( 0, "", trUtf8("Ошибка загрузки файла: ") + fileName, 0,0,0);
+        QMessageBox::information( 0, "", QString("Ошибка загрузки файла: ") + fileName, 0,0,0);
         return;
     };
     QDomElement fileEl=root.firstChildElement("FILE");
@@ -247,7 +247,7 @@ void MainWindowTask::loadMarks(const QString fileName)
     QString fileN=fileEl.attribute("fileName");
 //qDebug()<<"KURS ZAGRUZILI";
     if(cursFile!=krsFile){
-    QMessageBox::information( 0, "", trUtf8("Не найден файл курса:") + fileEl.attribute("fileName"), 0,0,0);
+    QMessageBox::information( 0, "", QString("Не найден файл курса:") + fileEl.attribute("fileName"), 0,0,0);
     fileN=getFileName(krsFile);
     loadCourseData(fileN);
     if(cursFile!=fileN)return;
@@ -322,7 +322,7 @@ for(int i=0;i<prgElListT.count();i++)
         loadHtml(cText);
     }else setTaskViewHtml(cText);
     // if(isTeacher)ui->actionEdit->setEnabled(true);
-    setWindowTitle(course->name()+trUtf8(" - Практикум"));
+    setWindowTitle(course->name()+QString(" - Практикум"));
     updateLastFiles(fileName);
     interface->lockContrls();
     interface->setPreProgram(QVariant(""));
@@ -343,7 +343,7 @@ void MainWindowTask::loadCourse()
     if(0 == dir.length() || !chD.exists()) {
         dir=resDir.canonicalPath();
     }
-//    QFileDialog dialog(this,trUtf8("Открыть файл"),dir, "(*.kurs.xml *.work.xml)");
+//    QFileDialog dialog(this,QString("Открыть файл"),dir, "(*.kurs.xml *.work.xml)");
 //     dialog.setAcceptMode(QFileDialog::AcceptOpen);
 //     if(!dialog.exec())return;
 
@@ -374,15 +374,15 @@ void MainWindowTask::loadCourse()
     bool createDefaultWorkFile=true;
     QMessageBox msgBoxCreateWorkbook(
                 QMessageBox::Question,
-                trUtf8("Практикум"),
-                trUtf8("Вы хотите создать тетрадь?"),
+                QString("Практикум"),
+                QString("Вы хотите создать тетрадь?"),
                 QMessageBox::Yes | QMessageBox::No,
                 this
                 );
-    msgBoxCreateWorkbook.button(QMessageBox::Yes)->setText(trUtf8("Создать"));
-    msgBoxCreateWorkbook.button(QMessageBox::No)->setText(trUtf8("Не создавать"));
+    msgBoxCreateWorkbook.button(QMessageBox::Yes)->setText(QString("Создать"));
+    msgBoxCreateWorkbook.button(QMessageBox::No)->setText(QString("Не создавать"));
     int ans = msgBoxCreateWorkbook.exec();
-//            ans = QMessageBox::question(this, trUtf8("Практикум"), trUtf8("Вы хотите создать тетрадь?"),
+//            ans = QMessageBox::question(this, QString("Практикум"), QString("Вы хотите создать тетрадь?"),
 //                    QMessageBox::Yes | QMessageBox::No , QMessageBox::Yes);
             if (ans == QMessageBox::Yes)
             {
@@ -402,7 +402,7 @@ void MainWindowTask::loadCourse()
       loadHtml(cText);
   }else setTaskViewHtml(cText);
  // if(isTeacher)ui->actionEdit->setEnabled(true);
-  setWindowTitle(course->name()+trUtf8(" - Практикум"));
+  setWindowTitle(course->name()+QString(" - Практикум"));
     updateLastFiles(fileName);
     interface->lockContrls();
     ui->checkTask->setEnabled(false);
@@ -488,7 +488,7 @@ void MainWindowTask::showText(const QModelIndex & index )
 //    if(onTask)
 //    {
 //        QMessageBox::StandardButton ans;
-//        ans = QMessageBox::question(this, trUtf8("Задание"), trUtf8("Вы хотите сменить задание?"),
+//        ans = QMessageBox::question(this, QString("Задание"), QString("Вы хотите сменить задание?"),
 //                                                                                                                        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
 //        if ((ans == QMessageBox::Cancel)||(ans == QMessageBox::No))
 //        {
@@ -542,7 +542,7 @@ void MainWindowTask::loadHtml(QString fileName)
 //    QFile inp(curDir+'/'+fileName);
 //    if  (!inp.open(QIODevice::ReadOnly))
 //    {
-//    QMessageBox::information( 0, "", trUtf8("Ошибка чтения: ") + fileName, 0,0,0);
+//    QMessageBox::information( 0, "", QString("Ошибка чтения: ") + fileName, 0,0,0);
 //    return;
 //    };
 //    QString htmlData=QString::fromUtf8(inp.readAll());
@@ -557,12 +557,12 @@ void MainWindowTask::startTask()
     qDebug()<<"StartTask";
      if(curTaskIdx.internalId()<=0)
      {
-         QMessageBox::about(NULL, trUtf8("Не выбрано задание"),trUtf8("Необходимо выбрать задание"));
+         QMessageBox::about(NULL, QString("Не выбрано задание"),QString("Необходимо выбрать задание"));
          return;
      }
      if(course->csName(curTaskIdx.internalId()).toLower()!=CS)
      {
-         QMessageBox::about(NULL, trUtf8("Неправильное окружение"),trUtf8("Необходим ")+course->csName(curTaskIdx.internalId()));
+         QMessageBox::about(NULL, QString("Неправильное окружение"),QString("Необходим ")+course->csName(curTaskIdx.internalId()));
          return;
      }
 
@@ -587,14 +587,14 @@ if(ioDir.isFile())
         for(int j=0;j<t_fields.count();j++)
             {
                 qDebug()<<"Cur Dir"<<curDir;
-            task.fields.insertMulti(task.isps[i],curDir+'/'+t_fields[j]);
+            task.fields.insert(task.isps[i],curDir+'/'+t_fields[j]);
             qDebug()<<curDir+'/'+t_fields[j];
 
             };
         qDebug()<<"Fields!!!!"<<task.fields;
         }
        qDebug()<<"MODULES:"<<course->Modules(curTaskIdx.internalId());
-  if(!interface->startNewTask(course->Modules(curTaskIdx.internalId()),&task))QMessageBox::about(NULL, trUtf8("Невозможно выполнить задание"),trUtf8("Нет необходимых исполнителей"));
+  if(!interface->startNewTask(course->Modules(curTaskIdx.internalId()),&task))QMessageBox::about(NULL, QString("Невозможно выполнить задание"),QString("Нет необходимых исполнителей"));
   if(course->getUserText(curTaskIdx.internalId())!="")
   {
       interface->setPreProgram(QVariant(course->getUserText(curTaskIdx.internalId())));
@@ -633,7 +633,7 @@ void MainWindowTask::checkTask()
 markProgChange();
 if(!cursWorkFile.exists()){
 
-    QMessageBox::information( 0, "", trUtf8("Нужно завести файл рабочей тетради "), 0,0,0);
+    QMessageBox::information( 0, "", QString("Нужно завести файл рабочей тетради "), 0,0,0);
     saveCourse();
       };
 course->setMark(curTaskIdx.internalId(),0);
@@ -693,7 +693,7 @@ QString MainWindowTask::loadScript(QString file_name)
     QFile file(curDir+"/"+file_name);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QMessageBox::about(NULL, trUtf8("Ошибка"),trUtf8("Невозможно открыть ")+curDir+"/"+file_name);
+        QMessageBox::about(NULL, QString("Ошибка"),QString("Невозможно открыть ")+curDir+"/"+file_name);
         return "";
     };
     return file.readAll();
@@ -704,7 +704,7 @@ void MainWindowTask::saveCourse()
 {
     editRoot->hide();
    markProgChange();
-//    QFileDialog dialog(this,trUtf8("Сохранить изменения"),curDir+"/", "Work files(*.work.xml);;All files (*)");
+//    QFileDialog dialog(this,QString("Сохранить изменения"),curDir+"/", "Work files(*.work.xml);;All files (*)");
 //    dialog.setDefaultSuffix("work.xml");
 //    dialog.setAcceptMode(QFileDialog::AcceptSave);
 //    if(!dialog.exec())return;
@@ -719,9 +719,9 @@ void MainWindowTask::saveCourse()
     
   QString fileName = QFileDialog::getSaveFileName(
                this,
-               trUtf8("Сохранить изменения"),
+               QString("Сохранить изменения"),
                open,
-               trUtf8("Тетради(*.work.xml);;Все файлы (*)")
+               QString("Тетради(*.work.xml);;Все файлы (*)")
                );
     QString type=fileName.right(9);
     if(type!=".work.xml")fileName+=".work.xml";
@@ -794,7 +794,7 @@ void MainWindowTask::saveCourseFile()
 
           if  (!cursWorkFile.open(QIODevice::WriteOnly))
           {
-          QMessageBox::information( 0, "", trUtf8("Ошибка записи: ") + cursWorkFile.fileName(), 0,0,0);
+          QMessageBox::information( 0, "", QString("Ошибка записи: ") + cursWorkFile.fileName(), 0,0,0);
           return;
           };
     cursWorkFile.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -818,7 +818,7 @@ QString MainWindowTask::getFileName(QString fileName)
 {
     QFileInfo finf(fileName);
     qDebug()<<"GET FILE!";
-//    QFileDialog dialog(this,trUtf8("Открыть файл"),curDir, finf.fileName()+" *.kurs.xml");
+//    QFileDialog dialog(this,QString("Открыть файл"),curDir, finf.fileName()+" *.kurs.xml");
 //    dialog.setAcceptMode(QFileDialog::AcceptOpen);
 //    if(!dialog.exec())return "";
 //    QFileInfo fi(dialog.selectedFiles().first());
@@ -892,16 +892,16 @@ bool MainWindowTask::safeToQuit()
     {
         QMessageBox msgBoxCreateWorkbook(
                                          QMessageBox::Question,
-                                         trUtf8("Практикум"),
-                                         trUtf8("Вы хотите сохранить работу?"),
+                                         QString("Практикум"),
+                                         QString("Вы хотите сохранить работу?"),
                                          QMessageBox::Yes | QMessageBox::No|QMessageBox::Cancel,
                                          this
                                          );
-        msgBoxCreateWorkbook.button(QMessageBox::Yes)->setText(trUtf8("Да"));
-        msgBoxCreateWorkbook.button(QMessageBox::No)->setText(trUtf8("Нет"));
-        msgBoxCreateWorkbook.button(QMessageBox::Cancel)->setText(trUtf8("Отмена"));
+        msgBoxCreateWorkbook.button(QMessageBox::Yes)->setText(QString("Да"));
+        msgBoxCreateWorkbook.button(QMessageBox::No)->setText(QString("Нет"));
+        msgBoxCreateWorkbook.button(QMessageBox::Cancel)->setText(QString("Отмена"));
         int ans = msgBoxCreateWorkbook.exec();
-        //            ans = QMessageBox::question(this, trUtf8("Практикум"), trUtf8("Вы хотите создать тетрадь?"),
+        //            ans = QMessageBox::question(this, QString("Практикум"), QString("Вы хотите создать тетрадь?"),
         //                    QMessageBox::Yes | QMessageBox::No , QMessageBox::Yes);
         if (ans == QMessageBox::Yes)
         {
@@ -931,7 +931,7 @@ QString MainWindowTask::loadTestAlg(QString file_name)
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
 
-        QMessageBox::about(NULL, trUtf8("Ошибка"),trUtf8("Невозможно открыть ")+curDir+"/"+file_name);
+        QMessageBox::about(NULL, QString("Ошибка"),QString("Невозможно открыть ")+curDir+"/"+file_name);
         return "";
     };
     QTextStream ts(&file);
@@ -1000,7 +1000,7 @@ void MainWindowTask::saveKurs()
     QFile cursKursFile("../../test.kurs.xml");
     if  (!cursKursFile.open(QIODevice::WriteOnly))
     {
-    QMessageBox::information( 0, "", trUtf8("Ошибка записи: ") + cursKursFile.fileName(), 0,0,0);
+    QMessageBox::information( 0, "", QString("Ошибка записи: ") + cursKursFile.fileName(), 0,0,0);
     return;
     };
 
@@ -1013,7 +1013,7 @@ void MainWindowTask::saveBaseKurs()
     QFile cursKursFile(baseKursFile.absoluteFilePath());
     if  (!cursKursFile.open(QIODevice::WriteOnly))
     {
-    QMessageBox::information( 0, "", trUtf8("Ошибка записи: ") + cursKursFile.fileName(), 0,0,0);
+    QMessageBox::information( 0, "", QString("Ошибка записи: ") + cursKursFile.fileName(), 0,0,0);
     return;
     };
 
@@ -1026,7 +1026,7 @@ void MainWindowTask::saveKursAs()
     QString dir=curDir;
     QDir chD(curDir);
     if(!chD.exists())dir=QDir::homePath ();
-     QFileDialog dialog(this,trUtf8("Сохранить файл курса"),dir, "(*.kurs.xml )");
+     QFileDialog dialog(this,QString("Сохранить файл курса"),dir, "(*.kurs.xml )");
      dialog.setAcceptMode(QFileDialog::AcceptSave);
 
      if(!dialog.exec())return;
@@ -1117,7 +1117,7 @@ void MainWindowTask::newKurs()
 //
 //    if  (!newKurs.open(QIODevice::WriteOnly))
 //    {
-//    QMessageBox::information( 0, "", trUtf8("Ошибка записи: ") + newKurs.fileName(), 0,0,0);
+//    QMessageBox::information( 0, "", QString("Ошибка записи: ") + newKurs.fileName(), 0,0,0);
 //    return;
 //    };
 //    QString toWr="<?xml version='1.0' encoding='UTF-8'?>\n";

@@ -1,5 +1,10 @@
 FROM ubuntu
 
+ENV QT_DEBUG_PLUGINS=1
+ENV QT_QPA_PLATFORM=xcb
+ENV QT_QPA_PLATFORM_PLUGIN_PATH=/opt/Qt/${QT_VERSION}/gcc_64/plugins
+ENV QT_PLUGIN_PATH=/opt/Qt/${QT_VERSION}/gcc_64/plugins
+ENV DISPLAY=:1
 ARG path_to_tests_folder="./Tests"
 
 LABEL EMAIL=gorka19800@gmail.com
@@ -7,8 +12,10 @@ LABEL EMAIL=gorka19800@gmail.com
 #install all the necessary libs and apps
 RUN apt-get update
 RUN apt-get dist-upgrade -y
-RUN echo "8"| apt-get install -y qttools5-dev-tools
+RUN echo "8"| apt-get install -y qttools5-dev-tools 
+RUN apt-get install -y xcb
 RUN apt-get install -y git python3 cmake qtbase5-dev g++ libqt5svg5-dev libqt5x11extras5-dev qtscript5-dev libboost-system-dev zlib1g zlib1g-dev
+
 #setup git
 RUN git config --global user.email "gorka19800@gmail.com"
 RUN git config --global user.name "Test suit"

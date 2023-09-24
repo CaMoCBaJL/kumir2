@@ -35,4 +35,4 @@ RUN make -j 18
 #start tests
 WORKDIR ../kumir_tests/
 RUN touch test_results.log
-RUN python3 test_script.py -d -o ./test_results.log -tr ../build/bin/kumir2-arduino -t $path_to_tests_folder
+EXPOSE 3000

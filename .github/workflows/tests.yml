@@ -1,0 +1,28 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "ArduinoFixes", "translator_tests" ]
+  pull_request:
+    branches: [ "ArduinoFixes", "translator_tests" ]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout tests branch
+      uses: actions/checkout@v3
+      with: 
+        ref: translator_tests
+    
+    - name: create tests image
+      run: docker build -t kumir-robots-tests --build-arg path_to_tests_folder=./Tests .
+
+    - name: create tests container
+      run: docker run -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --name kumir_tests --rm localhost/kumir-robots-tests
+
+    - name: run tests
+      run: python3 test_script.py -d -o ./test_results.log -tr ../build/bin/kumir2-arduino -t ./Tests
+

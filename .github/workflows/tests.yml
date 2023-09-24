@@ -17,5 +17,12 @@ jobs:
       with: 
         ref: translator_tests
     
-    - name: test
-      run: docker build -t ubuntu-test:latest - < arduino_test_dockerfile --build-arg path_to_tests_folder=./Tests
+    - name: create tests image
+      run: docker build -t kumir-robots-tests --build-arg path_to_tests_folder=./Tests .
+
+    - name: create tests container
+      run: docker run -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --name kumir_tests --rm localhost/kumir-robots-tests
+
+    - name: run tests
+      run: python3 test_script.py -d -o ./test_results.log -tr ../build/bin/kumir2-arduino -t ./Tests
+

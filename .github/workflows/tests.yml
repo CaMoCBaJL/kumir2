@@ -2,9 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "ArduinoFixes" ]
+    branches: [ "ArduinoFixes", "translator_tests" ]
   pull_request:
-    branches: [ "ArduinoFixes" ]
+    branches: [ "ArduinoFixes", "translator_tests" ]
 
 jobs:
   test:

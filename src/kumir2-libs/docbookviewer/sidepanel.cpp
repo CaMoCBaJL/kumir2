@@ -251,13 +251,16 @@ void SidePanel::createNavigationItems(QTreeWidgetItem *item,
 
 void SidePanel::createListOfExamples(ModelPtr root)
 {
+    //TODO: remove me after qt6 migration or DokBookFactory re-implementation)
+#ifdef QT_DEBUG
     ModelPtr listOfExamples = ModelPtr();
-    //TODO: uncomment me after qt6 migration or DokBookFactory re-implementation)
-//    ModelPtr listOfExamples = DocBookFactory::createListOfEntries(
-//                root,
-//                ListOfExamples,
-//                Example
-//                );
+#else
+    ModelPtr listOfExamples = DocBookFactory::createListOfEntries(
+                root,
+                ListOfExamples,
+                Example
+                );
+#endif
     if (listOfExamples) {
         QTreeWidgetItem * topLevelItem =
                 new QTreeWidgetItem(ui->examplesNavigator);
@@ -281,13 +284,16 @@ void SidePanel::createListOfExamples(ModelPtr root)
 
 void SidePanel::createListOfTables(ModelPtr root)
 {
+    //TODO: remove me after qt6 migration or DokBookFactory re-implementation)
+#ifdef QT_DEBUG
     ModelPtr listOfTables = ModelPtr();
-    //TODO: uncomment me after qt6 migration or DokBookFactory re-implementation)
-//    ModelPtr listOfTables = DocBookFactory::createListOfEntries(
-//                root,
-//                ListOfTables,
-//                Table
-//                );
+#else
+    ModelPtr listOfTables = DocBookFactory::createListOfEntries(
+                root,
+                ListOfTables,
+                Table
+                );
+#endif
     if (listOfTables) {
         QTreeWidgetItem * topLevelItem =
                 new QTreeWidgetItem(ui->tablesNavigator);
@@ -321,9 +327,10 @@ void SidePanel::createListOfAlgorithms(ModelPtr root)
         ModelPtr topLevelModel = modelsOfItems_[topLevelItem];
         modules[key] = topLevelModel;
     }
-    //TODO: uncomment me after qt6 migration or DokBookFactory re-implementation)
-//    DocBookFactory::updateListOfAlgorithms(root, modules);
-
+    //TODO: remove me after qt6 migration or DokBookFactory re-implementation)
+#ifdef QT_NO_DEBUG
+    DocBookFactory::updateListOfAlgorithms(root, modules);
+#endif
     foreach (const QString & key, modules.keys()) {
         ModelPtr module = modules[key];
         QTreeWidgetItem * moduleItem = nullptr;
@@ -355,8 +362,10 @@ void SidePanel::createListOfAlgorithms(ModelPtr root)
 
 void SidePanel::createIndex(ModelPtr root)
 {
-    //TODO: uncomment me after qt6 migration or DokBookFactory re-implementation)
-//    DocBookFactory::updateListOfKeywords(root, keywordsIndex_);
+    //TODO: remove me after qt6 migration or DokBookFactory re-implementation)
+#ifdef QT_NO_DEBUG
+    DocBookFactory::updateListOfKeywords(root, keywordsIndex_);
+#endif
 }
 
 ModelPtr SidePanel::findApiFunction(const QString &name) const

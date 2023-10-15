@@ -14,7 +14,7 @@
 #if QT_VERSION < 0x050000
 #endif
 #else
-#  // include <QInputMethod>
+#    include <QInputMethod>
 #endif
 
 #ifdef Q_OS_MACX
@@ -113,8 +113,13 @@ QString Utils::textByKey(Qt::Key key,
     }
     else if (altKeyPressed && key==Qt::Key_Equal) {
         keyText = ":=";
-    }
-    else if (altKeyPressed && isRussianLayout()) {
+    }  
+    else if (altKeyPressed
+#ifdef QT_NO_DEBUG
+             && isRussianLayout()
+#endif
+             ) {
+
         if (keyText.toLower()==QString::fromUtf8("й"))
             keyText = "q";
         else if (keyText.toLower()==QString::fromUtf8("ц"))
@@ -189,7 +194,11 @@ QString Utils::textByKey(Qt::Key key,
         if ( (shiftPressed && !isCapsLock()) || (!shiftPressed && isCapsLock()) )
             keyText = keyText.toUpper();
     }
-    else if (altKeyPressed && !isRussianLayout()) {
+    else if (altKeyPressed
+#ifdef QT_NO_DEBUG
+             && !isRussianLayout()
+#endif
+             ) {
         if (key==Qt::Key_Q)
             keyText = QString::fromUtf8("й");
         else if (key==Qt::Key_W)

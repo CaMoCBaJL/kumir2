@@ -3085,9 +3085,13 @@ QString EditorPlane::tryCorrectKeyboardLayout(const QString &source) const
 
 void EditorPlane::tryCorrectKeyboardLayoutForLastLexem()
 {
+#ifdef QT_NO_DEBUG
     if (Utils::isRussianLayout()) {
         return; // nothing to correct: already russian keyboard layout
     }
+#else
+    return;
+#endif
     if ( ! editor_->analizerPlugin_ || ! helper_) {
         return; // has no information how to do it
     }

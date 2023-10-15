@@ -237,10 +237,22 @@ void EditorInstance::timerEvent(QTimerEvent *e)
 {
     if (e->timerId()==timerId_) {
         e->accept();
-        bool isRussianLayout = Utils::isRussianLayout();
-        bool isCapsLock = Utils::isCapsLock();
-        bool isShiftPressed = Utils::shiftKeyPressed;
-        bool isAltPressed = Utils::altKeyPressed;
+        //TODO: search info about xcb for qt5
+        bool isRussianLayout;
+        bool isCapsLock;
+        bool isShiftPressed;
+        bool isAltPressed;
+#ifdef QT_NO_DEBUG
+        isRussianLayout = Utils::isRussianLayout();
+        isCapsLock = Utils::isCapsLock();
+        isShiftPressed = Utils::shiftKeyPressed;
+        isAltPressed = Utils::altKeyPressed;
+#else
+        isRussianLayout = true;
+        isCapsLock = true;
+        isShiftPressed = true;
+        isAltPressed = true;
+#endif
         emit keyboardLayoutChanged(
                     isRussianLayout ? QLocale::Russian : QLocale::English,
                     isCapsLock,

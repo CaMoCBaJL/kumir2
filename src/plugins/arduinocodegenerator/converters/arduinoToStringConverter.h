@@ -5,6 +5,7 @@
 #ifndef KUMIR2_ARDUINOTOSTRINGCONVERTER_H
 #define KUMIR2_ARDUINOTOSTRINGCONVERTER_H
 #include "../entities/arduinoHelpers.h"
+#include <QVariant>
 namespace Arduino{
     static std::string parseValueType(Arduino::ValueType type){
         switch (type){
@@ -32,7 +33,7 @@ namespace Arduino{
 
             if (instruction.arg < constants.size()) {
                 result = constants[instruction.arg].toString().toStdString();
-                if (constants[instruction.arg].type() == QMetaType::QString) {
+                if (constants[instruction.arg].type() == QVariant::Type::String) {
                     result = "\"" + result + "\"";
                 } else {
                     result = result;

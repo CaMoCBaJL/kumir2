@@ -91,7 +91,7 @@ void DocBookViewImpl::updateToggleSideBarButton()
 
     const QString html = QString("<a href=\"%1\">%2</a>").arg(action).arg(text);
 
-    const int width = toggleSideBar_->fontMetrics().width(text) + 16;
+    const int width = toggleSideBar_->fontMetrics().horizontalAdvance(text) + 16;
 
     toggleSideBar_->setText(html);
     toggleSideBar_->setFixedWidth(width);
@@ -254,37 +254,37 @@ QAction * DocBookViewImpl::viewerAction(const DocBookView::DocBookViewAction typ
     return 0;
 }
 
-Document DocBookViewImpl::addDocument(const QUrl &url, QString *error)
-{
-    DocBookFactory * factory = DocBookFactory::self();
-    Document doc = factory->parseDocument(roleValues_, url, error);
-    sidePanel_->addDocument(doc, true);
-    if (content_->isEmpty()) {
-        content_->renderData(doc.root_);
-    }
-    return doc;
-}
+//Document DocBookViewImpl::addDocument(const QUrl &url, QString *error)
+//{
+//    DocBookFactory * factory = DocBookFactory::self();
+//    Document doc = factory->parseDocument(roleValues_, url, error);
+//    sidePanel_->addDocument(doc, true);
+//    if (content_->isEmpty()) {
+//        content_->renderData(doc.root_);
+//    }
+//    return doc;
+//}
 
-Document DocBookViewImpl::addDocuments(const QString &groupName, const QList<QUrl> &urls, QString *error)
-{
-    DocBookFactory * factory = DocBookFactory::self();
+//Document DocBookViewImpl::addDocuments(const QString &groupName, const QList<QUrl> &urls, QString *error)
+//{
+//    DocBookFactory * factory = DocBookFactory::self();
 
-    QList<Document> docs;
-    Q_FOREACH(const QUrl & url, urls) {
-        Document doc = factory->parseDocument(roleValues_, url, error);
-        if (doc.root_.isNull()) {
-            if (error) {
-                error->prepend(QString("In %1: ").arg(url.toString()));
-            }
-        }
-        else {
-            docs.append(doc);
-        }
-    }
-    Document set = factory->createNamedSet(groupName, docs);
-    sidePanel_->addDocument(set, false);
-    return set;
-}
+//    QList<Document> docs;
+//    Q_FOREACH(const QUrl & url, urls) {
+//        Document doc = factory->parseDocument(roleValues_, url, error);
+//        if (doc.root_.isNull()) {
+//            if (error) {
+//                error->prepend(QString("In %1: ").arg(url.toString()));
+//            }
+//        }
+//        else {
+//            docs.append(doc);
+//        }
+//    }
+//    Document set = factory->createNamedSet(groupName, docs);
+//    sidePanel_->addDocument(set, false);
+//    return set;
+//}
 
 bool DocBookViewImpl::hasAlgorithm(const QString &name) const
 {

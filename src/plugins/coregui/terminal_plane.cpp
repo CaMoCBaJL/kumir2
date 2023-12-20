@@ -466,17 +466,17 @@ QSize Plane::minimumSizeHint() const
 
 void Plane::wheelEvent(QWheelEvent *e)
 {
-    if (!terminal_->sb_vertical->isEnabled() && e->orientation()==Qt::Vertical) {
+    if (!terminal_->sb_vertical->isEnabled() && e->angleDelta().y() == 0) {
         e->ignore();
         return;
     }
-    if (!terminal_->sb_horizontal->isEnabled() && e->orientation()==Qt::Horizontal) {
+    if (!terminal_->sb_horizontal->isEnabled() && e->angleDelta().x() == 0) {
         e->ignore();
         return;
     }
-    int degrees = e->delta() / 8;
+    int degrees = e->angleDelta().y() / 8;
     int steps = degrees / 15;
-    QScrollBar * sb = e->orientation()==Qt::Vertical? terminal_->sb_vertical : terminal_->sb_horizontal;
+    QScrollBar * sb = e->angleDelta().y() == 0 ? terminal_->sb_vertical : terminal_->sb_horizontal;
     sb->setValue(sb->value()-steps*sb->singleStep()*3);
 }
 

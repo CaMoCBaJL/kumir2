@@ -128,7 +128,8 @@ namespace ArduinoCodeGenerator {
             loc.id = i;
             loc.name = var->name.toStdWString();
             loc.dimension = var->dimension;
-            loc.vtype = parseValueType(var->baseType).toStdList();
+            auto parsedType = parseValueType(var->baseType);
+            loc.vtype = std::list<Arduino::ValueType>(parsedType.begin(), parsedType.end());
             loc.recordModuleAsciiName = var->baseType.actor ?
                                         std::string(var->baseType.actor->asciiModuleName().constData()) : std::string();
             loc.recordModuleLocalizedName = var->baseType.actor ?
@@ -152,7 +153,8 @@ namespace ArduinoCodeGenerator {
         loc.id = 0;
         loc.name = tr("Function return value").toStdWString();
         loc.dimension = 0;
-        loc.vtype = parseValueType(retval->baseType).toStdList();
+        auto parsedType = parseValueType(retval->baseType);
+        loc.vtype = std::list<Arduino::ValueType>(parsedType.begin(), parsedType.end());
         loc.refvalue = Arduino::VK_Plain;
         byteCode_->d.push_back(loc);
         varsToOut << calculateConstantValue(Arduino::VT_int, 0, 0, QString(), QString());
@@ -186,7 +188,8 @@ namespace ArduinoCodeGenerator {
         func.module = moduleId;
         func.moduleLocalizedName = mod->header.name.toStdWString();
         func.name = QString::fromLatin1("@below_main").toStdWString();
-        func.instructions = instrs.toVector().toStdVector();
+        auto instructionsVector = instrs.toVector();
+        func.instructions = std::vector<Arduino::Instruction>(instructionsVector.begin(), instructionsVector.end());
         byteCode_->d.push_back(func);
 
     }
@@ -298,7 +301,7 @@ namespace ArduinoCodeGenerator {
         loadRetval.varName = retval->name;
         ret << loadRetval;
 
-        loadRetval.varName = QString::null;
+        loadRetval.varName = QString();
         loadRetval.varType = parseVarType(retval);
         argHandle << loadRetval;
     }
@@ -313,7 +316,7 @@ namespace ArduinoCodeGenerator {
             funcResult.varName = argHandle.at(lastArgIndex).varName;
             ret << funcResult;
             Arduino::Instruction retArg = argHandle.at(lastArgIndex);
-            retArg.varName = QString::null;
+            retArg.varName = QString();
 
             //insert declaration of return var in the begining of func body
             //insert order reversed(str_delim -> end_var -> var), because each time
@@ -353,7 +356,7 @@ namespace ArduinoCodeGenerator {
 
         for (int i = argHandle.size() - 1; i > 0; --i){
             if (argHandle.at(i).type == Arduino::VAR){
-                if (argHandle.at(i).varName == QString::null) {
+                if (argHandle.at(i).varName == QString()) {
                     returnValueIndex = i;
                 } else {
                     returnValueIndex = -1;
@@ -407,7 +410,8 @@ namespace ArduinoCodeGenerator {
         generateFunctionReturnValue(body, ret, argHandle, alg, pre);
 
         QList <Arduino::Instruction> instrs = argHandle + pre + body + post + ret;
-        func.instructions = instrs.toVector().toStdVector();
+        auto instructionsVector = instrs.toVector();
+        func.instructions = std::vector<Arduino::Instruction>(instructionsVector.begin(), instructionsVector.end());
         byteCode_->d.push_back(func);
     }
 }

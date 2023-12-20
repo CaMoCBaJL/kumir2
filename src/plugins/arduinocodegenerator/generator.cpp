@@ -226,7 +226,7 @@ namespace ArduinoCodeGenerator {
                 const QList <AST::ModuleWPtr> &used = module->header.usedBy;
                 for (int j = 0; j < used.size(); j++) {
                     AST::ModuleWPtr reference = used[j];
-                    const AST::ModuleHeader &header = reference.data()->header;
+                    const AST::ModuleHeader &header = reference.toStrongRef()->header;
                     if (header.type == AST::ModTypeUser ||
                         header.type == AST::ModTypeUserMain ||
                         header.type == AST::ModTypeTeacher ||
@@ -285,7 +285,8 @@ namespace ArduinoCodeGenerator {
             glob.id = quint16(i);
             glob.name = var->name.toStdWString();
             glob.dimension = quint8(var->dimension);
-            glob.vtype = parseValueType(var->baseType).toStdList();
+            auto parsedValueType = parseValueType(var->baseType);
+            glob.vtype = std::list<Arduino::ValueType>(parsedValueType.begin(), parsedValueType.end());
             glob.refvalue = parseValueKind(var->accessType);
             glob.recordModuleAsciiName = var->baseType.actor ?
                                          std::string(var->baseType.actor->asciiModuleName().constData())
@@ -302,7 +303,8 @@ namespace ArduinoCodeGenerator {
         initElem.type = Arduino::EL_INIT;
         initElem.module = quint8(id);
         initElem.moduleLocalizedName = mod->header.name.toStdWString();
-        initElem.instructions = calculateInstructions(id, -1, 0, mod->impl.initializerBody).toVector().toStdVector();
+        auto instructions = calculateInstructions(id, -1, 0, mod->impl.initializerBody).toVector();
+        initElem.instructions = std::vector<Arduino::Instruction>(instructions.begin(), instructions.end());
         if (!initElem.instructions.empty())
             initElem.instructions << returnFromInit;
         if (!initElem.instructions.empty())

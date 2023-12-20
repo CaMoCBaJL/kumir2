@@ -56,7 +56,7 @@ public:
     inline void activateCourseFromList(QString file) { loadCource(file); }
      inline QStringList getListOfCourses() const {
          QString defaultCur=qApp->property("sharePath").toString()+"/courses/practicum/practicum.kurs.xml;";
-         return mySettings()->value("Courses/LastFiles",defaultCur).toString().split(";",QString::SkipEmptyParts); 
+         return mySettings()->value("Courses/LastFiles",defaultCur).toString().split(";",Qt::SkipEmptyParts);
      }
     void rebuildRescentMenu();
     bool isSafeToQuit();

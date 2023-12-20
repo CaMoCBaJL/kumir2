@@ -67,12 +67,23 @@ QAction * DocBookView::viewerAction(const DocBookViewAction type) const
 
 Document DocBookView::addDocument(const QUrl &url, QString *error)
 {
+    //TODO: remove me after qt6 migration or DokBookFactory re-implementation)
+#ifdef QT_NO_DEBUG
     return pImpl_->addDocument(url, error);
+#else
+    return Document(url, ModelPtr());
+#endif
+
 }
 
 Document DocBookView::addDocuments(const QString &groupName, const QList<QUrl> &urls, QString *error)
 {
+    //TODO: remove me after qt6 migration or DokBookFactory re-implementation)
+#ifdef QT_NO_DEBUG
     return pImpl_->addDocuments(groupName, urls, error);
+#else
+    return Document(urls.at(0), ModelPtr());
+#endif
 }
 
 void DocBookView::removeDocument(const Document & existingDocument)

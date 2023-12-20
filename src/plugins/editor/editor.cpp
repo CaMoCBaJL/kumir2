@@ -237,10 +237,22 @@ void EditorInstance::timerEvent(QTimerEvent *e)
 {
     if (e->timerId()==timerId_) {
         e->accept();
-        bool isRussianLayout = Utils::isRussianLayout();
-        bool isCapsLock = Utils::isCapsLock();
-        bool isShiftPressed = Utils::shiftKeyPressed;
-        bool isAltPressed = Utils::altKeyPressed;
+        //TODO: search info about xcb for qt5
+        bool isRussianLayout;
+        bool isCapsLock;
+        bool isShiftPressed;
+        bool isAltPressed;
+#ifdef QT_NO_DEBUG
+        isRussianLayout = Utils::isRussianLayout();
+        isCapsLock = Utils::isCapsLock();
+        isShiftPressed = Utils::shiftKeyPressed;
+        isAltPressed = Utils::altKeyPressed;
+#else
+        isRussianLayout = true;
+        isCapsLock = true;
+        isShiftPressed = true;
+        isAltPressed = true;
+#endif
         emit keyboardLayoutChanged(
                     isRussianLayout ? QLocale::Russian : QLocale::English,
                     isCapsLock,
@@ -395,7 +407,11 @@ void EditorInstance::updateInsertMenu()
         int groupNo = m->showInLastBlock ? 1 : 0;
         groups[groupNo].append(m);
     }
-    qSort(groups[1]);
+    std::sort(
+            groups[1].begin(),
+            groups[1].end(),
+            [](const QSharedPointer<Macro>& a, const QSharedPointer<Macro>& b)->bool{return a < b;}
+    );
     for (int z=0; z<2; ++z) {
         QList<QSharedPointer<Macro> > group = groups[z];
         if (1==z && groups[1].size() > 0) {

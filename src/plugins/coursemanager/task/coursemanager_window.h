@@ -71,7 +71,7 @@ public:
     QString name;
     QStringList isps;//исполнители используемые в задание
     QStringList Scripts;//скрипты используемые в задание
-    QMap<QString, QString> fields;//Обстановки для каждого исполнителя fields[исп,обст]
+    QMultiMap<QString, QString> fields;//Обстановки для каждого исполнителя fields[исп,обст]
     
 }; 
 

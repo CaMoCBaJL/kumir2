@@ -51,7 +51,7 @@ void TextDocument::insertText(const QString &text, const Shared::Analizer::Insta
     tl.changed = true;
     data_[line] = tl;
 
-    const QStringList lines = text.split("\n", QString::KeepEmptyParts);
+    const QStringList lines = text.split("\n", Qt::KeepEmptyParts);
     if (lines.size()==1) {
         // Insert text fragment into line
         data_[line].text.insert(pos, lines[0]);
@@ -844,7 +844,7 @@ QByteArray TextDocument::toRtf(uint fromLine, uint toLine) const
     result.append(QString(
                       "{\\fonttbl{\\f0\\fmodern\\fcharset204 %1;}}\r\n"
                       )
-                  .arg(fontName)
+                  .arg(fontName).toUtf8()
                   );
 
     // Begin color table
@@ -864,7 +864,7 @@ QByteArray TextDocument::toRtf(uint fromLine, uint toLine) const
     result.append("}\r\n");
 
     // Begin code style
-    result.append(QString("{\\f0\\fs%1\\lang1024\r\n").arg(fontSize * 2));
+    result.append(QString("{\\f0\\fs%1\\lang1024\r\n").arg(fontSize * 2).toUtf8());
 
     // Begin table row
 
@@ -932,7 +932,7 @@ QByteArray TextDocument::toRtf(uint fromLine, uint toLine) const
             static QTextCodec * codec = QTextCodec::codecForName("CP1251");
             result.append("\\intbl");
             if (text.length()>0) {
-                result.append(QString("{\\fs%1 ").arg(fontSize * 2));
+                result.append(QString("{\\fs%1 ").arg(fontSize * 2).toUtf8());
                 if (red) {
                     result.append("\\cf9 ");
                 }

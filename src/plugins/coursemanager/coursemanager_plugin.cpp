@@ -36,9 +36,9 @@ Plugin::Plugin()
     qDebug()<<"CourseManager:Console Mode";
 #endif
     DISPLAY=true;
-    courseMenu=new QMenu(trUtf8("Практикум"));
+    courseMenu=new QMenu(QString("Практикум"));
     MenuList.append(courseMenu);
-    rescentMenu=new QMenu(trUtf8("Недавние тетради/курсы..."));
+    rescentMenu=new QMenu(QString("Недавние тетради/курсы..."));
     // m_actionCourseLoadRescent->setMenu(rescentMenu);
     MW=new MainWindowTask();
 
@@ -46,8 +46,8 @@ Plugin::Plugin()
     mainWindow_=MW;
    
     field_no=0;
-    prevFld=new QAction(trUtf8("Предыдущая обстановка"),this);
-    nextFld=new QAction(trUtf8("Следующая обстановка"),this);
+    prevFld=new QAction(QString("Предыдущая обстановка"),this);
+    nextFld=new QAction(QString("Следующая обстановка"),this);
     connect(nextFld,SIGNAL(triggered()),this,SLOT(nextField()));
     connect(prevFld,SIGNAL(triggered()),this,SLOT(prevField()));
     nextFld->setEnabled(false);
@@ -66,7 +66,7 @@ int Plugin::loadWorkBook(QString wbfilename,QString cbname)
         
         if  (!f.open(QIODevice::ReadOnly))
         {
-            QMessageBox::information( 0, "", trUtf8("Ошибка открытия файла: ") + wbfilename, 0,0,0);
+            QMessageBox::information( 0, "", QString("Ошибка открытия файла: ") + wbfilename, 0,0,0);
             return 5;
             
         };
@@ -178,7 +178,7 @@ int Plugin::checkTaskFromConsole(const int taskID)
             for(int j=0;j<t_fields.count();j++)
             {
     
-                task.fields.insertMulti(task.isps[i],curDir+'/'+t_fields[j]);
+                task.fields.insert(task.isps[i],curDir+'/'+t_fields[j]);
                 
             };
 
@@ -254,7 +254,7 @@ int Plugin::checkTaskFromConsole(const int taskID)
         }
         if(resultStream.status()==QTextStream::Ok)//If we can - we writes marks to file
         {
-            resultStream<<task.name+trUtf8(" Оценка:")+QString::number(mark);
+            resultStream<<task.name+QString(" Оценка:")+QString::number(mark);
             if(error!="")resultStream<<" Err:"<<error;
             resultStream<<"\n";
             
@@ -377,7 +377,7 @@ bool  Plugin::startNewTask(QStringList isps,KumZadanie* task)
         for(int i=0;i<isps.count();i++)
         {
             
-            if(isps.at(i)==trUtf8("Файл ввода"))
+            if(isps.at(i)==QString("Файл ввода"))
             {
                 Shared::RunInterface * runner = ExtensionSystem::PluginManager::instance()->findPlugin<Shared::RunInterface>();
                 QFile* field_data=new QFile(task->field(isps.at(i), field_no));
@@ -448,7 +448,7 @@ void Plugin::selectNext(KumZadanie* task)
         
         for(int i=0;i<task->isps.count();i++)
         {
-            if(task->isps.at(i)==trUtf8("Файл ввода"))
+            if(task->isps.at(i)==QString("Файл ввода"))
             {
                 Shared::RunInterface * runner = ExtensionSystem::PluginManager::instance()->findPlugin<Shared::RunInterface>();
                 QFile* field_data=new QFile(task->field(task->isps.at(i), field_no));
@@ -615,8 +615,8 @@ QString Plugin::initialize(const QStringList &configurationArguments,
     qDebug()<<"DIPLSY"<<DISPLAY;
     if(!DISPLAY)
     {
-        if(!runtimeArguments.value('w').isValid())return trUtf8("Нет тетради");
-        if(!runtimeArguments.value('c').isValid())return trUtf8("Нет учебника");
+        if(!runtimeArguments.value('w').isValid())return QString("Нет тетради");
+        if(!runtimeArguments.value('c').isValid())return QString("Нет учебника");
         
         qDebug()<<"LOAD WORK BOOK ERR CODE:"<<loadCourseFromConsole(runtimeArguments.value('w').toString(),runtimeArguments.value('c').toString());
         if(runtimeArguments.value('o').isValid())

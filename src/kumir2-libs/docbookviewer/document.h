@@ -25,8 +25,6 @@ public:
     const QUrl & url() const;
     QString title() const;
     ModelPtr documentRoot() const;
-
-protected /* methods */:
     explicit Document(const QUrl & url, ModelPtr model);
 
 protected /* fields */:

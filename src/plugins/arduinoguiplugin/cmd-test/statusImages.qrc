@@ -1,3 +1,6 @@
 <RCC>
-    <qresource prefix="/states"/>
+    <qresource prefix="/states">
+        <file>check_item.ui</file>
+        <file>check_item.h</file>
+    </qresource>
 </RCC>

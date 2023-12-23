@@ -19,6 +19,7 @@ set(PROJECT_SOURCES
         mainwindow.ui
         check_item.cpp
         check_item.h
+        constants.h
         check_item.ui
         check_steps.h
         check_item_states.h
@@ -26,6 +27,10 @@ set(PROJECT_SOURCES
         checkarduinoplugininitialization.h
         checkarduinoplugininitialization.ui
 )
+
+set(CMAKE_INCLUDE_CURRENT_DIR "YES")
+set(CMAKE_AUTOMOC "YES")
+set(CMAKE_AUTOUIC "YES")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(cmd-test

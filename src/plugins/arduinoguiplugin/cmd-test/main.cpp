@@ -75,10 +75,10 @@ void qprocTest(QApplication a){
                      a.instance(),
                      stdOutReadyCallBack);
 
-//    QObject::connect(proc,
-//                     &QProcess::errorOccured,
-//                     a.instance(),
-//                     errorOccuredCallback);
+    QObject::connect(proc,
+                     &QProcess::errorOccurred,
+                     a.instance(),
+                     errorOccuredCallback);
 
     QObject::connect(proc,
                      &QProcess::stateChanged,
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
 
-    readTest();
+//    readTest();
 
     w.show();
     return a.exec();

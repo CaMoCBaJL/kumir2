@@ -1,23 +1,26 @@
 #include <QPainter>
 #include <QPen>
+#include <QDebug>
 
 #include "check_item.h"
 #include "ui_check_item.h"
 
-CheckItem::CheckItem(QWidget *parent) :
+CheckItemWidget::CheckItemWidget(QWidget *parent, QString labelText) :
     QWidget(parent),
     ui(new Ui::check_item)
 {
     ui->setupUi(this);
-    ui->label->setText(parent->property("labelText").toString());
+    ui->label->setText(labelText);
+    qDebug() << labelText;
+    qDebug() << this->property("labelText").toString();
 }
 
-CheckItem::~CheckItem()
+CheckItemWidget::~CheckItemWidget()
 {
     delete ui;
 }
 
-void CheckItem::setState(ArduinoPlugin::CheckItemStates state){
+void CheckItemWidget::setState(ArduinoPlugin::CheckItemStates state){
     switch(state){
         case ArduinoPlugin::Error:
             drawCircle(Qt::red);
@@ -31,7 +34,7 @@ void CheckItem::setState(ArduinoPlugin::CheckItemStates state){
     }
 }
 
-void CheckItem::drawCircle(Qt::GlobalColor color) {
+void CheckItemWidget::drawCircle(Qt::GlobalColor color) {
     QPixmap pm(40, 40);
     pm.fill();
 

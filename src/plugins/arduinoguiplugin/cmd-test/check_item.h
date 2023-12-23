@@ -8,13 +8,13 @@ namespace Ui {
 class check_item;
 }
 
-class CheckItem : public QWidget
+class CheckItemWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit CheckItem(QWidget *parent = nullptr);
-    ~CheckItem();
+    explicit CheckItemWidget(QWidget *parent = nullptr, QString labelText = QString());
+    ~CheckItemWidget();
 
     void setState(ArduinoPlugin::CheckItemStates state);
 

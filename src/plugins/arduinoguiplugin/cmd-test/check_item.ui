@@ -20,7 +20,7 @@
    <string>Form</string>
   </property>
   <property name="labelText" stdset="0">
-   <string>Предазаданный текст</string>
+   <string>Предзаданный текст</string>
   </property>
   <widget class="QLabel" name="statusImage">
    <property name="geometry">

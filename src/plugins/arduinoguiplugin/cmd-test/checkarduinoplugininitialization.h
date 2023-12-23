@@ -2,7 +2,10 @@
 #define CHECKARDUINOPLUGININITIALIZATION_H
 
 #include <QDialog>
+#include <QVBoxLayout>
+
 #include "check_steps.h"
+#include "check_item.h"
 using ArduinoPlugin::ArduinoPluginCheckState;
 
 namespace Ui {

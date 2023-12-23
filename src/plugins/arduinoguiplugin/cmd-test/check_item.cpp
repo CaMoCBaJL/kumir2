@@ -5,14 +5,15 @@
 #include "check_item.h"
 #include "ui_check_item.h"
 
-CheckItemWidget::CheckItemWidget(QWidget *parent, QString labelText) :
+CheckItemWidget::CheckItemWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::check_item)
 {
     ui->setupUi(this);
-    ui->label->setText(labelText);
-    qDebug() << labelText;
-    qDebug() << this->property("labelText").toString();
+}
+
+void CheckItemWidget::setLabelText(QString labelText) {
+    ui ->label->setText(labelText);
 }
 
 CheckItemWidget::~CheckItemWidget()
@@ -35,7 +36,7 @@ void CheckItemWidget::setState(ArduinoPlugin::CheckItemStates state){
 }
 
 void CheckItemWidget::drawCircle(Qt::GlobalColor color) {
-    QPixmap pm(40, 40);
+    QPixmap pm(20, 20);
     pm.fill();
 
     QPainter p(&pm);
@@ -44,7 +45,7 @@ void CheckItemWidget::drawCircle(Qt::GlobalColor color) {
     p.setPen(pen);
     QBrush brush(color);
     p.setBrush(brush);
-    p.drawEllipse(5, 5, 35, 35);
+    p.drawEllipse(3, 3, 15, 15);
 
-    this->ui->label->setPixmap(pm);
+    this->ui->statusImage->setPixmap(pm);
 }

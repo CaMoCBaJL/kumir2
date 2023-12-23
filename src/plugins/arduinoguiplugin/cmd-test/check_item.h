@@ -13,10 +13,11 @@ class CheckItemWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit CheckItemWidget(QWidget *parent = nullptr, QString labelText = QString());
+    explicit CheckItemWidget(QWidget *parent = nullptr);
     ~CheckItemWidget();
 
     void setState(ArduinoPlugin::CheckItemStates state);
+    void setLabelText(QString labelText);
 
 private:
     Ui::check_item *ui;

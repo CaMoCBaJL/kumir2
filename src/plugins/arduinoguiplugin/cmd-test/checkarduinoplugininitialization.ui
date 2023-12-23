@@ -6,21 +6,54 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>372</width>
-    <height>231</height>
+    <width>401</width>
+    <height>300</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>401</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>401</width>
+    <height>300</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <widget class="CheckItemWidget" name="arduinoCliAvailability" native="true">
    <property name="geometry">
     <rect>
      <x>40</x>
      <y>100</y>
-     <width>291</width>
+     <width>321</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="labelText" stdset="0">
     <string>Проверка доступности arduino-cli...</string>
@@ -31,9 +64,15 @@
     <rect>
      <x>40</x>
      <y>40</y>
-     <width>291</width>
+     <width>321</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="labelText" stdset="0">
     <string>Проверка установки arduino-cli...</string>
@@ -44,15 +83,47 @@
     <rect>
      <x>40</x>
      <y>160</y>
-     <width>291</width>
+     <width>321</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="LabelText" stdset="0">
     <string/>
    </property>
    <property name="labelText" stdset="0">
     <string>Поиск подключенных плат...</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="okButton">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>260</y>
+     <width>88</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Ok</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="resultLabel">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>220</y>
+     <width>321</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
    </property>
   </widget>
  </widget>
